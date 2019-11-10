@@ -1,0 +1,68 @@
+version: 2.1
+
+defaults: &defaults
+    working_directory: ~/js-threads-client
+    docker:
+        - image: node:10.0.0
+
+jobs:
+    lint-test:
+        <<: *defaults    
+        steps:
+            - checkout
+            - restore_cache:
+                key: dependency-cache-{{ checksum "package-lock.json" }}
+            - run: npm install
+            - run:
+                name: Lint
+                command: |
+                    npm run lint
+            - save_cache:
+                key: dependency-cache-{{ checksum "package-lock.json" }}
+                paths:
+                    - ./node_modules
+            - run:
+                name: Test
+                command: |
+                    mkdir -p test-results/jest
+                    npm run test
+                environment:
+                    JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
+            - store_test_results:
+                path: test-results
+            - store_artifacts:
+                path: test-results
+    deploy:
+        <<: *defaults
+        steps:
+            - checkout
+            - restore_cache:
+                key: npm-v1-{{ checksum "package-lock.json" }}-{{ arch }}
+            - restore_cache:
+                key: node-v1-{{ checksum "package.json" }}-{{ arch }}
+            - run: npm install
+            - attach_workspace:
+                at: ~/js-threads-client
+            - run:
+                name: Authenticate
+                command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/js-threads-client/.npmrc
+            - run:
+                name: Publish Package
+                command: npm publish --access=public --unsafe-perm
+                        
+workflows:
+    version: 2
+    js-threads-client:
+        jobs:
+            - lint-test:
+                filters:
+                    tags:
+                        only: /.*/
+            - deploy:
+                requires:
+                    - lint-test
+                filters:
+                    tags:
+                        only: /^v.*/
+                    branches:
+                        ignore: /.*/

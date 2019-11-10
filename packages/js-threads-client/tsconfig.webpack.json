@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "sourceMap": true,
+    "paths": {
+      "../../core/*": ["src/core/*"],
+      "../../models/*": ["src/models/*"]
+    }
+  },
+  "exclude": [
+    "**/__test__/*",
+    "node_modules"
+  ]
+}

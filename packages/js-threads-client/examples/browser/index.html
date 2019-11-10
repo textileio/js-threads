@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Threads</title>
+</head>
+<body>
+  <script src="../../dist/bundle.js"></script>
+  <script>
+    (function () {
+      // Create a new client and connect
+      window.client = new threads.Client()
+      client.connect('ws://localhost:8080').then(() => {
+
+        // Subscribe to thread(s) in URL query
+        const params = new URLSearchParams(window.location.search)
+        if (params.has('thread')) {
+          client.subscribe(...params.getAll('thread')).catch((err) => {
+            console.error(err)
+          })
+        }
+
+      })
+    })()
+  </script>
+</body>
+</html>

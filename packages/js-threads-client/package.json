@@ -1,5 +1,5 @@
 {
-  "name": "@textile/js-threads-client",
+  "name": "@textile/threads-client",
   "version": "0.0.1",
   "description": "Textile's JS client for interacting with remote Threads",
   "main": "dist/index.js",

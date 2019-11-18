@@ -15,7 +15,11 @@
         // Subscribe to thread(s) in URL query
         const params = new URLSearchParams(window.location.search)
         if (params.has('thread')) {
-          client.subscribe(...params.getAll('thread')).catch((err) => {
+          client.subscribe(params.getAll('thread'), (rec) => {
+            console.debug('Got new record:', rec)
+          }).then((token) => {
+            console.debug('Subscription started:', token)
+          }).catch((err) => {
             console.error(err)
           })
         }

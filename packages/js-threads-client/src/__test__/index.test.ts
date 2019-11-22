@@ -1,6 +1,6 @@
 import {Client} from '../index'
 
-const url = 'ws://localhost:8080'
+const host = 'http://localhost:9091'
 const client = new Client()
 
 describe('version', () => {
@@ -9,8 +9,8 @@ describe('version', () => {
   })
 })
 
-describe.skip('connect', () => {
+describe('setHost', () => {
   it('should resolve', async () => {
-    expect(await client.connect(url)).toBeUndefined()
+    expect(await client.setHost(host)).toBeDefined()
   })
 })

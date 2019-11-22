@@ -41,6 +41,7 @@
     "semicolon": [true, "never"],
     "jsx-no-multiline-js": false,
     "no-object-literal-type-assertion": false,
+    "no-implicit-dependencies": [false, "dev"],
     "trailing-comma": [
       true,
       {
@@ -52,4 +53,3 @@
   },
   "rulesDirectory": []
 }
-  

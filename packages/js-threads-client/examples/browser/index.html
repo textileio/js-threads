@@ -7,24 +7,68 @@
 <body>
   <script src="../../dist/bundle.js"></script>
   <script>
-    (function () {
-      // Create a new client and connect
-      window.client = new threads.Client()
-      client.connect('ws://localhost:8080').then(() => {
 
-        // Subscribe to thread(s) in URL query
-        const params = new URLSearchParams(window.location.search)
-        if (params.has('thread')) {
-          client.subscribe(params.getAll('thread'), (rec) => {
-            console.debug('Got new record:', rec)
-          }).then((token) => {
-            console.debug('Subscription started:', token)
-          }).catch((err) => {
-            console.error(err)
-          })
+    const personSchema = {
+      "$id": "https://example.com/person.schema.json",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "description": "The person's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The person's last name."
+        },
+        "age": {
+          "description": "Age in years which must be equal to or greater than zero.",
+          "type": "integer",
+          "minimum": 0
         }
+      }
+    };
 
-      })
+    const adam = {
+      "firstName": "Adam",
+      "lastName": "Doe",
+      "age": 21
+    };
+
+    const eve = {
+      "firstName": "Eve",
+      "lastName": "Doe",
+      "age": 21
+    };
+
+    (async function () {
+
+      window.client = new threads.Client().setHost('http://localhost:9091')
+      try {
+        const res = await client.newStore()
+        const storeID = res.id
+        await client.registerSchema(storeID, 'Person', personSchema)
+        const people = await client.modelCreate(storeID, 'Person', [adam, eve])
+        console.debug(people.entityidsList) // list created ids
+      }
+      catch (err) {
+        console.error(err)
+      }
+
+      // @todo: re-enable subscriptions
+      // // Subscribe to thread(s) in URL query
+      // const params = new URLSearchParams(window.location.search)
+      // if (params.has('thread')) {
+      //   client.subscribe(params.getAll('thread'), (rec) => {
+      //     console.debug('Got new record:', rec)
+      //   }).then((token) => {
+      //     console.debug('Subscription started:', token)
+      //   }).catch((err) => {
+      //     console.error(err)
+      //   })
+      // }
+
     })()
   </script>
 </body>

@@ -50,7 +50,7 @@
         const storeID = res.id
         await client.registerSchema(storeID, 'Person', personSchema)
         const people = await client.modelCreate(storeID, 'Person', [adam, eve])
-        console.debug(people.entityidsList) // list created ids
+        console.debug(people) // list created ids
       }
       catch (err) {
         console.error(err)

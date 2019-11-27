@@ -1,7 +1,7 @@
 {
   "name": "@textile/threads-client",
   "version": "0.0.1",
-  "description": "Textile's JS client for interacting with remote Threads",
+  "description": "Textile's JS client for interacting with remote Threads.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -38,15 +38,13 @@
   "license": "MIT",
   "dependencies": {
     "@improbable-eng/grpc-web": "^0.11.0",
+    "@textile/threads-client-grpc": "0.0.1",
     "@types/google-protobuf": "^3.7.2",
     "google-protobuf": "^3.10.0",
-    "isomorphic-ws": "^4.0.1",
-    "uuid": "^3.3.3",
-    "ws": "^7.2.0"
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "@textile/tslint-rules": "^1.0.3",
-    "@types/ws": "^6.0.3",
     "@types/uuid": "^3.4.6",
     "@types/jest": "^24.0.22",
     "eslint": "^6.6.0",

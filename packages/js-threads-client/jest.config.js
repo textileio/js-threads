@@ -14,5 +14,5 @@ module.exports = {
     "json",
     "node"
   ],
-  "testEnvironment": "node"
+  "testEnvironment": "jsdom"
 }

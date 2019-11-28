@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
     "test": "jest --no-watchman",
     "lint": "./node_modules/tslint/bin/tslint  -c tslint.json --project .",
     "docs": "./node_modules/typedoc/bin/typedoc",

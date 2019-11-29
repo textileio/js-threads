@@ -1,9 +1,8 @@
 import { expect } from 'chai'
-import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport'
+import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport/lib'
 import { Client } from '../index'
 
-const host = 'http://localhost:9091'
-const client = new Client(NodeHttpTransport())
+const client = new Client('http://localhost:9091', NodeHttpTransport())
 
 const personSchema = `{
   "$id": "https://example.com/person.schema.json",

@@ -109,7 +109,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
       const req = new WriteTransactionRequest()
       req.setModelfindbyidrequest(findReq)
       this.client.onMessage((message: WriteTransactionReply) => {
-        resolve(message.hasModelfindreply())
+        resolve(message.hasModelfindbyidreply())
       })
       super.setReject(reject)
       this.client.send(req)

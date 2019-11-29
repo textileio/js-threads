@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport'
+import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport/lib'
 import { Client } from '../index'
 
 const host = 'http://localhost:9091'
@@ -7,7 +7,7 @@ let client: Client
 
 describe('basic client', function() {
   before(() => {
-    client = new Client(NodeHttpTransport())
+    client = new Client(host, NodeHttpTransport())
   })
 
   describe('.version', function() {
@@ -15,16 +15,11 @@ describe('basic client', function() {
       expect(Client.version()).to.not.be.undefined
     })
   })
-  describe('.setHost', function() {
-    it('result should be defined', async () => {
-      expect(client.setHost(host)).to.not.be.undefined
-    })
-  })
 })
 
 describe('basic store', function() {
   before(() => {
-    client = new Client(NodeHttpTransport()).setHost(host)
+    client = new Client(host, NodeHttpTransport())
   })
   describe('.newStore', function() {
     it('should resolve', async function() {

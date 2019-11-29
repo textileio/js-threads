@@ -28,33 +28,24 @@ import {
   WriteTransactionRequest,
   WriteTransactionReply,
   ListenRequest,
+  ListenReply,
 } from '@textile/threads-client-grpc/api_pb'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
-
-// interface Response<T extends grpc.ProtobufMessage> {
-//   onMessage(callback: (message: T) => void): void
-//   onError(callback: (status: string) => void): void
-// }
 
 export class Client {
   public static version(): string {
     return pack.version
   }
 
-  private host: string | undefined
+  private readonly host: string
   // private subscriptions: Record<string, Subscription> = {}
 
-  constructor(defaultTransport?: grpc.TransportFactory) {
-    const transport = defaultTransport || grpc.FetchReadableStreamTransport({ credentials: 'omit' })
-    grpc.setDefaultTransport(transport)
-    // grpc.setDefaultTransport(grpc.WebsocketTransport())
-  }
-
-  public setHost(host: string) {
+  constructor(host: string, defaultTransport?: grpc.TransportFactory) {
     this.host = host
-    return this
+    const transport = defaultTransport || grpc.WebsocketTransport()
+    grpc.setDefaultTransport(transport)
   }
 
   public async newStore() {
@@ -141,32 +132,47 @@ export class Client {
     return this.unary(API.ModelFindByID, req) as Promise<ModelFindByIDReply.AsObject>
   }
 
-  public readTransaction(storeID: string, modelName: string): ReadTransaction | undefined {
-    if (!this.host) {
-      return
-    }
+  public readTransaction(storeID: string, modelName: string): ReadTransaction {
     const client = grpc.client(API.ReadTransaction, {
       host: this.host,
     }) as grpc.Client<ReadTransactionRequest, ReadTransactionReply>
     return new ReadTransaction(client, storeID, modelName)
   }
 
-  public writeTransaction(storeID: string, modelName: string): WriteTransaction | undefined {
-    if (!this.host) {
-      return
-    }
+  public writeTransaction(storeID: string, modelName: string): WriteTransaction {
     const client = grpc.client(API.WriteTransaction, {
-      host: this.host!,
+      host: this.host,
     }) as grpc.Client<WriteTransactionRequest, WriteTransactionReply>
     return new WriteTransaction(client, storeID, modelName)
   }
 
-  public async listen(storeID: string, modelName: string, entityID: string) {
-    const req = new ListenRequest()
-    req.setStoreid(storeID)
-    req.setModelname(modelName)
-    req.setEntityid(entityID)
-    // return this.client(API.Listen, req)
+  public async listen(
+    storeID: string,
+    modelName: string,
+    entityID: string,
+    callback: (reply: ListenReply.AsObject) => void,
+  ) {
+    return new Promise((resolve, reject) => {
+      const req = new ListenRequest()
+      req.setStoreid(storeID)
+      req.setModelname(modelName)
+      req.setEntityid(entityID)
+      const client = grpc.client(API.Listen, {
+        host: this.host,
+      }) as grpc.Client<ListenRequest, ListenReply>
+      client.onMessage((message: ListenReply) => {
+        callback(message.toObject())
+      })
+      client.onEnd((status: grpc.Code, message: string) => {
+        if (status !== grpc.Code.OK) {
+          reject(new Error(message))
+        } else {
+          resolve()
+        }
+      })
+      client.start()
+      client.send(req)
+    })
   }
 
   private async unary<
@@ -175,10 +181,6 @@ export class Client {
     M extends grpc.UnaryMethodDefinition<TRequest, TResponse>
   >(methodDescriptor: M, req: TRequest) {
     return new Promise((resolve, reject) => {
-      if (!this.host) {
-        reject(new Error('host URL is not set'))
-        return
-      }
       grpc.unary(methodDescriptor, {
         request: req,
         host: this.host,
@@ -200,4 +202,4 @@ export class Client {
 }
 
 // eslint-disable-next-line import/no-default-export
-export default new Client()
+export default Client

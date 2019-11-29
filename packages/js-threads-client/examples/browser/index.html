@@ -44,30 +44,30 @@
 
     (async function () {
 
-      window.client = new threads.Client().setHost('http://localhost:9091')
+      window.client = new threads.Client('http://localhost:9091')
       try {
+        // Create a new store
         const res = await client.newStore()
         const storeID = res.id
+
+        // Register a person schema
         await client.registerSchema(storeID, 'Person', personSchema)
+
+        // Create adam and eve
         const people = await client.modelCreate(storeID, 'Person', [adam, eve])
-        console.debug(people) // list created ids
+        const adamID = JSON.parse(people.entitiesList[0]).ID
+        const eveID = JSON.parse(people.entitiesList[1]).ID
+        console.debug('adam:', adamID)
+        console.debug('eve:', eveID)
+
+        // Subscribe to adam
+        await client.listen(storeID, 'Person', adamID, ((reply) => {
+          console.debug(reply)
+        }))
       }
       catch (err) {
         console.error(err)
       }
-
-      // @todo: re-enable subscriptions
-      // // Subscribe to thread(s) in URL query
-      // const params = new URLSearchParams(window.location.search)
-      // if (params.has('thread')) {
-      //   client.subscribe(params.getAll('thread'), (rec) => {
-      //     console.debug('Got new record:', rec)
-      //   }).then((token) => {
-      //     console.debug('Subscription started:', token)
-      //   }).catch((err) => {
-      //     console.error(err)
-      //   })
-      // }
 
     })()
   </script>

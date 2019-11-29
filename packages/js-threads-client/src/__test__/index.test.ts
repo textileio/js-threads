@@ -1,7 +1,9 @@
-import {Client} from '../index'
+import { expect } from 'chai'
+import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport'
+import { Client } from '../index'
 
 const host = 'http://localhost:9091'
-const client = new Client()
+const client = new Client(NodeHttpTransport())
 
 const personSchema = `{
   "$id": "https://example.com/person.schema.json",
@@ -26,26 +28,14 @@ const personSchema = `{
 }
 `
 
-describe('version', () => {
-  it('should resolve', async () => {
-    expect(await Client.version()).toBeDefined()
-  })
-})
-
-describe('setHost', () => {
-  it('should resolve', async () => {
-    expect(await client.setHost(host)).toBeDefined()
-  })
-})
-
 describe.skip('newStore', () => {
   it('should resolve', async () => {
     const store = await client.newStore()
-    expect(store.id).toBeDefined()
+    expect(store.id).to.not.be.undefined
 
     describe('registerSchema', () => {
       it('should resolve', async () => {
-        expect(await client.registerSchema(store.id, 'Person', personSchema)).toBeDefined()
+        expect(await client.registerSchema(store.id, 'Person', personSchema)).to.not.be.undefined
       })
     })
   })

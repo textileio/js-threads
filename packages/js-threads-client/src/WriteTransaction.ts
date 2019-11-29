@@ -8,12 +8,11 @@ import {
   ModelFindByIDRequest,
   StartTransactionRequest,
   WriteTransactionRequest,
-  WriteTransactionReply
+  WriteTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
-import {Transaction} from './Transaction'
+import { Transaction } from './Transaction'
 
 export class WriteTransaction extends Transaction<WriteTransactionRequest, WriteTransactionReply> {
-
   public async start() {
     const startReq = new StartTransactionRequest()
     startReq.setStoreid(this.storeID)
@@ -28,7 +27,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     return new Promise<boolean>((resolve, reject) => {
       const createReq = new ModelCreateRequest()
       const list: any[] = []
-      values.forEach((v) => {
+      values.forEach(v => {
         v['ID'] = uuid.v4()
         list.push(JSON.stringify(v))
       })
@@ -47,7 +46,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     return new Promise<boolean>((resolve, reject) => {
       const saveReq = new ModelSaveRequest()
       const list: any[] = []
-      values.forEach((v) => {
+      values.forEach(v => {
         v['ID'] = uuid.v4()
         list.push(JSON.stringify(v))
       })
@@ -108,7 +107,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
       const findReq = new ModelFindByIDRequest()
       findReq.setEntityid(entityID)
       const req = new WriteTransactionRequest()
-      req.setModelfindrequest(findReq)
+      req.setModelfindbyidrequest(findReq)
       this.client.onMessage((message: WriteTransactionReply) => {
         resolve(message.hasModelfindreply())
       })

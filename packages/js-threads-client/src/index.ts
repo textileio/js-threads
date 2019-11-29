@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as uuid from 'uuid'
-import {grpc} from '@improbable-eng/grpc-web'
-import {API} from '@textile/threads-client-grpc/api_pb_service'
+import { grpc } from '@improbable-eng/grpc-web'
+import { API } from '@textile/threads-client-grpc/api_pb_service'
 import {
   NewStoreRequest,
   NewStoreReply,
@@ -26,12 +27,11 @@ import {
   ReadTransactionReply,
   WriteTransactionRequest,
   WriteTransactionReply,
-  ListenRequest
+  ListenRequest,
 } from '@textile/threads-client-grpc/api_pb'
-import {ReadTransaction} from './ReadTransaction'
-import {WriteTransaction} from './WriteTransaction'
-
-const pack = require('../package.json')
+import * as pack from '../package.json'
+import { ReadTransaction } from './ReadTransaction'
+import { WriteTransaction } from './WriteTransaction'
 
 // interface Response<T extends grpc.ProtobufMessage> {
 //   onMessage(callback: (message: T) => void): void
@@ -39,7 +39,6 @@ const pack = require('../package.json')
 // }
 
 export class Client {
-
   public static version(): string {
     return pack.version
   }
@@ -47,10 +46,9 @@ export class Client {
   private host: string | undefined
   // private subscriptions: Record<string, Subscription> = {}
 
-  constructor() {
-    grpc.setDefaultTransport(grpc.FetchReadableStreamTransport({
-      credentials: 'omit'
-    }))
+  constructor(defaultTransport?: grpc.TransportFactory) {
+    const transport = defaultTransport || grpc.FetchReadableStreamTransport({ credentials: 'omit' })
+    grpc.setDefaultTransport(transport)
     // grpc.setDefaultTransport(grpc.WebsocketTransport())
   }
 
@@ -91,7 +89,7 @@ export class Client {
     req.setStoreid(storeID)
     req.setModelname(modelName)
     const list: any[] = []
-    values.forEach((v) => {
+    values.forEach(v => {
       v['ID'] = uuid.v4()
       list.push(JSON.stringify(v))
     })
@@ -104,7 +102,7 @@ export class Client {
     req.setStoreid(storeID)
     req.setModelname(modelName)
     const list: any[] = []
-    values.forEach((v) => {
+    values.forEach(v => {
       v['ID'] = uuid.v4()
       list.push(JSON.stringify(v))
     })
@@ -148,7 +146,7 @@ export class Client {
       return
     }
     const client = grpc.client(API.ReadTransaction, {
-      host: this.host
+      host: this.host,
     }) as grpc.Client<ReadTransactionRequest, ReadTransactionReply>
     return new ReadTransaction(client, storeID, modelName)
   }
@@ -158,7 +156,7 @@ export class Client {
       return
     }
     const client = grpc.client(API.WriteTransaction, {
-      host: this.host!
+      host: this.host!,
     }) as grpc.Client<WriteTransactionRequest, WriteTransactionReply>
     return new WriteTransaction(client, storeID, modelName)
   }
@@ -174,7 +172,8 @@ export class Client {
   private async unary<
     TRequest extends grpc.ProtobufMessage,
     TResponse extends grpc.ProtobufMessage,
-    M extends grpc.UnaryMethodDefinition<TRequest, TResponse>>(methodDescriptor: M, req: TRequest) {
+    M extends grpc.UnaryMethodDefinition<TRequest, TResponse>
+  >(methodDescriptor: M, req: TRequest) {
     return new Promise((resolve, reject) => {
       if (!this.host) {
         reject(new Error('host URL is not set'))
@@ -183,7 +182,7 @@ export class Client {
       grpc.unary(methodDescriptor, {
         request: req,
         host: this.host,
-        onEnd: (res) => {
+        onEnd: res => {
           const { status, statusMessage, headers, message, trailers } = res
           if (status === grpc.Code.OK) {
             if (message) {
@@ -194,10 +193,11 @@ export class Client {
           } else {
             reject(new Error(statusMessage))
           }
-        }
+        },
       })
     })
   }
 }
 
+// eslint-disable-next-line import/no-default-export
 export default new Client()

@@ -1,4 +1,4 @@
-import {grpc} from '@improbable-eng/grpc-web'
+import { grpc } from '@improbable-eng/grpc-web'
 
 export class Transaction<TRequest extends grpc.ProtobufMessage, TResponse extends grpc.ProtobufMessage> {
   protected readonly client: grpc.Client<TRequest, TResponse>

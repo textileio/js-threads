@@ -15,18 +15,32 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 ## Table of Contents
 
 -   [Install](#install)
--   [Usage](#usage)
+-   [Tests](#tests)
 -   [Contributing](#contributing)
 -   [Changelog](#changelog)
 -   [License](#license)
 
 ## Install
 
-TODO
+```
+git clone git@github.com:textileio/js-threads-client.git
+cd js-threads-client
+npm i
+```
 
-## Usage
+If you want to run the tests in both browser and Nodejs, you'll need to install a recent [Java Development Kit (JDK)](https://www.oracle.com/technetwork/java/javase/downloads/index.html), and [Firefox](https://www.mozilla.org/en-CA/firefox/) or [Chrome](https://www.google.com/chrome/) browser.
 
-TODO
+## Tests
+
+```
+npm run test
+```
+
+Or to do just Nodejs or browser:
+
+```
+npm run test:{node,browser}
+```
 
 ## Contributing
 

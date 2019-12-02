@@ -8,6 +8,7 @@ import { expect } from 'chai'
 import { NewStoreReply } from '@textile/threads-client-grpc/api_pb'
 import { WriteTransaction } from 'src/WriteTransaction'
 import { Client } from '../index'
+import { JSONQuery, JSONOperation } from '../query'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const client = new Client('http://localhost:9091')
@@ -122,6 +123,35 @@ describe('Client', function() {
       const has = await client.modelHas(store.id, 'Person', [person.ID])
       expect(has).to.not.be.undefined
       expect(has).to.have.property('exists', true)
+    })
+  })
+  describe('.modelFind', () => {
+    it('', async () => {
+      const frank = createPerson()
+      frank.firstName = 'Frank'
+      const create = await client.modelCreate(store.id, 'Person', [frank])
+      const entities = create.entitiesList.map(entity => JSON.parse(entity))
+      const person: Person = entities.pop()
+
+      const q: JSONQuery = {
+        ands: [
+          {
+            fieldPath: 'firstName',
+            operation: JSONOperation.Eq,
+            value: { string: person.firstName },
+          },
+        ],
+      }
+      const find = await client.modelFind(store.id, 'Person', q)
+      expect(find).to.not.be.undefined
+      const found = find.entitiesList.map(entity => JSON.parse(entity as string))
+      expect(found).to.have.length(1)
+      const foundPerson: Person = found.pop()
+      expect(foundPerson).to.not.be.undefined
+      expect(foundPerson).to.have.property('firstName', 'Frank')
+      expect(foundPerson).to.have.property('lastName', 'Doe')
+      expect(foundPerson).to.have.property('age', 21)
+      expect(foundPerson).to.have.property('ID')
     })
   })
   describe('.modelFindById', () => {

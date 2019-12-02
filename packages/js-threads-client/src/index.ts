@@ -30,9 +30,11 @@ import {
   ListenRequest,
   ListenReply,
 } from '@textile/threads-client-grpc/api_pb'
+import { fromBase64, toBase64 } from 'b64-lite'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
+import { JSONQuery } from './query'
 
 export class Client {
   public static version(): string {
@@ -124,11 +126,15 @@ export class Client {
     return this.unary(API.ModelHas, req) as Promise<ModelHasReply.AsObject>
   }
 
-  public async modelFind(storeID: string, modelName: string) {
+  public async modelFind(storeID: string, modelName: string, query: JSONQuery) {
     const req = new ModelFindRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
-    return this.unary(API.ModelFind, req) as Promise<ModelFindReply.AsObject>
+    req.setQueryjson(toBase64(JSON.stringify(query)))
+    const res = (await this.unary(API.ModelFind, req)) as ModelFindReply.AsObject
+    // @todo: Do we want to do this? Otherwise, the caller has to decode the base64 string...
+    res.entitiesList = res.entitiesList.map(entity => fromBase64(entity as string))
+    return res
   }
 
   public async modelFindByID(storeID: string, modelName: string, entityID: string) {

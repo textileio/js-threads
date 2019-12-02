@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "ts-mocha -p tsconfig.json src/__test__/**/*.test.ts",
+    "test": "mocha --require ts-node/register --require source-map-support/register --recursive src/__test__/**/*.test.ts",
+    "test:coverage": "nyc npm run test",
     "lint": "eslint --fix --ext .mjs,.js,.jsx,.ts,.tsx src",
     "docs": "typedoc",
     "precommit": "npm run lint && npm test",
@@ -16,6 +17,19 @@
     "postversion": "git push --follow-tags",
     "browser": "webpack --mode production",
     "serve": "webpack-dev-server --mode development --progress --color"
+  },
+  "nyc": {
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "exclude": [
+      "**/*.d.ts"
+    ],
+    "reporter": [
+      "json"
+    ],
+    "all": true
   },
   "engines": {
     "node": ">= 10.0.0",
@@ -41,10 +55,11 @@
     "@textile/threads-client-grpc": "0.0.1",
     "@types/google-protobuf": "^3.7.2",
     "google-protobuf": "^3.10.0",
-    "uuid": "^3.3.3"
+    "isomorphic-ws": "^4.0.1",
+    "uuid": "^3.3.3",
+    "ws": "^7.2.0"
   },
   "devDependencies": {
-    "@improbable-eng/grpc-web-node-http-transport": "^0.11.0",
     "@types/chai": "^4.2.5",
     "@types/mocha": "^5.2.7",
     "@types/uuid": "^3.4.6",
@@ -60,10 +75,12 @@
     "jsdoc": "^3.6.3",
     "mocha": "^6.2.2",
     "nodemon": "^1.19.4",
+    "nyc": "^14.1.1",
     "prettier": "^1.19.1",
     "prettier-eslint": "^9.0.0",
+    "source-map-support": "^0.5.16",
     "ts-loader": "^6.2.1",
-    "ts-mocha": "^6.0.0",
+    "ts-node": "^8.5.4",
     "typedoc": "^0.15.0",
     "typedoc-plugin-markdown": "^2.2.11",
     "typescript": "^3.7.2",

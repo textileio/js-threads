@@ -57,13 +57,15 @@ export class Client {
     req.setStoreid(storeID)
     req.setName(name)
     req.setSchema(JSON.stringify(schema))
-    return this.unary(API.RegisterSchema, req) as Promise<RegisterSchemaReply.AsObject>
+    await this.unary(API.RegisterSchema, req)
+    return
   }
 
   public async start(storeID: string) {
     const req = new StartRequest()
     req.setStoreid(storeID)
-    return this.unary(API.Start, req) as Promise<StartReply.AsObject>
+    await this.unary(API.Start, req)
+    return
   }
 
   public async startFromAddress(storeID: string, address: string, followKey: string, readKey: string) {
@@ -72,7 +74,8 @@ export class Client {
     req.setAddress(address)
     req.setFollowkey(followKey)
     req.setReadkey(readKey)
-    return this.unary(API.StartFromAddress, req) as Promise<StartFromAddressReply.AsObject>
+    await this.unary(API.StartFromAddress, req)
+    return
   }
 
   public async modelCreate(storeID: string, modelName: string, values: any[]) {
@@ -94,11 +97,14 @@ export class Client {
     req.setModelname(modelName)
     const list: any[] = []
     values.forEach(v => {
-      v['ID'] = uuid.v4()
+      if (!v.hasOwnProperty('ID')) {
+        v['ID'] = '' // The server will add an ID if empty.
+      }
       list.push(JSON.stringify(v))
     })
     req.setValuesList(list)
-    return this.unary(API.ModelSave, req) as Promise<ModelSaveReply.AsObject>
+    await this.unary(API.ModelSave, req)
+    return
   }
 
   public async modelDelete(storeID: string, modelName: string, entityIDs: string[]) {
@@ -106,7 +112,8 @@ export class Client {
     req.setStoreid(storeID)
     req.setModelname(modelName)
     req.setEntityidsList(entityIDs)
-    return this.unary(API.ModelDelete, req) as Promise<ModelDeleteReply.AsObject>
+    await this.unary(API.ModelDelete, req)
+    return
   }
 
   public async modelHas(storeID: string, modelName: string, entityIDs: string[]) {
@@ -146,33 +153,26 @@ export class Client {
     return new WriteTransaction(client, storeID, modelName)
   }
 
-  public async listen(
-    storeID: string,
-    modelName: string,
-    entityID: string,
-    callback: (reply: ListenReply.AsObject) => void,
-  ) {
-    return new Promise((resolve, reject) => {
-      const req = new ListenRequest()
-      req.setStoreid(storeID)
-      req.setModelname(modelName)
-      req.setEntityid(entityID)
-      const client = grpc.client(API.Listen, {
-        host: this.host,
-      }) as grpc.Client<ListenRequest, ListenReply>
-      client.onMessage((message: ListenReply) => {
-        callback(message.toObject())
-      })
-      client.onEnd((status: grpc.Code, message: string) => {
-        if (status !== grpc.Code.OK) {
-          reject(new Error(message))
-        } else {
-          resolve()
-        }
-      })
-      client.start()
-      client.send(req)
+  public listen(storeID: string, modelName: string, entityID: string, callback: (reply: ListenReply.AsObject) => void) {
+    const req = new ListenRequest()
+    req.setStoreid(storeID)
+    req.setModelname(modelName)
+    req.setEntityid(entityID)
+    const client = grpc.client(API.Listen, {
+      host: this.host,
+    }) as grpc.Client<ListenRequest, ListenReply>
+    client.onMessage((message: ListenReply) => {
+      callback(message.toObject())
     })
+    client.onEnd((status: grpc.Code, message: string) => {
+      if (status !== grpc.Code.OK) {
+        throw new Error(message)
+      }
+    })
+    client.start()
+    client.send(req)
+    // Bind to client here because the close call uses 'this'...
+    return client.close.bind(client)
   }
 
   private async unary<

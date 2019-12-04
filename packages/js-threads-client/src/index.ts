@@ -6,17 +6,12 @@ import {
   NewStoreRequest,
   NewStoreReply,
   RegisterSchemaRequest,
-  RegisterSchemaReply,
   StartRequest,
-  StartReply,
   StartFromAddressRequest,
-  StartFromAddressReply,
   ModelCreateRequest,
   ModelCreateReply,
   ModelSaveRequest,
-  ModelSaveReply,
   ModelDeleteRequest,
-  ModelDeleteReply,
   ModelHasRequest,
   ModelHasReply,
   ModelFindRequest,
@@ -35,6 +30,7 @@ import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
 import { JSONQuery } from './query'
+import { Entity, EntityList } from './models'
 
 export class Client {
   public static version(): string {
@@ -42,7 +38,6 @@ export class Client {
   }
 
   private readonly host: string
-  // private subscriptions: Record<string, Subscription> = {}
 
   constructor(host: string, defaultTransport?: grpc.TransportFactory) {
     this.host = host
@@ -80,7 +75,7 @@ export class Client {
     return
   }
 
-  public async modelCreate(storeID: string, modelName: string, values: any[]) {
+  public async modelCreate<T = any>(storeID: string, modelName: string, values: any[]) {
     const req = new ModelCreateRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -90,7 +85,11 @@ export class Client {
       list.push(JSON.stringify(v))
     })
     req.setValuesList(list)
-    return this.unary(API.ModelCreate, req) as Promise<ModelCreateReply.AsObject>
+    const res = (await this.unary(API.ModelCreate, req)) as ModelCreateReply.AsObject
+    const ret: EntityList<T> = {
+      entitiesList: res.entitiesList.map(entity => JSON.parse(entity as string)),
+    }
+    return ret
   }
 
   public async modelSave(storeID: string, modelName: string, values: any[]) {
@@ -123,26 +122,32 @@ export class Client {
     req.setStoreid(storeID)
     req.setModelname(modelName)
     req.setEntityidsList(entityIDs)
-    return this.unary(API.ModelHas, req) as Promise<ModelHasReply.AsObject>
+    const res = (await this.unary(API.ModelHas, req)) as ModelHasReply.AsObject
+    return res.exists === true
   }
 
-  public async modelFind(storeID: string, modelName: string, query: JSONQuery) {
+  public async modelFind<T = any>(storeID: string, modelName: string, query: JSONQuery) {
     const req = new ModelFindRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
     req.setQueryjson(toBase64(JSON.stringify(query)))
     const res = (await this.unary(API.ModelFind, req)) as ModelFindReply.AsObject
-    // @todo: Do we want to do this? Otherwise, the caller has to decode the base64 string...
-    res.entitiesList = res.entitiesList.map(entity => fromBase64(entity as string))
-    return res
+    const ret: EntityList<T> = {
+      entitiesList: res.entitiesList.map(entity => JSON.parse(fromBase64(entity as string))),
+    }
+    return ret
   }
 
-  public async modelFindByID(storeID: string, modelName: string, entityID: string) {
+  public async modelFindByID<T = any>(storeID: string, modelName: string, entityID: string) {
     const req = new ModelFindByIDRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
     req.setEntityid(entityID)
-    return this.unary(API.ModelFindByID, req) as Promise<ModelFindByIDReply.AsObject>
+    const res = (await this.unary(API.ModelFindByID, req)) as ModelFindByIDReply.AsObject
+    const ret: Entity<T> = {
+      entity: JSON.parse(res.entity as string),
+    }
+    return ret
   }
 
   public readTransaction(storeID: string, modelName: string): ReadTransaction {
@@ -159,7 +164,7 @@ export class Client {
     return new WriteTransaction(client, storeID, modelName)
   }
 
-  public listen(storeID: string, modelName: string, entityID: string, callback: (reply: ListenReply.AsObject) => void) {
+  public listen<T = any>(storeID: string, modelName: string, entityID: string, callback: (reply: Entity<T>) => void) {
     const req = new ListenRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -168,7 +173,11 @@ export class Client {
       host: this.host,
     }) as grpc.Client<ListenRequest, ListenReply>
     client.onMessage((message: ListenReply) => {
-      callback(message.toObject())
+      const res = message.toObject(true)
+      const ret: Entity<T> = {
+        entity: JSON.parse(res.entity as string),
+      }
+      callback(ret)
     })
     client.onEnd((status: grpc.Code, message: string) => {
       if (status !== grpc.Code.OK) {

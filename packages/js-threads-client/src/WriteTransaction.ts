@@ -1,14 +1,10 @@
 import * as uuid from 'uuid'
 import {
   ModelCreateRequest,
-  ModelCreateReply,
   ModelSaveRequest,
   ModelDeleteRequest,
   ModelHasRequest,
-  ModelHasReply,
   ModelFindRequest,
-  ModelFindReply,
-  ModelFindByIDReply,
   ModelFindByIDRequest,
   StartTransactionRequest,
   WriteTransactionRequest,
@@ -17,7 +13,7 @@ import {
 import { toBase64, fromBase64 } from 'b64-lite'
 import { Transaction } from './Transaction'
 import { Entity, EntityList } from './models'
-import { JSONQuery } from './query'
+import { JSONQuery } from './models'
 
 export class WriteTransaction extends Transaction<WriteTransactionRequest, WriteTransactionReply> {
   public async start() {

@@ -29,8 +29,10 @@ import { fromBase64, toBase64 } from 'b64-lite'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
-import { JSONQuery } from './query'
-import { Entity, EntityList } from './models'
+import { JSONQuery, Entity, EntityList } from './models'
+
+export { JSONQuery, Entity, EntityList }
+export { Query, Where } from './query'
 
 export class Client {
   public static version(): string {
@@ -200,7 +202,7 @@ export class Client {
         request: req,
         host: this.host,
         onEnd: res => {
-          const { status, statusMessage, headers, message, trailers } = res
+          const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {
             if (message) {
               resolve(message.toObject())

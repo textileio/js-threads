@@ -1,4 +1,6 @@
 Copyright (c) 2019 Textile.io
+Portions derived from https://github.com/textileio/go-textile-threads and https://github.com/timshannon/badgerhold
+Copyright (c) 2019 Textile.io, Tim Shannon
 
 MIT License
 

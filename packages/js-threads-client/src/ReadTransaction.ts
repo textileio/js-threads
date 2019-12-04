@@ -1,10 +1,7 @@
 import {
   ModelHasRequest,
-  ModelHasReply,
   ModelFindRequest,
-  ModelFindReply,
   ModelFindByIDRequest,
-  ModelFindByIDReply,
   StartTransactionRequest,
   ReadTransactionRequest,
   ReadTransactionReply,
@@ -12,7 +9,7 @@ import {
 import { toBase64, fromBase64 } from 'b64-lite'
 import { Transaction } from './Transaction'
 import { Entity, EntityList } from './models'
-import { JSONQuery } from './query'
+import { JSONQuery } from './models'
 
 export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTransactionReply> {
   public async start() {

@@ -8,7 +8,8 @@ import { expect } from 'chai'
 import { NewStoreReply } from '@textile/threads-client-grpc/api_pb'
 import { WriteTransaction } from 'src/WriteTransaction'
 import { Client } from '../index'
-import { JSONQuery, JSONOperation } from '../query'
+import { JSONQuery, JSONOperation } from '../models'
+import { Where } from '../query'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const client = new Client('http://localhost:9091')
@@ -281,6 +282,27 @@ describe('Client', function() {
       } finally {
         expect(closer()).to.not.throw
       }
+    })
+  })
+  describe('Query', () => {
+    before(async () => {
+      const people = [...Array(8)].map((_, i) => {
+        const person = createPerson()
+        person.age = 60 + i
+        return person
+      })
+      await client.modelCreate<Person>(store.id, 'Person', people)
+    })
+    it('something', async () => {
+      const q = new Where('age')
+        .ge(60)
+        .and('age')
+        .lt(66)
+        .or(new Where('age').eq(67))
+      const find = await client.modelFind<Person>(store.id, 'Person', q)
+      expect(find).to.not.be.undefined
+      const found = find.entitiesList
+      expect(found).to.have.length(7)
     })
   })
 })

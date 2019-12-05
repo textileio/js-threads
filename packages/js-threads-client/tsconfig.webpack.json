@@ -2,10 +2,7 @@
   "extends": "./tsconfig",
   "compilerOptions": {
     "sourceMap": true,
-    "paths": {
-      "../../core/*": ["src/core/*"],
-      "../../models/*": ["src/models/*"]
-    }
+    "paths": {}
   },
   "exclude": [
     "**/__test__/*",

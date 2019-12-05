@@ -125,7 +125,7 @@ export class Client {
     req.setModelname(modelName)
     req.setEntityidsList(entityIDs)
     const res = (await this.unary(API.ModelHas, req)) as ModelHasReply.AsObject
-    return res.exists === true
+    return res.exists
   }
 
   public async modelFind<T = any>(storeID: string, modelName: string, query: JSONQuery) {

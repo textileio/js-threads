@@ -67,6 +67,9 @@ typings/
 # next.js build output
 .next
 
+# Jetbrains
+.idea
+
 # VSCode settings
 .vscode
 

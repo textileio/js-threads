@@ -15,7 +15,13 @@ import { Transaction } from './Transaction'
 import { Entity, EntityList } from './models'
 import { JSONQuery } from './models'
 
+/**
+ * WriteTransaction performs a mutating bulk transaction on the underlying store.
+ */
 export class WriteTransaction extends Transaction<WriteTransactionRequest, WriteTransactionReply> {
+  /**
+   * start begins the transaction. All operations between start and end will be applied as a single transaction upon a call to end.
+   */
   public async start() {
     const startReq = new StartTransactionRequest()
     startReq.setStoreid(this.storeID)
@@ -25,7 +31,10 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     this.client.start()
     this.client.send(req)
   }
-
+  /**
+   * modelCreate creates a new model instance in the given store.
+   * @param values An array of model instances as JSON/JS objects.
+   */
   public async modelCreate<T = any>(values: any[]) {
     return new Promise<EntityList<T> | undefined>((resolve, reject) => {
       const createReq = new ModelCreateRequest()
@@ -53,6 +62,10 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     })
   }
 
+  /**
+   * modelSave saves changes to an existing model instance in the given store.
+   * @param values An array of model instances as JSON/JS objects. Each model instance must have a valid existing `ID` property.
+   */
   public async modelSave(values: any[]) {
     return new Promise<void>((resolve, reject) => {
       const saveReq = new ModelSaveRequest()
@@ -74,6 +87,10 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     })
   }
 
+  /**
+   * modelDelete deletes an existing model instance from the given store.
+   * @param entityIDs An array of entity ids to delete.
+   */
   public async modelDelete(entityIDs: string[]) {
     return new Promise<void>((resolve, reject) => {
       const deleteReq = new ModelDeleteRequest()
@@ -87,7 +104,10 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
       this.client.send(req)
     })
   }
-
+  /**
+   * has checks whether a given entity exists in the given store.
+   * @param entityIDs An array of entity ids to check for.
+   */
   public async has(entityIDs: string[]) {
     return new Promise<boolean>((resolve, reject) => {
       const hasReq = new ModelHasRequest()
@@ -102,7 +122,10 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
       this.client.send(req)
     })
   }
-
+  /**
+   * modelFind queries the store for entities matching the given query parameters. See Query for options.
+   * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
+   */
   public async modelFind<T = any>(query: JSONQuery) {
     return new Promise<EntityList<T>>((resolve, reject) => {
       const findReq = new ModelFindRequest()
@@ -125,6 +148,10 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     })
   }
 
+  /**
+   * modelFindByID queries the store for the id of an entity.
+   * @param entityID The id of the entity to search for.
+   */
   public async modelFindByID<T = any>(entityID: string) {
     return new Promise<Entity<T> | undefined>((resolve, reject) => {
       const findReq = new ModelFindByIDRequest()

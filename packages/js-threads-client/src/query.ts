@@ -13,7 +13,9 @@ const valueToJSONValue = (value: Value): JSONValue => {
   }
 }
 
-// Criterion is a partial condition that can specify comparison operator for a field.
+/**
+ * Criterion is a partial condition that can specify comparison operator for a field.
+ */
 export class Criterion implements JSONCriterion {
   constructor(
     public fieldPath: string,
@@ -22,37 +24,57 @@ export class Criterion implements JSONCriterion {
     public query?: Query,
   ) {}
 
-  // Eq is an equality operator against a field
+  /**
+   * eq is an equality operator against a field
+   * @param value The value to query against. Must be a valid JSON data type.
+   */
   eq(value: Value): Query {
     return this.create(JSONOperation.Eq, value)
   }
 
-  // Ne is a not equal operator against a field
+  /**
+   * ne is a not equal operator against a field
+   * @param value The value to query against. Must be a valid JSON data type.
+   */
   ne(value: Value): Query {
     return this.create(JSONOperation.Ne, value)
   }
 
-  // Gt is a greater operator against a field
+  /**
+   * gt is a greater operator against a field
+   * @param value The value to query against. Must be a valid JSON data type.
+   */
   gt(value: Value): Query {
     return this.create(JSONOperation.Ne, value)
   }
 
-  // Lt is a less operation against a field
+  /** lt is a less operation against a field
+   * @param value The value to query against. Must be a valid JSON data type.
+   */
   lt(value: Value): Query {
     return this.create(JSONOperation.Lt, value)
   }
 
-  // Ge is a greater or equal operator against a field
+  /** ge is a greater or equal operator against a field
+   * @param value The value to query against. Must be a valid JSON data type.
+   */
   ge(value: Value): Query {
     return this.create(JSONOperation.Ge, value)
   }
 
-  // Le is a less or equal operator against a field
+  /** le is a less or equal operator against a field
+   * @param value The value to query against. Must be a valid JSON data type.
+   */
   le(value: Value): Query {
     return this.create(JSONOperation.Le, value)
   }
 
-  create(op: JSONOperation, value: Value): Query {
+  /**
+   * create updates this Criterion with a new Operation and returns the corresponding query.
+   * @param op
+   * @param value
+   */
+  private create(op: JSONOperation, value: Value): Query {
     this.operation = op
     this.value = valueToJSONValue(value)
     if (this.query === undefined) {
@@ -63,51 +85,73 @@ export class Criterion implements JSONCriterion {
     return this.query
   }
 
-  // toJSON converts the Criterion to JSONCriterion, dropping circular references to internal Queries
+  /**
+   * toJSON converts the Criterion to JSONCriterion, dropping circular references to internal Queries.
+   */
   toJSON(): JSONCriterion {
     const { query, ...rest } = this
     return rest
   }
 }
 
-// Alias Criterion to Where for a slightly nicer API (see example below)
+/**
+ * Alias Criterion to Where for a slightly nicer API (see example below)
+ */
 const Where = Criterion
 
 // Export Where for external callers
 export { Where }
 
-// Query allows to build queries to be used to fetch data from a model.
+/**
+ * Query allows to build queries to be used to fetch data from a model.
+ */
 export class Query implements JSONQuery {
-  // Query creates a new generic query object.
+  /**
+   * Query creates a new generic query object.
+   * @param ands An array of top-level Criterions to be included in the query.
+   * @param ors An array of internal queries.
+   * @param sort An object describing how to sort the query.
+   */
   constructor(public ands: JSONCriterion[] = [], public ors: JSONQuery[] = [], public sort?: JSONSort) {}
 
-  // Where starts to create a query condition for a field
+  /**
+   * where starts to create a query condition for a field
+   * @param fieldPath The field name to query on. Can be a hierarchical path.
+   */
   static where(fieldPath: string): Criterion {
     return new Criterion(fieldPath)
   }
 
-  // And concatenates a new condition in an existing field.
+  /**
+   * and concatenates a new condition in an existing field.
+   * @param fieldPath The field name to query on. Can be a hierarchical path.
+   */
   and(fieldPath: string): Criterion {
     return new Criterion(fieldPath, undefined, undefined, this)
   }
 
-  // Or concatenates a new condition that is sufficient
-  // for an instance to satisfy, independant of the current Query.
-  // Has left-associativity as: (a And b) Or c
+  /**
+   * or concatenates a new condition that is sufficient for an instance to satisfy, independant of the current Query. Has left-associativity as: (a And b) Or c
+   * @param query The 'sub-query' to concat to the existing query.
+   */
   or(query: Query): Query {
     this.ors.push(query)
     return this
   }
 
-  // OrderBy specify ascending order for the query results.
-  // On multiple calls, only the last one is considered.
+  /**
+   * orderBy specify ascending order for the query results. On multiple calls, only the last one is considered.
+   * @param fieldPath The field name to query on. Can be a hierarchical path.
+   */
   orderBy(fieldPath: string): Query {
     this.sort = { fieldPath, desc: false }
     return this
   }
 
-  // OrderByDesc specify descending order for the query results.
-  // On multiple calls, only the last one is considered.
+  /**
+   * orderByDesc specify descending order for the query results. On multiple calls, only the last one is considered.
+   * @param fieldPath The field name to query on. Can be a hierarchical path.
+   */
   orderByDesc(fieldPath: string): Query {
     this.sort = { fieldPath, desc: true }
     return this

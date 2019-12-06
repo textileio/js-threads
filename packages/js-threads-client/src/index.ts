@@ -34,23 +34,49 @@ import { JSONQuery, Entity, EntityList } from './models'
 export { JSONQuery, Entity, EntityList }
 export { Query, Where } from './query'
 
+/**
+ * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
+ * This client library can be used to interact with a local or remote Textile gRPC-service
+ *  It is a wrapper around Textile's 'Store' API, which is defined here: https://github.com/textileio/go-textile-threads/blob/master/api/pb/api.proto.
+ */
 export class Client {
+  /**
+   * version is the release version.
+   */
   public static version(): string {
     return pack.version
   }
 
+  /**
+   * host is the (private) remote host address.
+   */
   private readonly host: string
 
+  /**
+   * Client creates a new gRPC client instance.
+   * @param host The local/remote host url. Defaults to 'localhost:9091'.
+   * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
+   */
   constructor(host: string, defaultTransport?: grpc.TransportFactory) {
     this.host = host
     const transport = defaultTransport || grpc.WebsocketTransport()
     grpc.setDefaultTransport(transport)
   }
 
+  /**
+   * newStore creates a new store on the remote node.
+   */
   public async newStore() {
     return this.unary(API.NewStore, new NewStoreRequest()) as Promise<NewStoreReply.AsObject>
   }
 
+  /**
+   * registerSchema registers a new model schema under the given name on the remote node.
+   * The schema must be a valid json-schema.org schema, and can be a JSON string or Javascript object.
+   * @param storeID The id of the store with which to register the new model.
+   * @param name The human-readable name for the model.
+   * @param schema The actual json-schema.org compatible schema object.
+   */
   public async registerSchema(storeID: string, name: string, schema: any) {
     const req = new RegisterSchemaRequest()
     req.setStoreid(storeID)
@@ -60,6 +86,10 @@ export class Client {
     return
   }
 
+  /**
+   * start initializes the client with the given store.
+   * @param storeID The id of the store with which to register.
+   */
   public async start(storeID: string) {
     const req = new StartRequest()
     req.setStoreid(storeID)
@@ -67,6 +97,14 @@ export class Client {
     return
   }
 
+  /**
+   * startFromAddress initializes the client with the given store, connecting to the given thread address (database).
+   * It should also include the read and follow (replicator) keys, which should be base58-encoded random bytes.
+   * @param storeID The id of the store with which to register.
+   * @param address The address for the thread with which to connect.
+   * @param followKey A base58-encoded symmetric key. Should be 44 bytes in length.
+   * @param readKey  A base58-encoded symmetric key. Should be 44 bytes in length.
+   */
   public async startFromAddress(storeID: string, address: string, followKey: string, readKey: string) {
     const req = new StartFromAddressRequest()
     req.setStoreid(storeID)
@@ -77,6 +115,12 @@ export class Client {
     return
   }
 
+  /**
+   * modelCreate creates a new model instance in the given store.
+   * @param storeID The id of the store in which create the new instance.
+   * @param modelName The human-readable name of the model to use.
+   * @param values An array of model instances as JSON/JS objects.
+   */
   public async modelCreate<T = any>(storeID: string, modelName: string, values: any[]) {
     const req = new ModelCreateRequest()
     req.setStoreid(storeID)
@@ -94,6 +138,12 @@ export class Client {
     return ret
   }
 
+  /**
+   * modelSave saves changes to an existing model instance in the given store.
+   * @param storeID The id of the store in which the existing instance will be saved.
+   * @param modelName The human-readable name of the model to use.
+   * @param values An array of model instances as JSON/JS objects. Each model instance must have a valid existing `ID` property.
+   */
   public async modelSave(storeID: string, modelName: string, values: any[]) {
     const req = new ModelSaveRequest()
     req.setStoreid(storeID)
@@ -110,6 +160,12 @@ export class Client {
     return
   }
 
+  /**
+   * modelDelete deletes an existing model instance from the given store.
+   * @param storeID The id of the store from which to remove the given instances.
+   * @param modelName The human-readable name of the model to use.
+   * @param entityIDs An array of entity ids to delete.
+   */
   public async modelDelete(storeID: string, modelName: string, entityIDs: string[]) {
     const req = new ModelDeleteRequest()
     req.setStoreid(storeID)
@@ -119,6 +175,12 @@ export class Client {
     return
   }
 
+  /**
+   * modelHas checks whether a given entity exists in the given store.
+   * @param storeID The id of the store in which to check inclusion.
+   * @param modelName The human-readable name of the model to use.
+   * @param entityIDs An array of entity ids to check for.
+   */
   public async modelHas(storeID: string, modelName: string, entityIDs: string[]) {
     const req = new ModelHasRequest()
     req.setStoreid(storeID)
@@ -128,6 +190,12 @@ export class Client {
     return res.exists
   }
 
+  /**
+   * modelFind queries the store for entities matching the given query parameters. See Query for options.
+   * @param storeID The id of the store on which to perform the query.
+   * @param modelName The human-readable name of the model to use.
+   * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
+   */
   public async modelFind<T = any>(storeID: string, modelName: string, query: JSONQuery) {
     const req = new ModelFindRequest()
     req.setStoreid(storeID)
@@ -140,6 +208,12 @@ export class Client {
     return ret
   }
 
+  /**
+   * modelFindByID queries the store for the id of an entity.
+   * @param storeID The id of the store on which to perform the query.
+   * @param modelName The human-readable name of the model to use.
+   * @param entityID The id of the entity to search for.
+   */
   public async modelFindByID<T = any>(storeID: string, modelName: string, entityID: string) {
     const req = new ModelFindByIDRequest()
     req.setStoreid(storeID)
@@ -152,6 +226,11 @@ export class Client {
     return ret
   }
 
+  /**
+   * readTransaction creates a new read-only transaction object. See ReadTransaction for details.
+   * @param storeID The id of the store on which to perform the transaction.
+   * @param modelName The human-readable name of the model to use.
+   */
   public readTransaction(storeID: string, modelName: string): ReadTransaction {
     const client = grpc.client(API.ReadTransaction, {
       host: this.host,
@@ -159,6 +238,11 @@ export class Client {
     return new ReadTransaction(client, storeID, modelName)
   }
 
+  /**
+   * writeTransaction creates a new writeable transaction object. See WriteTransaction for details.
+   * @param storeID The id of the store on which to perform the transaction.
+   * @param modelName The human-readable name of the model to use.
+   */
   public writeTransaction(storeID: string, modelName: string): WriteTransaction {
     const client = grpc.client(API.WriteTransaction, {
       host: this.host,
@@ -166,6 +250,14 @@ export class Client {
     return new WriteTransaction(client, storeID, modelName)
   }
 
+  /**
+   * listen opens a long-lived connection with a remote node, running the given callback on each new update to the given entity.
+   * The return value is a `close` function, which cleanly closes the connection with the remote node.
+   * @param storeID The id of the store on which to open the connection.
+   * @param modelName The human-readable name of the model to use.
+   * @param entityID The id of the entity to monitor.
+   * @param callback The callback to call on each update to the given entity.
+   */
   public listen<T = any>(storeID: string, modelName: string, entityID: string, callback: (reply: Entity<T>) => void) {
     const req = new ListenRequest()
     req.setStoreid(storeID)

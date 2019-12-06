@@ -11,7 +11,13 @@ import { Transaction } from './Transaction'
 import { Entity, EntityList } from './models'
 import { JSONQuery } from './models'
 
+/**
+ * ReadTransaction performs a read-only bulk transaction on the underlying store.
+ */
 export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTransactionReply> {
+  /**
+   * start begins the transaction. All operations between start and end will be applied as a single transaction upon a call to end.
+   */
   public async start() {
     const startReq = new StartTransactionRequest()
     startReq.setStoreid(this.storeID)
@@ -22,6 +28,10 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
     this.client.send(req)
   }
 
+  /**
+   * has checks whether a given entity exists in the given store.
+   * @param entityIDs An array of entity ids to check for.
+   */
   public async has(entityIDs: string[]) {
     return new Promise<boolean>((resolve, reject) => {
       const hasReq = new ModelHasRequest()
@@ -37,6 +47,10 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
     })
   }
 
+  /**
+   * modelFind queries the store for entities matching the given query parameters. See Query for options.
+   * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
+   */
   public async modelFind<T = any>(query: JSONQuery) {
     return new Promise<EntityList<T>>((resolve, reject) => {
       const findReq = new ModelFindRequest()
@@ -59,6 +73,10 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
     })
   }
 
+  /**
+   * modelFindByID queries the store for the id of an entity.
+   * @param entityID The id of the entity to search for.
+   */
   public async modelFindByID<T = any>(entityID: string) {
     return new Promise<Entity<T>>((resolve, reject) => {
       const findReq = new ModelFindByIDRequest()

@@ -42,6 +42,14 @@ Or to do just Nodejs or browser:
 npm run test:{node,browser}
 ```
 
+## Docs
+
+To build the (Markdown-based) documentation output to the `docs` folder, run:
+
+```
+npm run docs
+```
+
 ## Contributing
 
 This project is a work in progress. As such, there's a few things you can do right now to help out:

@@ -101,11 +101,16 @@ export class Client {
    * startFromAddress initializes the client with the given store, connecting to the given thread address (database).
    * It should also include the read and follow (replicator) keys, which should be base58-encoded random bytes.
    * @param storeID The id of the store with which to register.
-   * @param address The address for the thread with which to connect.
-   * @param followKey A base58-encoded symmetric key. Should be 44 bytes in length.
-   * @param readKey  A base58-encoded symmetric key. Should be 44 bytes in length.
+   * @param address The address for the thread with which to connect. Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
+   * @param followKey A symmetric key. Should be a Buffer or Uint8Array of length 44 bytes.
+   * @param readKey  A symmetric key. Should be a Buffer or Uint8Array of length 44 bytes.
    */
-  public async startFromAddress(storeID: string, address: string, followKey: string, readKey: string) {
+  public async startFromAddress(
+    storeID: string,
+    address: string,
+    followKey: string | Uint8Array,
+    readKey: string | Uint8Array,
+  ) {
     const req = new StartFromAddressRequest()
     req.setStoreid(storeID)
     req.setAddress(address)

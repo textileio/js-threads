@@ -24,8 +24,11 @@ import {
   WriteTransactionReply,
   ListenRequest,
   ListenReply,
+  GetStoreLinkRequest,
+  GetStoreLinkReply,
 } from '@textile/threads-client-grpc/api_pb'
 import { fromBase64, toBase64 } from 'b64-lite'
+import { encode } from 'bs58'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
@@ -118,6 +121,24 @@ export class Client {
     req.setReadkey(readKey)
     await this.unary(API.StartFromAddress, req)
     return
+  }
+
+  /**
+   * getStoreLink returns invite 'links' unseful for inviting other peers to join a given store/thread.
+   * @param storeID The id of the store for which to create the invite.
+   */
+  public async getStoreLink(storeID: string) {
+    const req = new GetStoreLinkRequest()
+    req.setStoreid(storeID)
+    const res = (await this.unary(API.GetStoreLink, req)) as GetStoreLinkReply.AsObject
+    const invites = []
+    for (const addr of res.addressesList) {
+      //@todo: Try to avoid using Buffer directly here in the future
+      const fk = Buffer.from(fromBase64(res.followkey as string))
+      const rk = Buffer.from(fromBase64(res.readkey as string))
+      invites.push(`${addr}?${encode(fk)}&${encode(rk)}`)
+    }
+    return invites
   }
 
   /**

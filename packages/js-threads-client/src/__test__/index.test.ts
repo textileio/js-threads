@@ -79,6 +79,14 @@ describe('Client', function() {
       expect(start).to.be.undefined
     })
   })
+  describe('.createInvite', () => {
+    it('response should be defined and be an array of strings', async () => {
+      const invites = await client.createInvite(store.id)
+      expect(invites).to.not.be.undefined
+      expect(invites).to.have.length(3)
+    })
+  })
+
   describe.skip('.startFromAddress', () => {
     it('response should be defined and be an empty object', async () => {
       const start = await client.startFromAddress(store.id, '', '', '')

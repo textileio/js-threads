@@ -1,6 +1,6 @@
 {
   "name": "@textile/threads-client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Textile's JS client for interacting with remote Threads.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

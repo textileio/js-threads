@@ -36,8 +36,6 @@ import { JSONQuery, Entity, EntityList } from './models'
 export { JSONQuery, Entity, EntityList }
 export { Query, Where } from './query'
 
-const startedError = new Error('start or startFromAddress must be called')
-
 /**
  * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
  * This client library can be used to interact with a local or remote Textile gRPC-service
@@ -55,10 +53,6 @@ export class Client {
    * host is the (private) remote host address.
    */
   private readonly host: string
-  /**
-   * started stores whether start or startFromAddress has been called.
-   */
-  private started = false
 
   /**
    * Client creates a new gRPC client instance.
@@ -104,7 +98,6 @@ export class Client {
     const req = new StartRequest()
     req.setStoreid(storeID)
     await this.unary(API.Start, req)
-    this.started = true
     return
   }
 
@@ -132,7 +125,6 @@ export class Client {
     req.setFollowkey(typeof followKey === 'string' ? decode(followKey) : followKey)
     req.setReadkey(typeof readKey === 'string' ? decode(readKey) : readKey)
     await this.unary(API.StartFromAddress, req)
-    this.started = true
     return
   }
 
@@ -141,9 +133,6 @@ export class Client {
    * @param storeID The id of the store for which to create the invite.
    */
   public async getStoreLink(storeID: string) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new GetStoreLinkRequest()
     req.setStoreid(storeID)
     const res = (await this.unary(API.GetStoreLink, req)) as GetStoreLinkReply.AsObject
@@ -163,9 +152,6 @@ export class Client {
    * @param values An array of model instances as JSON/JS objects.
    */
   public async modelCreate<T = any>(storeID: string, modelName: string, values: any[]) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ModelCreateRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -189,9 +175,6 @@ export class Client {
    * @param values An array of model instances as JSON/JS objects. Each model instance must have a valid existing `ID` property.
    */
   public async modelSave(storeID: string, modelName: string, values: any[]) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ModelSaveRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -214,9 +197,6 @@ export class Client {
    * @param entityIDs An array of entity ids to delete.
    */
   public async modelDelete(storeID: string, modelName: string, entityIDs: string[]) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ModelDeleteRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -232,9 +212,6 @@ export class Client {
    * @param entityIDs An array of entity ids to check for.
    */
   public async modelHas(storeID: string, modelName: string, entityIDs: string[]) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ModelHasRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -250,9 +227,6 @@ export class Client {
    * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
    */
   public async modelFind<T = any>(storeID: string, modelName: string, query: JSONQuery) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ModelFindRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -272,9 +246,6 @@ export class Client {
    * @param entityID The id of the entity to search for.
    */
   public async modelFindByID<T = any>(storeID: string, modelName: string, entityID: string) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ModelFindByIDRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)
@@ -292,9 +263,6 @@ export class Client {
    * @param modelName The human-readable name of the model to use.
    */
   public readTransaction(storeID: string, modelName: string): ReadTransaction {
-    if (!this.started) {
-      throw startedError
-    }
     const client = grpc.client(API.ReadTransaction, {
       host: this.host,
     }) as grpc.Client<ReadTransactionRequest, ReadTransactionReply>
@@ -307,9 +275,6 @@ export class Client {
    * @param modelName The human-readable name of the model to use.
    */
   public writeTransaction(storeID: string, modelName: string): WriteTransaction {
-    if (!this.started) {
-      throw startedError
-    }
     const client = grpc.client(API.WriteTransaction, {
       host: this.host,
     }) as grpc.Client<WriteTransactionRequest, WriteTransactionReply>
@@ -325,9 +290,6 @@ export class Client {
    * @param callback The callback to call on each update to the given entity.
    */
   public listen<T = any>(storeID: string, modelName: string, entityID: string, callback: (reply: Entity<T>) => void) {
-    if (!this.started) {
-      throw startedError
-    }
     const req = new ListenRequest()
     req.setStoreid(storeID)
     req.setModelname(modelName)

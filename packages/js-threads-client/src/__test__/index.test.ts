@@ -79,16 +79,18 @@ describe('Client', function() {
       expect(start).to.be.undefined
     })
   })
-  describe('.createInvite', () => {
+  describe('.getStoreLink', () => {
     it('response should be defined and be an array of strings', async () => {
       const invites = await client.getStoreLink(store.id)
       expect(invites).to.not.be.undefined
-      expect(invites).to.have.length(3)
+      // @todo: Combine this with startFromAddress for a better 'round-trip' test
+      expect(invites).to.not.be.empty
     })
   })
 
   describe.skip('.startFromAddress', () => {
     it('response should be defined and be an empty object', async () => {
+      // @todo: Combine this with getStoreLink for a better 'round-trip' test
       const start = await client.startFromAddress(store.id, '', '', '')
       expect(start).to.be.undefined
     })
@@ -285,12 +287,12 @@ describe('Client', function() {
         await client.modelSave(store.id, 'Person', [existingPerson])
         existingPerson.age = 40
         await client.modelSave(store.id, 'Person', [existingPerson])
-        await sleep(1500)
+        await sleep(2000)
         expect(events.length).to.equal(2)
       } finally {
         expect(closer()).to.not.throw
       }
-    })
+    }).timeout(5000) // Make sure our test doesn't timeout
   })
   describe('Query', () => {
     before(async () => {
@@ -301,7 +303,7 @@ describe('Client', function() {
       })
       await client.modelCreate<Person>(store.id, 'Person', people)
     })
-    it('something', async () => {
+    it('Should return a full list of entities matching the given query', async () => {
       const q = new Where('age')
         .ge(60)
         .and('age')

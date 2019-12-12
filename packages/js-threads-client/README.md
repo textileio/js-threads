@@ -42,6 +42,144 @@ Or to do just Nodejs or browser:
 npm run test:{node,browser}
 ```
 
+## Basic use in Typescript
+
+**create a client**
+
+```js
+this.client = new Client('http://localhost:9091')
+```
+
+**create a store**
+
+```js
+const store = await this.client.newStore()
+await this.client.registerSchema(store.id, 'Folder2P', schema)
+```
+
+**join a store by invite**
+
+```js
+const store = await this.client.newStore()
+await this.client.registerSchema(store.id, 'Folder2P', schema)
+try {
+  const some = await this.client.startFromAddress(
+    store.id,
+    '/ip4/127.0.0.1/tcp/4006/p2p/12D3KooWS2QMPk53mi6xzjr6j87bB9NDfn6NnnQWFc31p86SwpBW/thread/bafktbzj3z4gc7x44dc7izjieurbboybszntx6vapj3umytpilvuqjva',
+    'stAhc51y6tnTdDGxSzA9rrSgjudzenwF6YcMAKK5Dm2seEmQi55DfGXcxzco',
+    'j6YMX423ugWRRTXsfeHCzRLgBTQ95H1u7r35MZ6mKYTN7rLgdRvq1Efb2PBL')
+} catch(err) {
+  console.log(err)
+}
+```
+
+**get all entries**
+
+```js
+const found = await this.client.modelFind(this.finderID, 'Folder2P', {})
+console.debug('found:', found.entitiesList.length)
+this.folders = found.entitiesList.map((entity) => entity).map((obj) => {
+  return new YourModel(obj)
+})
+```
+
+**add an entry**
+
+```js
+// matches YourModel and schema
+const created = await this.client.modelCreate(this.finderID, 'Folder2', [{
+  some: 'data',
+  numbers: [1, 2, 3]
+}])
+```
+
+
+## React Native
+
+The following has been tested on **Android Only**.
+
+`js-thread-client` should be compatible with React Native. Here are some helpful pointers if you find issues testing it out.
+
+### Connecting to the threads daemon
+
+You can run the daemon released as part of the early preview. To do so, 
+
+```sh
+git clone git@github.com:textileio/go-textile-threads.git
+cd go-textile-threads
+go run daemon/main.go
+```
+
+**Make daemon available to RN**
+
+You can make the daemon API port available to your app with,
+
+```sh
+adb reverse tcp:9091 tcp:9091
+```
+
+Altenatively, you can ensure this is run whenever you run your app by modifying your `package.json` as follows.
+
+```json
+{
+  ...
+  "scripts": {
+    ...
+    "bind": "adb reverse tcp:9091 tcp:9091",
+    "android": "npm run bind && npx react-native run-android",
+    ...
+  },
+  ...
+}
+```
+
+Then, run your app with,
+
+```sh
+npm run android
+```
+
+### Buffer not found
+
+`js-threads-client` relies on Buffer being available. To make `Buffer` available in your project, you may need to introduce a shim. Here are the steps.
+
+**install rn-nodeify**
+
+read more about [rn-nodeify](https://github.com/tradle/rn-nodeify#readme).
+
+```js
+npm install -G rn-nodeify
+```
+
+**run nodeify in the root of your project**
+
+```js
+rn-nodeify --install buffer --hack
+```
+
+This will create a `shim.js` in the root of your project. You need to import this at the top of your apps entry file (e.g. `indes.js`). 
+
+The top of `index.js` would look like, 
+
+```js
+require('./shim')
+...
+```
+
+**add nodeify to your postinstall**
+
+Ensure that the shim is still configured after any module updates. Inside `package.json` add the following line to your `scripts` tag,
+
+```json
+{
+  ...
+  "scripts": {
+    ...
+    "postinstall": "rn-nodeify --install buffer --hack"
+  }
+}
+```
+
 ## Docs
 
 To build the (Markdown-based) documentation output to the `docs` folder, run:

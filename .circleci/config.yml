@@ -25,7 +25,7 @@ jobs:
             - run:
                 name: Bootstrap and Build
                 command: |
-                    npm run bootstrap
+                    npm run bootstrap -- --hoist --no-ci
                     npm run build
             - run:
                 name: Lint

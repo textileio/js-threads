@@ -5,8 +5,9 @@
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
-    "pretest": "npm run bootstrap && npm run lint",
+    "pretest": "npm run bootstrap && npm run lint && npm run build",
     "bootstrap": "lerna bootstrap --hoist --no-ci",
+    "build": "lerna run build",
     "lint": "eslint --fix --ext .js,.ts packages/*/src/**/*",
     "test": "npm run test:node && npm run test:browser",
     "test:node": "TS_NODE_FILES=true mocha",

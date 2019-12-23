@@ -55,7 +55,12 @@ jobs:
             - attach_workspace:
                 at: ~/js-threads
             - run:
-                name: build docs
+                name: Bootstrap and Build
+                command: |
+                    npm run bootstrap
+                    npm run build
+            - run:
+                name: Build Docs
                 command: npm run docs
             - persist_to_workspace:
                 root: ~/js-threads

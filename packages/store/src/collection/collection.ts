@@ -64,9 +64,9 @@ export class ReadBatch<T extends Entity = object> {
   }
 
   async start(timeout?: number) {
-    if (!this.active) {
-      logger.error(NotActiveError)
-      throw NotActiveError
+    if (this.active) {
+      logger.error(IsActiveError)
+      throw IsActiveError
     }
     logger.debug(`batch started`)
     await this.collection.lock.readLock(timeout)

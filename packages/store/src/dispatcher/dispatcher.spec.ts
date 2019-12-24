@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { pack } from 'lexicographic-integer'
 import { Dispatcher } from './dispatcher'
-import { Event } from '.'
+import { Event } from '..'
 
 describe('Dispatcher', () => {
   it('should not require any arguments to initialise', async () => {

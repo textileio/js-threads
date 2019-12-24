@@ -3,16 +3,20 @@ import Ajv, { ValidateFunction } from 'ajv'
 import { JSONSchema } from 'json-schema-typed'
 import { Datastore, Key } from 'interface-datastore'
 import { RWLock } from 'async-rwlock'
+import log from 'loglevel'
 import uuid from 'uuid'
 import mingo from 'mingo'
 import { decode } from 'cbor-sync'
-import { FilterQuery } from './query/mongodb'
-import { Entity, Action, EntityID } from '.'
+import { FilterQuery } from './query'
+import { ActionHandler } from '.'
+import { Entity, Action, EntityID } from '..'
 
 // @todo: Find or write types for this
 const toJsonSchema = require('to-json-schema')
 // @todo: https://github.com/DefinitelyTyped/DefinitelyTyped/pull/41011
 const { NamespaceDatastore } = require('datastore-core')
+
+const logger = log.getLogger('store:dispatcher')
 
 const collectionKey = new Key('collection')
 const NotActiveError = new Error('Not Started')
@@ -20,21 +24,26 @@ const IsActiveError = new Error('Already Started')
 // const InvalidIDError = new Error('Invalid Entity ID')
 // const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
 
-export interface ActionHandler<T extends Entity = object> {
-  (store: Datastore<any>, actions: Array<Action<T>>): PromiseLike<void> | void
-}
-
 export class ReadBatch<T extends Entity = object> {
   protected active = false
   constructor(protected collection: Collection<T>) {}
   // Get returns the given Entity from the store if it exists.
   async get(id: EntityID) {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`getting entity ${id}`)
     return decode(await this.collection.datastore.get(new Key(id))) as T
   }
 
   // Find returns an async iterable of Entities that match the given criteria.
   async *find(query?: FilterQuery<T>) {
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`running query`)
     const q = new mingo.Query(query || {})
     for await (const { value } of this.collection.datastore.query({})) {
       const data: T = decode(value) // Decode from CBOR
@@ -46,19 +55,31 @@ export class ReadBatch<T extends Entity = object> {
 
   // Has checks if the given Entity is in the store.
   async has(id: EntityID) {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`checking for entity ${id}`)
     return this.collection.datastore.has(new Key(id))
   }
 
   async start(timeout?: number) {
-    if (this.active) throw IsActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`batch started`)
     await this.collection.lock.readLock(timeout)
     this.active = true
     return this
   }
 
   discard() {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`batch ended`)
     this.active = false
     return this.collection.lock.unlock()
   }
@@ -69,26 +90,40 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   private actions: Array<Action<T>> = []
   private ids: Set<string> = new Set()
   async start(timeout?: number) {
-    if (this.active) throw IsActiveError
+    if (this.active) {
+      logger.error(IsActiveError)
+      throw IsActiveError
+    }
+    logger.debug(`batch started`)
     await this.collection.lock.writeLock(timeout)
     this.active = true
     return this
   }
 
   async create(entity: T) {
-    if (!this.active) throw NotActiveError
-    if (!this.collection.validator(entity)) throw new Error('Schema Validation')
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    if (!this.collection.validator(entity)) {
+      const err = new Error('Schema Validation')
+      logger.error(err)
+      throw err
+    }
     // if (entity.ID && !isUUID(entity.ID)) throw InvalidIDError
     const id = entity.ID || uuid()
+    logger.debug(`creating entity ${id}`)
     const key = new Key(id)
     if ((await this.collection.datastore.has(key)) || this.ids.has(id)) {
-      throw new Error('Existing Entity')
+      const err = new Error('Existing Entity')
+      logger.error(err)
+      throw err
     }
     const current = { ...entity, ID: id } as T
     const action: Action<T> = {
       type: Action.Type.Create,
       entityID: id,
-      collectionName: this.collection.name,
+      collection: this.collection.name,
       previous: undefined,
       current,
     }
@@ -98,8 +133,12 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   }
 
   async delete(id: EntityID) {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
     // if (!isUUID(id)) throw InvalidIDError
+    logger.debug(`deleting entity ${id}`)
     const key = new Key(id)
     if (!(await this.collection.datastore.has(key))) {
       if (this.ids.has(id)) {
@@ -108,13 +147,15 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
         this.ids.delete(id)
         return
       } else {
-        throw new Error('Not Found')
+        const err = new Error('Not Found')
+        logger.error(err)
+        throw err
       }
     }
     const action: Action<T> = {
       type: Action.Type.Delete,
       entityID: id,
-      collectionName: this.collection.name,
+      collection: this.collection.name,
       previous: undefined, // @todo: Should this maybe be the current value rather than undefined?
       current: undefined,
     }
@@ -124,14 +165,20 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
 
   // Get returns existing Entities from the store.
   async get(id: EntityID) {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`getting entity ${id}`)
     const last = [...this.actions]
       .slice()
       .reverse()
       .find(item => item.entityID === id)
     if (last) {
       if (last.type === Action.Type.Delete) {
-        throw new Error('Entity Deleted')
+        const err = new Error('Entity Deleted')
+        logger.error(err)
+        throw err
       }
       return last.current as T
     }
@@ -140,7 +187,11 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
 
   // Has checks if the given Entities are in the store.
   async has(id: EntityID) {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
+    logger.debug(`checking for entity ${id}`)
     const deleted = [...this.actions]
       .filter(action => action.type === Action.Type.Delete)
       .map(action => action.entityID)
@@ -149,7 +200,10 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
 
   // Find returns an async iterable of Entities that match the given criteria.
   async *find(query?: FilterQuery<T>) {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
     const deleted = [...this.actions]
       .filter(action => action.type === Action.Type.Delete)
       .map(action => action.entityID)
@@ -158,6 +212,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
       .filter(action => action.type === Action.Type.Save)
       .slice()
       .reverse()
+    logger.debug(`running query`)
     const q = new mingo.Query(query || {})
     for await (const { key, value } of this.collection.datastore.query({})) {
       const data: T = decode(value) // Decode from CBOR
@@ -181,14 +236,19 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   discard() {
     this.actions = []
     this.ids.clear()
+    logger.debug(`batch discarded`)
     super.discard()
   }
 
   async commit() {
-    if (!this.active) throw NotActiveError
+    if (!this.active) {
+      logger.error(NotActiveError)
+      throw NotActiveError
+    }
     if (this.actions.length > 0) {
       await this.collection.handler(this.collection.datastore, this.actions)
     }
+    logger.debug(`batch commited`)
     return this.discard()
   }
 }
@@ -237,6 +297,7 @@ export class Collection<T extends Entity = object> {
 
   // Find returns an async iterable of Entities that match the given criteria.
   async *find(query?: FilterQuery<T>) {
+    logger.debug(`running query`)
     const batch = await this.batch(false).start()
     for await (const entity of batch.find(query)) yield entity
     batch.discard()
@@ -247,13 +308,15 @@ export class Collection<T extends Entity = object> {
   async create(...entities: T[]) {
     const batch = await this.batch(true).start()
     const results = await Promise.all<T>(entities.map(batch.create.bind(batch)))
+    logger.debug(`created ${results.length} entities`)
     await batch.commit()
     return results.length > 1 ? results : results.pop()
   }
 
   async delete(...ids: EntityID[]) {
     const batch = await this.batch(true).start()
-    await Promise.all<void>(ids.map(batch.delete.bind(batch)))
+    const results = await Promise.all<void>(ids.map(batch.delete.bind(batch)))
+    logger.debug(`deleted ${results.length} entities`)
     return await batch.commit()
   }
 
@@ -263,6 +326,7 @@ export class Collection<T extends Entity = object> {
   async get(...ids: EntityID[]) {
     const batch = await this.batch(false).start()
     const results = await Promise.all<T>(ids.map(async id => batch.get(id)))
+    logger.debug(`getting ${results.length} entities`)
     batch.discard()
     return results.length > 1 ? results : results.pop()
   }
@@ -273,6 +337,7 @@ export class Collection<T extends Entity = object> {
   async has(...ids: EntityID[]) {
     const batch = await this.batch(false).start()
     const results = await Promise.all<boolean>(ids.map(async id => batch.has(id)))
+    logger.debug(`checking for ${results.length} entities`)
     batch.discard()
     return results.length > 1 ? results : results.pop()
   }

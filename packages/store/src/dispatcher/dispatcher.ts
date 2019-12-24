@@ -1,12 +1,9 @@
 import { RWLock } from 'async-rwlock'
-import { Event } from '.'
+import log from 'loglevel'
+import { Reducer, Interface } from '.'
+import { Event } from '..'
 
-/**
- * Reducer applies an event to an existing state.
- */
-export interface Reducer {
-  reduce(...events: Event[]): Promise<void>
-}
+const logger = log.getLogger('store:dispatcher')
 
 /**
  * Dispatcher is used to dispatch events to registered reducers.
@@ -14,7 +11,7 @@ export interface Reducer {
  * Every event is dispatched to every registered reducer. Dispatcher is based on the singleton dispatcher utilized
  * in the "Flux" pattern (see https://github.com/facebook/flux).
  */
-export class Dispatcher {
+export class Dispatcher implements Interface {
   private lock: RWLock = new RWLock()
   public reducers: Set<Reducer> = new Set()
 
@@ -26,6 +23,7 @@ export class Dispatcher {
     await this.lock.writeLock()
     this.reducers.add(reducer)
     this.lock.unlock()
+    logger.debug(`registered reducers: ${this.reducers.size}`)
   }
 
   /**
@@ -35,8 +33,10 @@ export class Dispatcher {
   async dispatch(...events: Event[]) {
     await this.lock.writeLock()
     try {
+      logger.debug(`dispatching reducers: ${this.reducers.size}`)
       await Promise.all([...this.reducers].map(reducer => reducer.reduce(...events)))
     } catch (err) {
+      logger.error(err)
       throw err
     } finally {
       this.lock.unlock()

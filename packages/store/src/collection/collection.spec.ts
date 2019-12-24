@@ -8,8 +8,8 @@ import mingo from 'mingo'
 import { collect } from 'streaming-iterables'
 import { encode } from 'cbor-sync'
 import { Collection, ReadBatch, WriteBatch } from './collection'
-import { FilterQuery } from './query/mongodb'
-import { EntityID, Action } from '.'
+import { FilterQuery } from './query'
+import { EntityID, Action } from '..'
 
 const personSchema: JSONSchema = {
   $id: 'https://example.com/person.schema.json',

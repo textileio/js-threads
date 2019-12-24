@@ -1,5 +1,9 @@
-import { Datastore, Key } from 'interface-datastore'
-import { Block } from '@textile/threads-core'
+import CID from 'cids'
+
+export interface Block {
+  data: Buffer
+  cid: CID
+}
 
 // EntityID is the type used in models identities
 export type EntityID = string
@@ -37,7 +41,7 @@ interface Action<T extends Entity = object> {
   // EntityID of the instance in action
   entityID: EntityID
   // ModelName of the instance in action
-  collectionName: string // modelName
+  collection: string // modelName
   // Previous is the instance before the action
   previous?: T
   // Current is the instance after the action was done
@@ -46,21 +50,11 @@ interface Action<T extends Entity = object> {
 
 export { Action }
 
-export interface ReduceAction {
-  // Type of the reduced action
-  type: Action.Type
-  // Model in which action was made
-  collection: string // Model
-  // EntityID of the instance in reduced action
-  entityID: EntityID
-}
-
-// EventCodec transforms actions generated in models to events dispatched to thread logs, and viceversa.
-export interface EventCodec {
-  // Reduce applies generated events into state
-  reduce(events: Event[], datastore: Datastore, baseKey: Key): ReduceAction[]
-  // Create corresponding events to be dispatched
-  create(ops: Action[]): { events: Event[]; block: Block }
-  // EventsFromBytes deserializes a ipldformat.Node bytes payload into Events.
-  eventsFromBytes(data: Buffer): Event[]
-}
+// export interface ReduceAction {
+//   // Type of the reduced action
+//   type: Action.Type
+//   // Model in which action was made
+//   collection: string // Model
+//   // EntityID of the instance in reduced action
+//   entityID: EntityID
+// }

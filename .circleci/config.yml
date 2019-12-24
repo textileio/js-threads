@@ -13,7 +13,9 @@ jobs:
                 key: npm-v1-{{ checksum "package-lock.json" }}-{{ arch }}
             - restore_cache:
                 key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-            - run: npm install
+            - run:
+                name: Install Dependencies
+                command: npm install
             - save_cache:
                 key: npm-v1-{{ checksum "package-lock.json" }}-{{ arch }}
                 paths:
@@ -34,13 +36,13 @@ jobs:
                 name: Test
                 command: |
                     mkdir -p coverage
-                    mkdir -p junit
-                    MOCHA_FILE=junit/test-results.xml npm run test:node -- --reporter=mocha-junit-reporter
+                    mkdir -p test-results/mocha
+                    MOCHA_FILE=test-results/mocha/results.xml npm run test:node -- --reporter=mocha-junit-reporter
                     npm run test:browser
             - store_test_results:
-                path: ~/junit
+                path: test-results
             - store_artifacts:
-                path: ~/junit
+                path: test-results
             - store_artifacts:
                 path: coverage
     docs:
@@ -51,7 +53,9 @@ jobs:
                 key: npm-v1-{{ checksum "package-lock.json" }}-{{ arch }}
             - restore_cache:
                 key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-            - run: npm install
+            - run:
+                name: Install Dependencies
+                command: npm install
             - attach_workspace:
                 at: ~/js-threads
             - run:
@@ -74,7 +78,9 @@ jobs:
                 key: npm-v1-{{ checksum "package-lock.json" }}-{{ arch }}
             - restore_cache:
                 key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-            - run: npm install
+            - run:
+                name: Install Dependencies
+                command: npm install
             - attach_workspace:
                 at: ~/js-threads
             - run:

@@ -1,6 +1,7 @@
 import { Datastore } from 'interface-datastore'
 import { Entity, Action } from '..'
 
+// eslint-disable-next-line import/no-cycle
 export { ReadBatch, WriteBatch, Collection } from './collection'
 export { FilterQuery } from './query'
 

@@ -2,6 +2,7 @@
 import jsonpatch, { Operation } from 'fast-json-patch'
 import { pack } from 'lexicographic-integer'
 import log from 'loglevel'
+// eslint-disable-next-line import/no-cycle
 import { EventCodec, EncodedEvents } from '.'
 import { EntityID } from '..'
 import { Action, Entity, Event, Block } from '..'

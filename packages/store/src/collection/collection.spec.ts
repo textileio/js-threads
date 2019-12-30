@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai'
 import { MemoryDatastore, Datastore, Key } from 'interface-datastore'
-import { JSONSchema } from 'json-schema-typed'
+import { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
 import uuid from 'uuid'
 import sinon from 'sinon'
 import mingo from 'mingo'

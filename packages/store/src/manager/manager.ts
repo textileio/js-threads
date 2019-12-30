@@ -1,8 +1,8 @@
 import { Datastore, MemoryDatastore } from 'interface-datastore'
 import log from 'loglevel'
 import uuid from 'uuid'
-import { Store } from '../store'
-import { Interface, StoreID } from '.'
+import { Store, StoreID } from '../store'
+import { Interface } from '.'
 
 const logger = log.getLogger('store:manager')
 

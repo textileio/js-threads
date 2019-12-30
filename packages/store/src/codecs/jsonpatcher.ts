@@ -69,8 +69,9 @@ export const Codec: EventCodec = {
           }
           break
         default:
-          logger.error(`throwing error: Unknown Action`)
-          throw new Error('Unkown Action')
+          const err = new Error('Unkown Action')
+          logger.error(err)
+          throw err
       }
       return {
         // Patch

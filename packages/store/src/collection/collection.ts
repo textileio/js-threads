@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import Ajv, { ValidateFunction } from 'ajv'
-import { JSONSchema } from 'json-schema-typed'
 import { Datastore, Key } from 'interface-datastore'
+import { NamespaceDatastore } from 'datastore-core'
+import toJsonSchema, { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
 import { RWLock } from 'async-rwlock'
 import log from 'loglevel'
 import uuid from 'uuid'
@@ -10,11 +11,6 @@ import { decode } from 'cbor-sync'
 import { FilterQuery } from './query'
 import { ActionHandler } from '.'
 import { Entity, Action, EntityID } from '..'
-
-// @todo: Find or write types for this
-const toJsonSchema = require('to-json-schema')
-// @todo: https://github.com/DefinitelyTyped/DefinitelyTyped/pull/41011
-const { NamespaceDatastore } = require('datastore-core')
 
 const logger = log.getLogger('store:dispatcher')
 

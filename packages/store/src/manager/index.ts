@@ -1,7 +1,5 @@
 // import uuid from 'uuid/v4'
-import { Store } from '../store'
-
-export type StoreID = string
+import { Store, StoreID } from '../store'
 
 export interface Interface {
   // threadService: ThreadService

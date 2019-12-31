@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import Ajv, { ValidateFunction } from 'ajv'
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'

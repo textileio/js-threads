@@ -2,10 +2,8 @@
 import jsonpatch, { Operation } from 'fast-json-patch'
 import { pack } from 'lexicographic-integer'
 import log from 'loglevel'
-// eslint-disable-next-line import/no-cycle
-import { EventCodec, EncodedEvents, ReduceAction, ReduceState } from '.'
-import { EntityID } from '..'
-import { Action, Entity, Event, Block } from '..'
+import { EventCodec, ReduceState } from './interface'
+import { Action, Entity, Event, Block, EntityID } from '..'
 
 // @todo: Find or write types for this
 const Encoder = require('@ipld/block')

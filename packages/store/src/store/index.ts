@@ -66,7 +66,7 @@ export class Store<E extends Event = any, T extends Entity = object> extends Eve
   /**
    * Start the Store.
    * Start should be called immediately after registering all schemas and before any operation on them.
-   * If the store already bootstraped on a thread, it will continue using that thread.
+   * If the store already bootstrapped on a thread, it will continue using that thread.
    * In the opposite case, it will create a new thread.
    */
   async start(): Promise<void> {

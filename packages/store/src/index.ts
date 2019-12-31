@@ -49,12 +49,3 @@ interface Action<T extends Entity = object> {
 }
 
 export { Action }
-
-// export interface ReduceAction {
-//   // Type of the reduced action
-//   type: Action.Type
-//   // Model in which action was made
-//   collection: string // Model
-//   // EntityID of the instance in reduced action
-//   entityID: EntityID
-// }

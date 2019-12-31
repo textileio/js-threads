@@ -57,7 +57,7 @@
   "author": "Textile",
   "license": "MIT",
   "dependencies": {
-    "@improbable-eng/grpc-web": "^0.11.0",
+    "@improbable-eng/grpc-web": "^0.12.0",
     "@textile/threads-client-grpc": "^0.1.2",
     "@types/google-protobuf": "^3.7.2",
     "b64-lite": "^1.4.0",

@@ -3,7 +3,7 @@ import jsonpatch, { Operation } from 'fast-json-patch'
 import { pack } from 'lexicographic-integer'
 import log from 'loglevel'
 // eslint-disable-next-line import/no-cycle
-import { EventCodec, EncodedEvents } from '.'
+import { EventCodec, EncodedEvents, ReduceAction, ReduceState } from '.'
 import { EntityID } from '..'
 import { Action, Entity, Event, Block } from '..'
 
@@ -31,9 +31,6 @@ export interface Op {
 
 // PathEvent
 export interface Patch extends Event {
-  time: Buffer
-  entityID: EntityID
-  collection: string
   patch: Op
 }
 
@@ -42,8 +39,8 @@ export interface Events {
   patches: Patch[]
 }
 
-export const Codec: EventCodec = {
-  async encode<T extends Entity = object>(actions: Array<Action<T>>): Promise<EncodedEvents> {
+export const Codec: EventCodec<Patch> = {
+  async encode<T extends Entity = object>(actions: Array<Action<T>>) {
     const events: Patch[] = actions.map(action => {
       let op: Op
       switch (action.type) {
@@ -89,9 +86,39 @@ export const Codec: EventCodec = {
     return { events, block }
   },
 
-  async decode<T extends Entity = object>(block: Block): Promise<Array<Event>> {
+  async decode(block: Block) {
     const events: Events = Encoder.decoder(block.data, 'dag-cbor', 'sha2-256').decode()
     logger.debug(`decoded block with cid: ${block.cid}`)
     return events.patches
+  },
+
+  async reduce<T extends Entity = object>(state: T | undefined, event: Patch) {
+    let type: Action.Type
+    let newState: T | undefined
+    switch (event.patch.type) {
+      case Op.Type.Create:
+        type = Action.Type.Create
+        newState = event.patch.patch as T
+        break
+      case Op.Type.Save:
+        type = Action.Type.Save
+        newState = jsonpatch.applyPatch(state, event.patch.patch as Operation[]).newDocument
+        break
+      case Op.Type.Delete:
+        type = Action.Type.Delete
+        newState = undefined
+        break
+      default:
+        throw new Error('Unknown Operation')
+    }
+    const result: ReduceState<T> = {
+      state: newState,
+      action: {
+        type,
+        collection: event.collection,
+        entityID: event.entityID,
+      },
+    }
+    return result
   },
 }

@@ -1,20 +1,31 @@
-import { Action, Event, Block } from '../'
+import { Action, Event, Block, Entity, EntityID } from '../'
 // eslint-disable-next-line import/no-cycle
 import * as JSONPatcher from './jsonpatcher'
 
 export { JSONPatcher }
 
-export interface EncodedEvents {
-  events: Event[]
+export interface ReduceState<T extends Entity = object> {
+  state: T | undefined
+  action: ReduceAction
+}
+
+export interface ReduceAction {
+  type: Action.Type
+  collection: string
+  entityID: EntityID
+}
+
+export interface EncodedEvents<T extends Event> {
+  events: T[]
   block: Block
 }
 
 // EventCodec transforms actions generated in models to events dispatched to thread logs, and viceversa.
-export interface EventCodec {
-  // Reduce applies generated events into state
-  // reduce(events: Event[], datastore: Datastore, baseKey: Key): ReduceAction[]
-  // Encode corresponding events to be dispatched
-  encode(actions: Action[]): Promise<EncodedEvents>
-  // Decode deserializes a ipldformat.Node bytes payload into Events.
-  decode(block: Block): Promise<Array<Event>>
+export interface EventCodec<E extends Event> {
+  // Reduce an event into the existing state
+  reduce<T extends Entity = object>(state: T | undefined, event: Event): Promise<ReduceState<T>>
+  // Encode Actions into Events to be dispatched
+  encode<T extends Entity = object>(actions: Array<Action<T>>): Promise<EncodedEvents<E>>
+  // Decode an IPLD Node payload into Events
+  decode(block: Block): Promise<Array<E>>
 }

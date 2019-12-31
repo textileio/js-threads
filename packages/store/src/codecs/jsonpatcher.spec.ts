@@ -81,4 +81,22 @@ describe('JSONPatcher', () => {
       expect(err.toString()).to.equal('Error: Unkown Action')
     }
   })
+  it('should fold (reduce) events into existing state', async () => {
+    const base = { entityID: 'lucas', collection: 'lucas' }
+    const ops = [
+      { type: Action.Type.Create, current: defaultPerson },
+      { type: Action.Type.Save, previous: defaultPerson, current: { ...defaultPerson, age: 9 } },
+      { type: Action.Type.Delete },
+    ]
+    const actions = ops.map(op => ({ ...base, ...op } as Action<Person>))
+    const { events } = await Codec.encode(actions)
+    const states: (Person | undefined)[] = []
+    let state: Person | undefined = defaultPerson
+    for (const event of events) {
+      state = (await Codec.reduce(state, event)).state
+      states.push({ ...state } as Person)
+    }
+    expect(states.pop()).to.be.empty
+    expect(states.pop()).to.deep.equal({ ...defaultPerson, age: 9 })
+  })
 })

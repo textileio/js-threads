@@ -2,6 +2,7 @@ import Buffer from 'buffer'
 import CID from 'cids'
 
 export { ID, Variant } from './thread/id'
+export { Multiaddr, PrivateKey, PublicKey, Info, LogInfo } from './thread/info'
 
 export interface Block {
   data: Buffer

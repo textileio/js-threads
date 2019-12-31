@@ -8,8 +8,8 @@ const randomBytes = require('iso-random-stream/src/random')
 // Versions.
 export const V1 = 0x01
 
-// Variants denotes Thread variants. Currently only two variants are supported.
-export enum Variants {
+// Variant denotes Thread variant. Currently only two variants are supported.
+export enum Variant {
   Raw = 0x55,
   AccessControlled = 0x70, // Supports access control lists
 }
@@ -18,7 +18,12 @@ export enum Variants {
 // It is formed by a Version, a Variant, and a random number of a given length.
 export class ID {
   constructor(private buf: Buffer) {}
-  static newRandom(variant: number, size: number) {
+  /**
+   * Create a new random Thead ID.
+   * @param variant The Thread variant to use. @see Variant
+   * @param size The size of the random component to use. Defaults to 32 bytes.
+   */
+  static fromRandom(variant: Variant = Variant.Raw, size = 32) {
     // two 8 bytes (max) numbers plus random bytes
     const bytes = Buffer.concat([Buffer.from(encode(V1)), Buffer.from(encode(variant)), randomBytes(size)])
     return new ID(bytes)
@@ -55,7 +60,7 @@ export class ID {
     }
     copy = copy.slice(decode.bytes, copy.length)
     const variant = decode(copy)
-    if (!(variant in Variants)) {
+    if (!(variant in Variant)) {
       throw new Error('invalid variant.')
     }
     const id = copy.slice(decode.bytes, copy.length)

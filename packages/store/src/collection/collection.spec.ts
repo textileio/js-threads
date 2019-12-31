@@ -7,8 +7,9 @@ import sinon from 'sinon'
 import mingo from 'mingo'
 import { collect } from 'streaming-iterables'
 import { encode } from 'cbor-sync'
-import { Collection, ReadBatch, WriteBatch } from './collection'
+import { Collection, ReadBatch, WriteBatch, CollectionKey } from './collection'
 import { FilterQuery } from './query'
+import { ActionHandler } from '.'
 import { EntityID, Action } from '..'
 
 const personSchema: JSONSchema = {
@@ -47,31 +48,37 @@ const defaultPerson: Person = {
 }
 
 // Simple action handler that just deletes or overwrites in one batch
-const handler = async (store: Datastore, actions: Action[]) => {
-  const batch = store.batch()
-  actions.forEach(action => {
-    switch (action.type) {
-      case Action.Type.Delete:
-        batch.delete(new Key(action.entityID))
-        break
-      case Action.Type.Create:
-      case Action.Type.Save:
-        batch.put(new Key(action.entityID), encode(action.current))
-        break
+const createHandler = (store: Datastore<Buffer>) => {
+  const handler = async (actions: Action[]) => {
+    const batch = store.batch()
+    for (const action of actions) {
+      const key = CollectionKey.child(new Key(action.collection)).child(new Key(action.entityID))
+      switch (action.type) {
+        case Action.Type.Delete:
+          batch.delete(key)
+          break
+        case Action.Type.Create:
+        case Action.Type.Save:
+          batch.put(key, encode(action.current))
+          break
+      }
     }
-  })
-  return batch.commit()
+    return batch.commit()
+  }
+  return handler
 }
 
 const setupCollection = (store: Datastore) => {
-  return Collection.fromSchema<Person>('Person', personSchema, handler, store)
+  return Collection.fromSchema<Person>('Person', personSchema, createHandler(store), store)
 }
 
 describe('Collection', () => {
   let store: Datastore
+  let handler: ActionHandler
   beforeEach(() => {
     // Clear out the store before each run
     store = new MemoryDatastore()
+    handler = createHandler(store)
   })
   describe('top-level instance', () => {
     it('should derive a validator from an schema', () => {
@@ -91,7 +98,6 @@ describe('Collection', () => {
       const another = await c.create(defaultPerson)
       await c.delete(another.ID)
       expect(spy.callCount).to.equal(3)
-      expect(spy.calledWith(c.datastore)).to.be.true
     })
 
     describe('creating entities', () => {
@@ -370,14 +376,13 @@ describe('Collection', () => {
     })
 
     it('should not handle actions from empty transaction', async () => {
-      const spy = sinon.spy(handler)
+      const spy = sinon.spy(createHandler(store))
       const c = Collection.fromSchema<Person>('Person', personSchema, spy, store)
       const batch = await c.batch(true).start()
       const person = await batch.create(defaultPerson)
       await batch.delete(person.ID)
       batch.commit()
       expect(spy.callCount).to.equal(0)
-      expect(spy.calledWith(c.datastore)).to.be.false
     })
 
     it('should return uncommitted entities', async () => {

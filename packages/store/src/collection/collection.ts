@@ -14,11 +14,9 @@ import { Entity, Action, EntityID } from '..'
 
 const logger = log.getLogger('store:dispatcher')
 
-const collectionKey = new Key('collection')
+export const CollectionKey = new Key('collection')
 const NotActiveError = new Error('Not Started')
 const IsActiveError = new Error('Already Started')
-// const InvalidIDError = new Error('Invalid Entity ID')
-// const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
 
 export class ReadBatch<T extends Entity = object> {
   protected active = false
@@ -242,7 +240,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
       throw NotActiveError
     }
     if (this.actions.length > 0) {
-      await this.collection.handler(this.collection.datastore, this.actions)
+      await this.collection.handler(this.actions)
     }
     logger.debug(`batch commited`)
     return this.discard()
@@ -263,7 +261,7 @@ export class Collection<T extends Entity = object> {
   ) {
     // Scoped namespace keeps our transactions isolated
     // key = <...>/collection/<collection-name>/<entity-id>
-    this.datastore = new NamespaceDatastore(datastore, collectionKey.child(new Key(name)))
+    this.datastore = new NamespaceDatastore(datastore, CollectionKey.child(new Key(name)))
   }
 
   /**

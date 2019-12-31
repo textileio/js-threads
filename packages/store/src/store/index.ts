@@ -27,26 +27,28 @@ export type StoreID = string
 // are dispatched to the Store, and are internally processed to impact model
 // states. Likewise, local changes in models registered produce events dispatched
 // externally.
-export class Store<E extends Event, T extends Entity = object> extends EventEmitter<Events> implements Reducer {
+export class Store<E extends Event = any, T extends Entity = object> extends EventEmitter<Events> implements Reducer {
   // public adapter: ThreadAdapter
   /**
    * The ThreadService used by the store
    */
   // public threadService: ThreadService
-  public collections: Map<StoreID, Collection<T>> = new Map()
-  private lock: RWLock = new RWLock()
+  // private lock: RWLock = new RWLock()
   private dispatcher: Dispatcher
   private schema: Ajv = new Schema()
+  public eventCodec: EventCodec<E>
+  public collections: Map<StoreID, Collection<T>> = new Map()
+  private datastore: Datastore<Buffer>
   /**
    * Store creates a new Store.
    * The Store will *own* the input datastore and dispatcher, so these should not be accessed externally.
    * @param datastore The datastore to use for internal storage.
    * @param eventCodec The EventCodec to use for processing actions -> events.
    */
-  constructor(private datastore: Datastore<Buffer>, public eventCodec: EventCodec<E>) {
+  constructor(datastore: Datastore<Buffer> = new MemoryDatastore(), eventCodec: EventCodec<any> = JSONPatcher.Codec) {
     super()
-    this.datastore = datastore || new MemoryDatastore()
-    this.eventCodec = eventCodec || JSONPatcher.Codec
+    this.datastore = datastore
+    this.eventCodec = eventCodec
     this.dispatcher = new Dispatcher()
     this.dispatcher.register(this)
     this.registerSchemas()

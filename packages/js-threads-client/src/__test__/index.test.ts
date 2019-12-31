@@ -12,7 +12,7 @@ import { JSONQuery, JSONOperation } from '../models'
 import { Where } from '../query'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
-const client = new Client('http://localhost:9091')
+const client = new Client('http://localhost:7006')
 
 const personSchema = {
   $id: 'https://example.com/person.schema.json',

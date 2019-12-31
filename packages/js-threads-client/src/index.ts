@@ -56,7 +56,7 @@ export class Client {
 
   /**
    * Client creates a new gRPC client instance.
-   * @param host The local/remote host url. Defaults to 'localhost:9091'.
+   * @param host The local/remote host url. Defaults to 'localhost:7006'.
    * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
    */
   constructor(host: string, defaultTransport?: grpc.TransportFactory) {
@@ -292,15 +292,22 @@ export class Client {
   public listen<T = any>(storeID: string, modelName: string, entityID: string, callback: (reply: Entity<T>) => void) {
     const req = new ListenRequest()
     req.setStoreid(storeID)
-    req.setModelname(modelName)
-    req.setEntityid(entityID)
+    if (modelName && modelName !== '') {
+      const filter = new ListenRequest.Filter()
+      filter.setModelname(modelName)
+      req.addFilters(filter)
+    }
+    if (entityID && entityID !== '') {
+      const filter = new ListenRequest.Filter()
+      filter.setEntityid(entityID)
+      req.addFilters(filter)
+    }
     const client = grpc.client(API.Listen, {
       host: this.host,
     }) as grpc.Client<ListenRequest, ListenReply>
     client.onMessage((message: ListenReply) => {
-      const res = message.toObject(true)
       const ret: Entity<T> = {
-        entity: JSON.parse(res.entity as string),
+        entity: JSON.parse(Buffer.from(message.getEntity_asU8()).toString()),
       }
       callback(ret)
     })

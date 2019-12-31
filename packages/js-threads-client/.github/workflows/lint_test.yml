@@ -1,0 +1,41 @@
+name: lint_test
+
+on:
+  push:
+    branches:
+      - '*'
+      - '*/*'
+      - '!master'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: textile/builder:1.13.1
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install
+      run: npm install
+    - name: Lint
+      run: npm run lint
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: textile/builder:1.13.1
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install
+      run: npm install
+    - name: Install Daemon
+      run: |
+            cd ~ && mkdir gosrc && cd gosrc
+            git clone https://github.com/textileio/go-textile-threads.git
+            cd go-textile-threads
+            go build threadsd/main.go
+    - name: Test
+      run: |
+           (cd ~ && cd gosrc/go-textile-threads && go run threadsd/main.go) &
+           sleep 10
+           mkdir -p allure-results
+           npm run test:node
+

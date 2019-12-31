@@ -47,7 +47,7 @@ npm run test:{node,browser}
 **create a client**
 
 ```js
-this.client = new Client('http://localhost:9091')
+this.client = new Client('http://localhost:7006')
 ```
 
 **create a store**
@@ -107,7 +107,7 @@ You can run the daemon released as part of the early preview. To do so,
 ```sh
 git clone git@github.com:textileio/go-textile-threads.git
 cd go-textile-threads
-go run daemon/main.go
+go run threadsd/main.go
 ```
 
 **Make daemon available to RN**
@@ -115,7 +115,7 @@ go run daemon/main.go
 You can make the daemon API port available to your app with,
 
 ```sh
-adb reverse tcp:9091 tcp:9091
+adb reverse tcp:7006 tcp:7006
 ```
 
 Altenatively, you can ensure this is run whenever you run your app by modifying your `package.json` as follows.
@@ -125,7 +125,7 @@ Altenatively, you can ensure this is run whenever you run your app by modifying 
   ...
   "scripts": {
     ...
-    "bind": "adb reverse tcp:9091 tcp:9091",
+    "bind": "adb reverse tcp:7006 tcp:7006",
     "android": "npm run bind && npx react-native run-android",
     ...
   },

@@ -7,6 +7,7 @@
 [![npm (scoped)](https://img.shields.io/npm/v/@textile/threads.svg?style=popout-square)](https://www.npmjs.com/package/@textile/threads)
 [![Release](https://img.shields.io/github/release/textileio/js-threads.svg?style=flat-square)](https://github.com/textileio/js-threads/releases/latest)
 [![docs](https://img.shields.io/badge/docs-master-success.svg?style=popout-square)](https://textileio.github.io/js-threads)
+[![Workflow](https://img.shields.io/github/workflow/status/textileio/js-threads/Lint%20&%20Test?style=flat-square)](https://github.com/textileio/js-threads/actions)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 > Typescript implementation of Textile's Threads Protocol

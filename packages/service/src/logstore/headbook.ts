@@ -2,31 +2,31 @@
 import CID from 'cids'
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
-import { ID } from '@textile/threads-core'
+import { ThreadID, LogID } from '@textile/threads-core'
 import { encode, decode } from 'cbor-sync'
-import { Closer } from '.'
+import { Closer } from './interface'
 
 // /thread/heads/<base32 thread id no padding>/<base32 log id no padding>
 const baseKey = new Key('/thread/heads')
-const getKey = (id: ID, log: string) => new Key(id.string()).child(new Key(log))
+const getKey = (id: ThreadID, log: LogID) => new Key(id.string()).child(new Key(log))
 
 export class HeadBook implements Closer {
   constructor(private datastore: Datastore<Buffer>) {
     this.datastore = new NamespaceDatastore(datastore, baseKey)
   }
   // Get retrieves head values for a log.
-  async get(id: ID, log: string) {
+  async get(id: ThreadID, log: LogID) {
     const res = await this.datastore.get(getKey(id, log))
     const heads: Buffer[] = decode(res)
-    return heads.map((buf: Buffer) => new CID(buf))
+    return new Set(heads.map((buf: Buffer) => new CID(buf)))
   }
-  // put datastores cid in a log's head.
-  async put(id: ID, log: string, ...cids: CID[]) {
-    // @todo: This could lead to duplicate entries...
-    return this.datastore.put(getKey(id, log), encode(cids.map(cid => cid.buffer)))
+  // put stores cid in a log's head.
+  async put(id: ThreadID, log: LogID, ...cids: CID[]) {
+    const set = new Set([...cids.map(cid => cid.buffer)])
+    return this.datastore.put(getKey(id, log), encode([...set]))
   }
   // Add appends a new head to a log.
-  async add(id: ID, log: string, ...cids: CID[]) {
+  async add(id: ThreadID, log: LogID, ...cids: CID[]) {
     let arr: CID[] = []
     try {
       const res = await this.datastore.get(getKey(id, log))
@@ -42,7 +42,7 @@ export class HeadBook implements Closer {
   }
 
   // Clear deletes the head entry for a log.
-  async clear(id: ID, log: string) {
+  async clear(id: ThreadID, log: LogID) {
     return this.datastore.delete(getKey(id, log))
   }
 

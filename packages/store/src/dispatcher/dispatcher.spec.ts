@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { pack } from 'lexicographic-integer'
-import { Dispatcher } from '.'
+import { Dispatcher } from './dispatcher'
 import { Event } from '..'
 
 describe('Dispatcher', () => {

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import CID from 'cids'
 import Base58 from 'bs58'
 import { expect } from 'chai'
 import { RecordEncoder } from '.'

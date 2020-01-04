@@ -1,9 +1,11 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { encode, decode } from 'varint'
+import randomBytes from 'randombytes'
 
 // @todo: find or create types for these
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const multibase = require('multibase')
-const randomBytes = require('iso-random-stream/src/random')
+
+export type LogID = string
 
 // Versions.
 export const V1 = 0x01
@@ -14,9 +16,9 @@ export enum Variant {
   AccessControlled = 0x70, // Supports access control lists
 }
 
-// ID represents a self-describing thread identifier.
+// ThreadID represents a self-describing thread identifier.
 // It is formed by a Version, a Variant, and a random number of a given length.
-export class ID {
+export class ThreadID {
   constructor(private buf: Buffer) {}
   /**
    * Create a new random Thead ID.
@@ -26,7 +28,7 @@ export class ID {
   static fromRandom(variant: Variant = Variant.Raw, size = 32) {
     // two 8 bytes (max) numbers plus random bytes
     const bytes = Buffer.concat([Buffer.from(encode(V1)), Buffer.from(encode(variant)), randomBytes(size)])
-    return new ID(bytes)
+    return new ThreadID(bytes)
   }
 
   // Decode parses an ID-encoded string and returns an ID object.
@@ -37,12 +39,12 @@ export class ID {
   // The base-encoded string represents a:
   //
   // <version><variant><random-number>
-  static fromEncoded(v: string | Buffer): ID {
+  static fromEncoded(v: string | Buffer) {
     if (v.length < 2) {
       throw new Error('id too short')
     }
     const data = multibase.decode(v)
-    return ID.fromBytes(data)
+    return ThreadID.fromBytes(data)
   }
 
   // Cast takes an ID data slice, parses it and returns an ID.
@@ -52,7 +54,7 @@ export class ID {
   //
   // Please use fromEncoded when parsing a regular ID string, as fromBytes does not
   // expect multibase-encoded data. fromBytes accepts the output of ID.bytes().
-  static fromBytes(data: Buffer): ID {
+  static fromBytes(data: Buffer) {
     let copy = Buffer.from(data)
     const version = decode(copy)
     if (version != 1) {
@@ -67,19 +69,19 @@ export class ID {
     if (id.length < 16) {
       throw new Error('random component too small.')
     }
-    return new ID(data)
+    return new ThreadID(data)
   }
 
   // IsEncoded returns the multibase encoding for a multibase encoded string.
   // Returns the name of the encoding if it is encoded, and throws an error otherwise.
   static isEncoded(v: string): string {
     if (v.length < 2) {
-      throw new Error('ID is too short.')
+      throw new Error('Too Short')
     }
     const encoding = multibase.isEncoded(v)
     // check encoding is valid
     if (encoding === false) {
-      throw new Error('ID is not multibase encoded.')
+      throw new Error('Invalid Encoding.')
     }
     return encoding
   }
@@ -97,7 +99,7 @@ export class ID {
   }
 
   // Equals checks that two IDs are the same.
-  equals(o: ID): boolean {
+  equals(o: ThreadID): boolean {
     return this.buf == o.buf
   }
 
@@ -142,4 +144,4 @@ export class ID {
 }
 
 // Undef can be used to represent a nil or undefined ID, using ID{} directly is also acceptable.
-export const Undef = new ID(Buffer.alloc(0))
+export const Undef = new ThreadID(Buffer.alloc(0))

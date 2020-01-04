@@ -72,7 +72,7 @@ See the [lerna docs](https://github.com/lerna/lerna#what-can-lerna-do) for other
 
 ## API
 
-See [https://textileio.github.io/js-threads](https://textileio.github.io/js-threads)
+[Docs are published to Pages](https://textileio.github.io/js-threads).
 
 ## Maintainers
 
@@ -85,6 +85,10 @@ See [the contributing file](./CONTRIBUTING.md)!
 PRs accepted.
 
 Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+
+## Changelog
+
+[Changelog is published to Releases](https://github.com/textileio/js-threads/releases).
 
 ## License
 

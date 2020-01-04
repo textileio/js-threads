@@ -3,8 +3,8 @@ import { EventEmitter } from 'tsee'
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
 import { TTLDatastore, Duration, TTLDatastoreOptions } from '@textile/datastore-ttl'
-import { Multiaddr, ID } from '@textile/threads-core'
-import { Closer, LogsThreads } from '.'
+import { Multiaddr, ThreadID, LogID } from '@textile/threads-core'
+import { Closer, LogsThreads } from './interface'
 
 // @todo: Find or create types for this package
 const multiaddr = require('multiaddr')
@@ -12,11 +12,11 @@ const multiaddr = require('multiaddr')
 // Thread addresses are stored db key pattern:
 // /thread/addrs/<b32 thread id no padding>/<b32 log id no padding>/<multiaddr string>
 const baseKey = new Key('/thread/addrs')
-const getKey = (id: ID, log: string) => new Key(id.string()).child(new Key(log))
+const getKey = (id: ThreadID, log: LogID) => new Key(id.string()).child(new Key(log))
 
 // Events are for the book's EventEmitter
 type Events = {
-  newAddr: (log: string, addrs: Multiaddr[]) => void
+  newAddr: (log: LogID, addrs: Multiaddr[]) => void
 }
 
 export class AddrBook extends EventEmitter<Events> implements LogsThreads, Closer {
@@ -24,15 +24,12 @@ export class AddrBook extends EventEmitter<Events> implements LogsThreads, Close
   constructor(datastore: Datastore<Buffer>, opts?: TTLDatastoreOptions) {
     super() // EventEmitter
     const options = { ttl: opts?.ttl || Duration.Hour, frequency: opts?.frequency || Duration.Hour * 2 }
-    // const store = new NamespaceDatastore(datastore, baseKey)
-    this.datastore = new TTLDatastore(datastore, new NamespaceDatastore(datastore, new Key('ttl')), {
-      frequency: 20,
-      ttl: 100,
-    })
+    const store = new NamespaceDatastore(datastore, baseKey)
+    this.datastore = new TTLDatastore(store, new NamespaceDatastore(store, new Key('ttl')), options)
   }
   // put adds to a log's address(es) with the given TTL. TTLs for existing addrs will be updated.
   // If no addrs are provided, it simply updates the TTL values of all existing addrs.
-  async put(id: ID, log: string, ttl: number, ...addrs: Multiaddr[]) {
+  async put(id: ThreadID, log: LogID, ttl: number, ...addrs: Multiaddr[]) {
     const baseKey = getKey(id, log)
     const batch = this.datastore.batch(ttl)
     if (addrs.length === 0) {
@@ -64,21 +61,20 @@ export class AddrBook extends EventEmitter<Events> implements LogsThreads, Close
     return await batch.commit()
   }
   // get returns all addresses for a given log.
-  async get(id: ID, log: string) {
-    const addrs: Multiaddr[] = []
+  async get(id: ThreadID, log: LogID) {
+    const addrs: Set<Multiaddr> = new Set()
     const it = this.datastore.query({ prefix: getKey(id, log).toString() })
-    for await (const { key, value } of it) {
-      console.log(key.toString())
-      addrs.push(multiaddr(value))
+    for await (const { value } of it) {
+      addrs.add(multiaddr(value))
     }
     return addrs
   }
   // threads returns a list of threads referenced in the book.
   async threads() {
-    const threads = new Set<ID>()
+    const threads = new Set<ThreadID>()
     for await (const { key } of this.datastore.query({ keysOnly: true })) {
       threads.add(
-        ID.fromEncoded(
+        ThreadID.fromEncoded(
           key
             .reverse()
             .baseNamespace()
@@ -88,9 +84,13 @@ export class AddrBook extends EventEmitter<Events> implements LogsThreads, Close
     }
     return threads
   }
-  async logs(id: ID) {
-    const logs = new Set<string>()
-    for await (const { key } of this.datastore.query({ keysOnly: true })) {
+  async logs(id: ThreadID) {
+    const idKey = new Key(id.string())
+    const logs = new Set<LogID>()
+    for await (const { key } of this.datastore.query({
+      prefix: idKey.toString(),
+      keysOnly: true,
+    })) {
       logs.add(
         key
           .reverse()
@@ -102,7 +102,7 @@ export class AddrBook extends EventEmitter<Events> implements LogsThreads, Close
     return logs
   }
   // clear deletes all addresses for a log.
-  async clear(id: ID, log: string) {
+  async clear(id: ThreadID, log: LogID) {
     const batch = this.datastore.batch()
     const it = this.datastore.query({ keysOnly: true, prefix: getKey(id, log).toString() })
     for await (const { key } of it) {

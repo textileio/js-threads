@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import Base58 from 'bs58'
-import { BaseRecord, HeaderNode, EventNode, RecordNode } from '@textile/threads-core'
+import { BaseRecord, HeaderNode, EventNode, RecordNode } from './interface'
 import { decodeBlock, CodecOptions, createEvent, defaultCodecOpts } from './crypto/node'
 
 const Block = require('@ipld/block')

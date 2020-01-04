@@ -1,10 +1,10 @@
 import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
-import { ID, PrivateKey } from '@textile/threads-core'
+import { ThreadID } from '@textile/threads-core'
 import { MetadataBook } from './metadatabook'
 
 let book: MetadataBook
-const id: ID = ID.fromRandom(0, 24)
+const id: ThreadID = ThreadID.fromRandom(0, 24)
 
 describe('MetadataBook', () => {
   beforeEach(async () => {

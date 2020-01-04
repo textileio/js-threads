@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
-import { ID, PublicKey, PrivateKey } from '@textile/threads-core'
-import { Closer, LogsThreads } from '.'
+import { ThreadID, LogID, PublicKey, PrivateKey } from '@textile/threads-core'
+import { Closer, LogsThreads } from './interface'
 
 const crypto = require('libp2p-crypto')
 const PeerId = require('peer-id')
@@ -12,7 +12,7 @@ const PeerId = require('peer-id')
 // Follow and read keys are stored under the following db key pattern:
 // /threads/keys/<b32 thread id no padding>:(repl|read)
 const baseKey = new Key('/thread/keys')
-const getKey = (id: ID, log: string, suffix?: string) => {
+const getKey = (id: ThreadID, log: LogID, suffix?: string) => {
   return new Key(id.string()).child(new Key(suffix ? `${log}:${suffix}` : log))
 }
 
@@ -22,62 +22,83 @@ export class KeyBook implements LogsThreads, Closer {
     this.datastore = new NamespaceDatastore(datastore, baseKey)
   }
   // PubKey retrieves the public key of a log.
-  async pubKey(id: ID, log: string): Promise<PublicKey> {
-    const key = await this.datastore.get(getKey(id, log, 'pub'))
-    return crypto.keys.unmarshalPublicKey(key)
+  async pubKey(id: ThreadID, log: LogID) {
+    try {
+      const key = await this.datastore.get(getKey(id, log, 'pub'))
+      return crypto.keys.unmarshalPublicKey(key) as PublicKey
+    } catch (err) {
+      return
+    }
   }
   // AddPubKey adds a public key under a log.
-  async addPubKey(id: ID, log: string, pubKey: PublicKey): Promise<void> {
+  async addPubKey(id: ThreadID, log: LogID, pubKey: PublicKey) {
     const key = pubKey.bytes
     const peer = PeerId.createFromB58String(log)
     if (!peer.isEqual(await PeerId.createFromPubKey(key))) {
-      throw new Error('log ID does not match provided public key')
+      throw new Error('Public Key Mismatch')
     }
     return this.datastore.put(getKey(id, log, 'pub'), key)
   }
   // PrivKey retrieves the private key of a log.
-  async privKey(id: ID, log: string): Promise<PrivateKey> {
-    const key = await this.datastore.get(getKey(id, log, 'priv'))
-    return crypto.keys.unmarshalPrivateKey(key)
+  async privKey(id: ThreadID, log: LogID) {
+    try {
+      const key = await this.datastore.get(getKey(id, log, 'priv'))
+      return crypto.keys.unmarshalPrivateKey(key) as PrivateKey
+    } catch (err) {
+      return
+    }
   }
   // AddPrivKey adds a private key under a log.
-  async addPrivKey(id: ID, log: string, privKey: PrivateKey): Promise<void> {
+  async addPrivKey(id: ThreadID, log: LogID, privKey: PrivateKey) {
     const key = privKey.bytes
     const peer = PeerId.createFromB58String(log)
     const check = await PeerId.createFromPrivKey(key)
     if (!peer.isEqual(check)) {
-      throw new Error("log ID doesn't provided match private key")
+      throw new Error('Private Key Mismatch')
     }
     return this.datastore.put(getKey(id, log, 'priv'), key)
   }
   // ReadKey retrieves the read key of a log.
-  async readKey(id: ID): Promise<Buffer> {
-    return this.datastore.get(new Key(id.string()).child(new Key('read')))
+  async readKey(id: ThreadID) {
+    try {
+      return this.datastore.get(new Key(id.string()).child(new Key('read')))
+    } catch (err) {
+      return
+    }
   }
   // AddReadKey adds a read key under a log.
-  async addReadKey(id: ID, key: Buffer): Promise<void> {
+  async addReadKey(id: ThreadID, key: Buffer) {
     return this.datastore.put(new Key(id.string()).child(new Key('read')), key)
   }
   // ReplicatorKey retrieves the follow key of a log.
-  async replicatorKey(id: ID): Promise<Buffer> {
-    return this.datastore.get(new Key(id.string()).child(new Key('repl')))
+  async replicatorKey(id: ThreadID) {
+    try {
+      return this.datastore.get(new Key(id.string()).child(new Key('repl')))
+    } catch (err) {
+      return
+    }
   }
   // AddReplicatorKey adds a follow key under a log.
-  async addReplicatorKey(id: ID, key: Buffer): Promise<void> {
+  async addReplicatorKey(id: ThreadID, key: Buffer) {
     return this.datastore.put(new Key(id.string()).child(new Key('repl')), key)
   }
+
   async threads() {
-    const threads = new Set<ID>()
-    for await (const { key } of this.datastore.query({ keysOnly: true })) {
+    const threads = new Set<ThreadID>()
+    for await (const { key } of this.datastore.query({
+      prefix: baseKey.toString(),
+      keysOnly: true,
+    })) {
       // We only care about threads we can replicate
       if (key.name() === 'repl') {
-        threads.add(ID.fromEncoded(key.parent().toString()))
+        threads.add(ThreadID.fromEncoded(key.parent().toString()))
       }
     }
     return threads
   }
-  async logs(id: ID) {
-    const logs = new Set<string>()
+
+  async logs(id: ThreadID) {
+    const logs = new Set<LogID>()
     const q = { keysOnly: true, prefix: id.string() }
     for await (const { key } of this.datastore.query(q)) {
       if (['priv', 'pub'].includes(key.name())) {

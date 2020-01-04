@@ -2,14 +2,14 @@
 import { expect } from 'chai'
 import CID from 'cids'
 import { MemoryDatastore } from 'interface-datastore'
-import { ID } from '@textile/threads-core'
+import { ThreadID } from '@textile/threads-core'
 import { HeadBook } from './headbook'
 
 // @todo: Find or write the types for this library
 const PeerId = require('peer-id')
 
 let hb: HeadBook
-const id: ID = ID.fromRandom(0, 24)
+const id: ThreadID = ThreadID.fromRandom(0, 24)
 const peer = new PeerId(Buffer.from('test peer'))
 
 describe('HeadBook', () => {
@@ -26,7 +26,7 @@ describe('HeadBook', () => {
     await hb.put(id, peer.toB58String(), ...heads)
 
     const hbHeads = await hb.get(id, peer.toB58String())
-    expect(hbHeads.length).to.equal(1)
+    expect(hbHeads.size).to.equal(1)
 
     for (const head of hbHeads) {
       expect(head.toV0().toString()).to.equal('QmcfJ7FHfjBFD5ga3nLsxvdShcrnqQeEm6vaqByqd6BZMi')
@@ -42,9 +42,9 @@ describe('HeadBook', () => {
     await hb.add(id, peer.toB58String(), ...heads)
 
     const hbHeads = await hb.get(id, peer.toB58String())
-    expect(hbHeads.length).to.equal(2)
+    expect(hbHeads.size).to.equal(2)
 
-    expect(hbHeads).to.deep.equal(heads)
+    expect(hbHeads).to.deep.equal(new Set(heads))
   })
 
   it('Clear Heads', async () => {

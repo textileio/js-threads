@@ -13,28 +13,32 @@
     "clean": "rimraf ./dist"
   },
   "dependencies": {
-    "@textile/datastore-ttl": "^0.0.3",
+    "@improbable-eng/grpc-web": "^0.12.0",
+    "@textile/datastore-ttl": "^0.0.5",
     "@textile/threads-core": "0.0.1",
     "async-rwlock": "^1.1.1",
     "cbor-sync": "^1.0.4",
     "datastore-core": "^0.7.0",
     "interface-datastore": "^0.8.0",
     "lexicographic-integer": "^1.1.0",
+    "libp2p-crypto": "^0.17.1",
     "loglevel": "^1.6.6",
     "multiaddr": "^7.2.1",
     "multicodec": "0.5.6",
     "peer-id": "^0.13.6",
+    "randombytes": "^2.1.0",
     "tsee": "^1.3.0",
+    "@textile/threads-service-grpc": "/Users/carsonfarmer/Documents/Dev/go-threads/service/pb/javascript",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
     "@types/datastore-core": "^0.7.0",
     "@types/interface-datastore": "^0.8.0",
     "@types/lexicographic-integer": "^1.1.0",
+    "@types/randombytes": "^2.0.0",
     "@types/uuid": "^3.4.6",
     "cids": "github:multiformats/js-cid#master",
     "rimraf": "^3.0.0",
-    "streaming-iterables": "^4.1.1",
     "typescript": "^3.7.2"
   }
 }

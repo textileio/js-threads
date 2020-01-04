@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@textile/threads-core": "0.0.1",
+    "@textile/threads-service": "0.0.1",
     "ajv": "^6.10.2",
     "async-rwlock": "^1.1.1",
     "cbor-sync": "^1.0.4",

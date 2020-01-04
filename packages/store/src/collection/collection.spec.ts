@@ -8,8 +8,7 @@ import mingo from 'mingo'
 import { collect } from 'streaming-iterables'
 import { encode } from 'cbor-sync'
 import { FilterQuery } from './query'
-import { Collection, ReadBatch, WriteBatch, CollectionKey } from '.'
-import { ActionHandler } from '.'
+import { Collection, ReadBatch, WriteBatch, CollectionKey, ActionHandler } from '.'
 import { EntityID, Action } from '..'
 
 const personSchema: JSONSchema = {

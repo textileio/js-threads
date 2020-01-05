@@ -6,9 +6,11 @@ import { RWLock } from 'async-rwlock'
 import { encode, decode } from 'cbor-sync'
 import { ThreadID } from '@textile/threads-core'
 import { Service, LogStore } from '@textile/threads-service'
-import { Dispatcher, Reducer } from '../dispatcher/dispatcher'
+import { Dispatcher, Reducer } from '../dispatcher'
 import { Collection, CollectionKey } from '../collection'
 import { EventCodec, JSONPatcher, ReduceAction } from '../codecs'
+// eslint-disable-next-line import/no-cycle
+import { Adapter } from '../adapter'
 import { Block, Action, Event, Entity } from '..'
 
 const storeKey = new Key('store')
@@ -37,6 +39,7 @@ export class Store<E extends Event = any, T extends Entity = object> extends Eve
   private lock: RWLock = new RWLock()
   private dispatcher: Dispatcher
   private schema: Ajv = new Schema()
+  private adapter: Adapter<E, T> | undefined
   public eventCodec: EventCodec<E>
   public collections: Map<StoreID, Collection<T>> = new Map()
   private datastore: Datastore<Buffer>
@@ -73,12 +76,15 @@ export class Store<E extends Event = any, T extends Entity = object> extends Eve
    * In the opposite case, it will create a new thread.
    */
   async start(): Promise<void> {
-    const id = (await this.threadID()) || ThreadID.fromRandom()
-    // @todo: Implement this
-    // this.service.createThread()
-    this.datastore.put(threadKey, id.bytes())
-    // this.adapter = new ThreadAdapter()
-    // this.adapter.start()
+    let id = await this.threadID()
+    if (id === undefined) {
+      id = ThreadID.fromRandom()
+      const info = await Service.createThread(id)
+      await this.service.store.addThread(info)
+      this.datastore.put(threadKey, id.bytes())
+    }
+    this.adapter = new Adapter(this, id)
+    this.adapter.start()
     return
   }
   /**

@@ -16,6 +16,7 @@
     "@improbable-eng/grpc-web": "^0.12.0",
     "@textile/datastore-ttl": "^0.0.5",
     "@textile/threads-core": "0.0.1",
+    "@textile/threads-service-grpc": "^0.1.3",
     "async-rwlock": "^1.1.1",
     "cbor-sync": "^1.0.4",
     "datastore-core": "^0.7.0",
@@ -28,7 +29,6 @@
     "peer-id": "^0.13.6",
     "randombytes": "^2.1.0",
     "tsee": "^1.3.0",
-    "@textile/threads-service-grpc": "/Users/carsonfarmer/Documents/Dev/go-threads/service/pb/javascript",
     "uuid": "^3.3.3"
   },
   "devDependencies": {

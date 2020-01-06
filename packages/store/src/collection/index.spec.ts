@@ -7,9 +7,8 @@ import sinon from 'sinon'
 import mingo from 'mingo'
 import { collect } from 'streaming-iterables'
 import { encode } from 'cbor-sync'
-import { FilterQuery } from './query'
-import { Collection, ReadBatch, WriteBatch, CollectionKey, ActionHandler } from '.'
-import { EntityID, Action } from '..'
+import { FilterQuery, EntityID, Action, ActionHandler } from '@textile/threads-core'
+import { Collection, ReadBatch, WriteBatch, CollectionKey } from '.'
 
 const personSchema: JSONSchema = {
   $id: 'https://example.com/person.schema.json',

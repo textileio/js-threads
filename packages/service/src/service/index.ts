@@ -2,7 +2,18 @@
 import randomBytes from 'randombytes'
 import CID from 'cids'
 import { EventEmitter } from 'tsee'
-import { ThreadID, LogID, LogInfo, Multiaddr, PrivateKey, Block, ThreadRecord, ThreadInfo } from '@textile/threads-core'
+import {
+  ThreadID,
+  LogID,
+  LogInfo,
+  Multiaddr,
+  PrivateKey,
+  Block,
+  ThreadRecord,
+  ThreadInfo,
+  Service as Interface,
+} from '@textile/threads-core'
+import { Datastore } from 'interface-datastore'
 import { LogStore } from '../logstore'
 
 // @todo: Factor out libp2p crypto and peer-id
@@ -15,17 +26,19 @@ export type Events = {
 }
 
 // Service is an API for working with threads. It also provides a DAG API to the network.
-// @todo: This implements the Closer interface. Should probably import and indicate that here.
-export class Service extends EventEmitter<Events> {
-  // @todo: Host is currently left as 'any'. Should probably be typed to PeerId.
-  constructor(public store: LogStore, public host: any /**, dag: DAGService*/) {
+export class Service extends EventEmitter<Events> implements Interface {
+  public store: LogStore
+  constructor(store: LogStore | Datastore, public host: any /**, dag: DAGService*/) {
     super()
+    this.store = store instanceof LogStore ? store : LogStore.fromDatastore(store)
+    this.host = new PeerId()
   }
 
   /**
    * CreateThread creates a new set of keys.
    * @param id Thread ID.
    */
+  // eslint-disable-next-line require-await
   static async createThread(id: ThreadID) {
     const replicatorKey = randomBytes(44)
     const readKey = randomBytes(44)
@@ -57,8 +70,7 @@ export class Service extends EventEmitter<Events> {
   async close() {
     this.removeAllListeners()
     await this.store.close()
-    // @todo: Make sure this is a valid method call
-    await this.host.stop()
+    // await this.host.stop()
   }
 
   /**
@@ -66,6 +78,7 @@ export class Service extends EventEmitter<Events> {
    * @param addr Multiaddress.
    */
   async addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer): Promise<ThreadInfo> {
+    // @fixme: Implement this.
     throw new Error('not implemented')
   }
 

@@ -3,8 +3,7 @@ import { EventEmitter } from 'tsee'
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
 import { TTLDatastore, Duration, TTLDatastoreOptions } from '@textile/datastore-ttl'
-import { Multiaddr, ThreadID, LogID } from '@textile/threads-core'
-import { Closer, LogsThreads } from './interface'
+import { Closer, LogsThreads, Multiaddr, ThreadID, LogID } from '@textile/threads-core'
 
 // @todo: Find or create types for this package
 const multiaddr = require('multiaddr')

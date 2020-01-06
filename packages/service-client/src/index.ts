@@ -6,17 +6,18 @@ import {
   PushLogRequest,
   GetRecordsReply,
   GetRecordsRequest,
+  // SubscribeRequest,
+  // SubscribeReply,
 } from '@textile/threads-service-grpc/service_pb'
 import { Service } from '@textile/threads-service-grpc/service_pb_service'
 import CID from 'cids'
-import { ThreadID, LogID, LogInfo } from '@textile/threads-core'
-import { Network } from '../interface'
+import { ThreadID, LogID, LogInfo, Network, LogEntry } from '@textile/threads-core'
 
 /**
  * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
  * This client library can be used to interact with a local or remote Textile gRPC-service.
  */
-export class Client implements Network {
+export class Client {
   /**
    * Client creates a new gRPC client instance.
    * @param host The local/remote host url. Defaults to 'localhost:7006'.
@@ -57,17 +58,20 @@ export class Client implements Network {
     await this.unary(Service.PushLog, req) // as PushLogReply.AsObject
     return
   }
-  // // GetRecords from a peer.
-  // async getRecords(id: ThreadID, logs: LogID[], replicatorKey: Buffer, opts: { offset: CID; limit: number }) {
-  //   const req = new GetRecordsRequest()
-  //   req.setFollowkey(replicatorKey)
-  //   req.setThreadid(id)
-  //   req.setLogsList(logs)
-  // }
-  // // PushRecord to a peer.
-  // async pushRecord(id: ThreadID, log: LogID, record: any) {
-  //   return
-  // }
+  // GetRecords from a peer.
+  // eslint-disable-next-line require-await
+  async getRecords(id: ThreadID, logs: LogEntry[], replicatorKey: Buffer, opts: { offset: CID; limit: number }) {
+    const req = new GetRecordsRequest()
+    req.setFollowkey(replicatorKey)
+    req.setThreadid(id.string())
+    // req.setLogsList(logs)
+  }
+  // PushRecord to a peer.
+  // eslint-disable-next-line require-await
+  async pushRecord(id: ThreadID, log: LogID, record: any) {
+    return
+  }
+
   private async unary<
     TRequest extends grpc.ProtobufMessage,
     TResponse extends grpc.ProtobufMessage,
@@ -77,7 +81,8 @@ export class Client implements Network {
       grpc.unary(methodDescriptor, {
         request: req,
         host: this.host,
-        onEnd: res => {
+        onEnd: (res: any) => {
+          // @todo: Maybe not any
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {
             if (message) {

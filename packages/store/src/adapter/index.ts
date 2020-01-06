@@ -1,7 +1,5 @@
 import { RWLock } from 'async-rwlock'
-import { Service } from '@textile/threads-service'
-import { ThreadID, LogID } from '@textile/threads-core'
-import { Event, Entity } from '../'
+import { ThreadID, LogID, Event, Entity, Service } from '@textile/threads-core'
 
 // eslint-disable-next-line import/no-cycle
 import { Store } from '../store'

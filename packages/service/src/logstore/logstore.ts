@@ -1,12 +1,11 @@
 import { Datastore } from 'interface-datastore'
-import { ThreadID, LogID, LogInfo, ThreadInfo } from '@textile/threads-core'
-import { Closer } from './interface'
+import { ThreadID, LogID, LogInfo, ThreadInfo, LogStore as Interface } from '@textile/threads-core'
 import { KeyBook } from './keybook'
 import { AddrBook } from './addrbook'
 import { HeadBook } from './headbook'
 import { MetadataBook } from './metadatabook'
 
-export class LogStore implements Closer {
+export class LogStore implements Interface {
   constructor(public keys: KeyBook, public addrs: AddrBook, public metadata: MetadataBook, public heads: HeadBook) {}
   static fromDatastore(store: Datastore<Buffer>) {
     return new LogStore(new KeyBook(store), new AddrBook(store), new MetadataBook(store), new HeadBook(store))

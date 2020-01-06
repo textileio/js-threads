@@ -13,10 +13,8 @@
     "clean": "rimraf ./dist"
   },
   "dependencies": {
-    "@improbable-eng/grpc-web": "^0.12.0",
     "@textile/datastore-ttl": "^0.0.5",
     "@textile/threads-core": "0.0.1",
-    "@textile/threads-service-grpc": "^0.1.3",
     "async-rwlock": "^1.1.1",
     "cbor-sync": "^1.0.4",
     "datastore-core": "^0.7.0",

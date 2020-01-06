@@ -27,6 +27,7 @@
   },
   "rules": {
     "indent": 0,
+    "require-await": "warn",
     "@typescript-eslint/indent": [2, 2],
     "@typescript-eslint/explicit-function-return-type": 0,
     "@typescript-eslint/no-explicit-any": 0,

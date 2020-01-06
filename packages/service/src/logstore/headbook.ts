@@ -2,9 +2,8 @@
 import CID from 'cids'
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
-import { ThreadID, LogID } from '@textile/threads-core'
+import { ThreadID, LogID, Closer } from '@textile/threads-core'
 import { encode, decode } from 'cbor-sync'
-import { Closer } from './interface'
 
 // /thread/heads/<base32 thread id no padding>/<base32 log id no padding>
 const baseKey = new Key('/thread/heads')

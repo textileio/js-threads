@@ -2,8 +2,7 @@
 import jsonpatch, { Operation } from 'fast-json-patch'
 import { pack } from 'lexicographic-integer'
 import log from 'loglevel'
-import { EventCodec, ReduceState } from './interface'
-import { Action, Entity, Event, Block, EntityID } from '..'
+import { EventCodec, ReduceState, Action, Entity, Event, Block, EntityID } from '@textile/threads-core'
 
 // @todo: Find or write types for this
 const Encoder = require('@ipld/block')

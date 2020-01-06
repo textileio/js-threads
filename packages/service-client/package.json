@@ -1,0 +1,25 @@
+{
+  "name": "@textile/threads-service-client",
+  "version": "0.0.1",
+  "main": "dist/index",
+  "types": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf ./dist"
+  },
+  "dependencies": {
+    "@textile/threads-core": "0.0.1",
+    "@textile/threads-service-grpc": "^0.1.3",
+    "@improbable-eng/grpc-web": "^0.12.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.0",
+    "cids": "github:multiformats/js-cid#master",
+    "typescript": "^3.7.2"
+  }
+}

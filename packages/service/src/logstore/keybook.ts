@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
-import { ThreadID, LogID, PublicKey, PrivateKey } from '@textile/threads-core'
-import { Closer, LogsThreads } from './interface'
+import { Closer, LogsThreads, ThreadID, LogID, PublicKey, PrivateKey } from '@textile/threads-core'
 
 const crypto = require('libp2p-crypto')
 const PeerId = require('peer-id')

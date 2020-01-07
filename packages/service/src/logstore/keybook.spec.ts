@@ -12,7 +12,7 @@ let kb: KeyBook
 const tid: ThreadID = ThreadID.fromRandom(0, 24)
 
 describe('KeyBook', () => {
-  before(async () => {
+  before(() => {
     const mem = new MemoryDatastore()
     kb = new KeyBook(mem)
   })

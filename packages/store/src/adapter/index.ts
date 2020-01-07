@@ -16,10 +16,12 @@ export class Adapter<E extends Event, T extends Entity> {
   }
   // Close closes the storehead and stops listening both directions of thread<->store
   async close(): Promise<void> {
-    return
+    // @todo: implement me!
+    throw new Error('not implemented')
   }
   // Start starts connection from Store to Threadservice, and viceversa
   async start(): Promise<void> {
-    return
+    // @todo: implement me!
+    throw new Error('not implemented')
   }
 }

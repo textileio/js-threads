@@ -45,7 +45,7 @@ export class ReadBatch<T extends Entity = object> {
   }
 
   // Has checks if the given Entity is in the store.
-  async has(id: EntityID) {
+  has(id: EntityID) {
     if (!this.active) {
       logger.error(NotActiveError)
       throw NotActiveError
@@ -316,7 +316,7 @@ export class Collection<T extends Entity = object> {
   async get(...ids: EntityID[]): Promise<T[]>
   async get(...ids: EntityID[]) {
     const batch = await this.batch(false).start()
-    const results = await Promise.all<T>(ids.map(async id => batch.get(id)))
+    const results = await Promise.all<T>(ids.map(id => batch.get(id)))
     logger.debug(`getting ${results.length} entities`)
     batch.discard()
     return results.length > 1 ? results : results.pop()
@@ -327,7 +327,7 @@ export class Collection<T extends Entity = object> {
   async has(...ids: EntityID[]): Promise<boolean[]>
   async has(...ids: EntityID[]) {
     const batch = await this.batch(false).start()
-    const results = await Promise.all<boolean>(ids.map(async id => batch.has(id)))
+    const results = await Promise.all<boolean>(ids.map(id => batch.has(id)))
     logger.debug(`checking for ${results.length} entities`)
     batch.discard()
     return results.length > 1 ? results : results.pop()

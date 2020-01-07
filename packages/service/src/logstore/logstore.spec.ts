@@ -25,7 +25,7 @@ const generateAddrs = (count: number) => {
 
 describe('LogStore', () => {
   let store: LogStore
-  beforeEach(async () => {
+  beforeEach(() => {
     store = createLogStore()
   })
   it('should initialize with a set of books and then close', async () => {

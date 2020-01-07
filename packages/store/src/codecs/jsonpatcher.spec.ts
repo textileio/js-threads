@@ -1,7 +1,7 @@
 import { equal } from 'assert'
 import { expect } from 'chai'
+import { Action, EntityID, Block } from '@textile/threads-core'
 import { Codec, Patch, Op } from './jsonpatcher'
-import { Action, EntityID, Block } from '..'
 
 type Person = {
   ID: EntityID

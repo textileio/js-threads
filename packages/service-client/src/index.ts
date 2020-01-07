@@ -6,8 +6,6 @@ import {
   PushLogRequest,
   GetRecordsReply,
   GetRecordsRequest,
-  // SubscribeRequest,
-  // SubscribeReply,
 } from '@textile/threads-service-grpc/service_pb'
 import { Service } from '@textile/threads-service-grpc/service_pb_service'
 import CID from 'cids'
@@ -17,13 +15,17 @@ import { ThreadID, LogID, LogInfo, Network, LogEntry } from '@textile/threads-co
  * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
  * This client library can be used to interact with a local or remote Textile gRPC-service.
  */
-export class Client {
+export class Client implements Network {
   /**
    * Client creates a new gRPC client instance.
    * @param host The local/remote host url. Defaults to 'localhost:7006'.
    * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
    */
-  constructor(private readonly host: string = 'localhost:7006', defaultTransport?: grpc.TransportFactory) {
+  constructor(
+    private hostID: string,
+    private readonly host: string = 'http://localhost:5006',
+    defaultTransport?: grpc.TransportFactory,
+  ) {
     const transport = defaultTransport || grpc.WebsocketTransport()
     grpc.setDefaultTransport(transport)
   }
@@ -31,10 +33,9 @@ export class Client {
   async getLogs(id: ThreadID, replicatorKey: Buffer) {
     const req = new GetLogsRequest()
     req.setFollowkey(replicatorKey)
-    req.setThreadid(id.string())
+    req.setThreadid(id.bytes())
     const header = new GetLogsRequest.Header()
-    // @todo: Get this from the service layer?
-    // header.setFrom(libp2pHostID)
+    header.setFrom(this.hostID)
     req.setHeader(header)
     const res = (await this.unary(Service.GetLogs, req)) as GetLogsReply.AsObject
     return res.logsList
@@ -46,8 +47,7 @@ export class Client {
     readKey && req.setReadkey(readKey)
     req.setThreadid(id.string())
     const header = new GetLogsRequest.Header()
-    // @todo: Get this from the service layer?
-    // header.setFrom(libp2pHostID)
+    header.setFrom(this.hostID)
     req.setHeader(header)
     const protoLog = new ProtoLog()
     protoLog.setAddrsList([...(log.addrs || [])].map(item => item.buffer))
@@ -59,20 +59,37 @@ export class Client {
     return
   }
   // GetRecords from a peer.
-  // eslint-disable-next-line require-await
-  async getRecords(id: ThreadID, logs: LogEntry[], replicatorKey: Buffer, opts: { offset: CID; limit: number }) {
+  async getRecords(id: ThreadID, replicatorKey: Buffer, offsets?: Map<LogID, CID>, limit?: number) {
     const req = new GetRecordsRequest()
+    const entries: GetRecordsRequest.LogEntry[] = []
     req.setFollowkey(replicatorKey)
     req.setThreadid(id.string())
-    // req.setLogsList(logs)
-  }
-  // PushRecord to a peer.
-  // eslint-disable-next-line require-await
-  async pushRecord(id: ThreadID, log: LogID, record: any) {
-    return
+    if (offsets) {
+      for (const [log, offset] of offsets.entries()) {
+        const entry = new GetRecordsRequest.LogEntry()
+        entry.setLogid(log)
+        entry.setOffset(offset.buffer)
+        entry.setLimit(limit || 0)
+        entries.push(entry)
+      }
+    }
+    req.setLogsList(entries)
+    const header = new GetRecordsRequest.Header()
+    header.setFrom(this.hostID)
+    req.setHeader(header)
+    const res = (await this.unary(Service.GetRecords, req)) as GetRecordsReply.AsObject
+    const ret: LogEntry[] = []
+    for (const entry of res.logsList) {
+      ret.push({
+        ID: entry.logid as string,
+        records: entry.recordsList,
+        log: entry.log,
+      })
+    }
+    return ret
   }
 
-  private async unary<
+  private unary<
     TRequest extends grpc.ProtobufMessage,
     TResponse extends grpc.ProtobufMessage,
     M extends grpc.UnaryMethodDefinition<TRequest, TResponse>
@@ -81,8 +98,7 @@ export class Client {
       grpc.unary(methodDescriptor, {
         request: req,
         host: this.host,
-        onEnd: (res: any) => {
-          // @todo: Maybe not any
+        onEnd: res => {
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {
             if (message) {

@@ -13,7 +13,7 @@ const id: ThreadID = ThreadID.fromRandom(0, 24)
 const peer = new PeerId(Buffer.from('test peer'))
 
 describe('HeadBook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     const mem = new MemoryDatastore()
     hb = new HeadBook(mem)
   })

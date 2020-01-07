@@ -60,25 +60,25 @@ export class KeyBook implements LogsThreads, Closer {
   // ReadKey retrieves the read key of a log.
   async readKey(id: ThreadID) {
     try {
-      return this.datastore.get(new Key(id.string()).child(new Key('read')))
+      return await this.datastore.get(new Key(id.string()).child(new Key('read')))
     } catch (err) {
       return
     }
   }
   // AddReadKey adds a read key under a log.
-  async addReadKey(id: ThreadID, key: Buffer) {
+  addReadKey(id: ThreadID, key: Buffer) {
     return this.datastore.put(new Key(id.string()).child(new Key('read')), key)
   }
   // ReplicatorKey retrieves the follow key of a log.
   async replicatorKey(id: ThreadID) {
     try {
-      return this.datastore.get(new Key(id.string()).child(new Key('repl')))
+      return await this.datastore.get(new Key(id.string()).child(new Key('repl')))
     } catch (err) {
       return
     }
   }
   // AddReplicatorKey adds a follow key under a log.
-  async addReplicatorKey(id: ThreadID, key: Buffer) {
+  addReplicatorKey(id: ThreadID, key: Buffer) {
     return this.datastore.put(new Key(id.string()).child(new Key('repl')), key)
   }
 
@@ -106,7 +106,7 @@ export class KeyBook implements LogsThreads, Closer {
     }
     return logs
   }
-  async close() {
+  close() {
     return this.datastore.close()
   }
 }

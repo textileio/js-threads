@@ -61,7 +61,8 @@ const createHandler = (store: Datastore<Buffer>) => {
           break
       }
     }
-    return batch.commit()
+    await batch.commit()
+    return
   }
   return handler
 }
@@ -406,7 +407,7 @@ describe('Collection', () => {
       expect(await c.has(person.ID)).to.be.true
     })
 
-    it.skip('should return save changes within a transaction', async () => {
+    it.skip('should return save changes within a transaction', () => {
       console.log('pass')
     })
 

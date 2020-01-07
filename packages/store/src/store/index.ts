@@ -4,17 +4,7 @@ import { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
 import { EventEmitter } from 'tsee'
 import { RWLock } from 'async-rwlock'
 import { encode, decode } from 'cbor-sync'
-import {
-  EventCodec,
-  Service,
-  LogStore,
-  ThreadID,
-  Block,
-  Action,
-  Event,
-  Entity,
-  ReduceAction,
-} from '@textile/threads-core'
+import { EventCodec, Service, ThreadID, Block, Action, Event, Entity, ReduceAction } from '@textile/threads-core'
 import { Service as ThreadsService } from '@textile/threads-service'
 import { Dispatcher, Reducer } from '../dispatcher'
 import { Collection, CollectionKey } from '../collection'
@@ -22,9 +12,9 @@ import { JSONPatcher } from '../codecs'
 // eslint-disable-next-line import/no-cycle
 import { Adapter } from '../adapter'
 
-const storeKey = new Key('store')
-const threadKey = storeKey.child(new Key('threadid'))
-const schemaKey = storeKey.child(new Key('schema'))
+const baseKey = new Key('store')
+const threadKey = baseKey.child(new Key('threadid'))
+const schemaKey = baseKey.child(new Key('schema'))
 
 // Events are for the store's EventEmitter
 type Events = {
@@ -41,10 +31,6 @@ export type StoreID = string
 // externally.
 export class Store<E extends Event = any, T extends Entity = object> extends EventEmitter<Events> implements Reducer {
   // public adapter: ThreadAdapter
-  /**
-   * The ThreadService used by the store
-   */
-  public service: Service
   private lock: RWLock = new RWLock()
   private dispatcher: Dispatcher
   private schema: Ajv = new Schema()
@@ -58,15 +44,17 @@ export class Store<E extends Event = any, T extends Entity = object> extends Eve
    * @param datastore The datastore to use for internal storage.
    * @param eventCodec The EventCodec to use for processing actions -> events.
    */
-  constructor(datastore: Datastore<Buffer> = new MemoryDatastore(), eventCodec: EventCodec<any> = JSONPatcher.Codec) {
+  constructor(
+    public service: Service,
+    datastore: Datastore<Buffer> = new MemoryDatastore(),
+    eventCodec: EventCodec<any> = JSONPatcher.Codec,
+  ) {
     super()
     this.datastore = datastore
     this.eventCodec = eventCodec
     this.dispatcher = new Dispatcher()
     this.dispatcher.register(this)
     this.registerSchemas()
-    // @todo: Add host information here.
-    this.service = new ThreadsService(datastore, {})
   }
   /**
    * ThreadID returns the store's theadID if it exists.
@@ -187,7 +175,7 @@ export class Store<E extends Event = any, T extends Entity = object> extends Eve
       }
       const compiled = this.schema.addSchema(schema, name).compile(schema)
       const collection = new Collection(name, compiled, this.handler.bind(this), this.datastore)
-      const key = storeKey.child(new Key(name))
+      const key = baseKey.child(new Key(name))
       const exists = this.datastore.has(key)
       if (!exists) {
         this.datastore.put(key, encode(schema))
@@ -202,7 +190,7 @@ export class Store<E extends Event = any, T extends Entity = object> extends Eve
    * Get a collection from the store.
    * @param name The name of the collection.
    */
-  async getCollection(name: string) {
+  getCollection(name: string) {
     return this.collections.get(name)
   }
 }

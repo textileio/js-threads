@@ -1,8 +1,9 @@
-import { EventEmitter } from 'events'
 import CID from 'cids'
 import { LogID, ThreadID, LogInfo, ThreadInfo } from '../thread'
 import { Multiaddr } from '../external'
 import { Closer, Block } from '../utils'
+// @todo: Replace this with actual peer-id types
+import { PeerID } from '../external'
 
 export interface ThreadRecord {
   value: RecordNode
@@ -27,9 +28,9 @@ export interface LogStore extends Closer {
   logInfo(id: ThreadID, log: string): Promise<LogInfo>
 }
 
-export interface Service extends Closer, EventEmitter {
+export interface Service extends Closer {
   store: LogStore
-  host: any
+  host: PeerID
   // dag: DAGService
   close(): Promise<void>
   addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer): Promise<ThreadInfo>
@@ -43,13 +44,13 @@ export interface Service extends Closer, EventEmitter {
 // Record is a thread record containing link data.
 export interface Record {
   // recordNode is the top-level node's raw data.
-  recordNode: Buffer
+  recordnode: Uint8Array | string
   // eventNode is the event node's raw data.
-  eventNode: Buffer
+  eventnode: Uint8Array | string
   // headerNode is the header node's raw data.
-  headerNode: Buffer
+  headernode: Uint8Array | string
   // bodyNode is the body node's raw data.
-  bodyNode: Buffer
+  bodynode: Uint8Array | string
 }
 
 // Log represents a thread log.
@@ -71,7 +72,7 @@ export interface LogEntry {
   // records returned for this entry.
   records: Record[]
   // log contains new log info that was missing from the request.
-  log: Log
+  log?: Log
 }
 
 export interface Network {
@@ -80,7 +81,7 @@ export interface Network {
   // PushLog to a peer.
   pushLog(id: ThreadID, log: LogInfo, replicatorKey: Buffer, readKey?: Buffer): Promise<void>
   // GetRecords from a peer.
-  getRecords(id: ThreadID, log: LogID, replicatorKey: Buffer, opts: { offset: CID; limit: number }): Promise<LogEntry>
+  getRecords(id: ThreadID, replicatorKey: Buffer, offsets?: Map<LogID, CID>, limit?: number): Promise<LogEntry[]>
   // PushRecord to a peer.
-  pushRecord(id: ThreadID, log: LogID, record: Record): Promise<void>
+  // pushRecord(id: ThreadID, log: LogID, record: Record): Promise<void>
 }

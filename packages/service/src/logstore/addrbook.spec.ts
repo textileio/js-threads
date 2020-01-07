@@ -20,7 +20,7 @@ describe('AddrBook', () => {
     await ab.close()
   })
   describe('Adding', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       const mem = new MemoryDatastore()
       ab = new AddrBook(mem, { ttl: 100, frequency: 20 })
     })
@@ -96,7 +96,7 @@ describe('AddrBook', () => {
   })
   describe('Clearing', () => {
     const id = ThreadID.fromRandom(Variant.Raw, 24)
-    beforeEach(async () => {
+    beforeEach(() => {
       ab = new AddrBook(new MemoryDatastore(), { ttl: 3600, frequency: 30 })
     })
     it('clearing out addresses should always work', async () => {

@@ -12,14 +12,16 @@ import {
   ThreadRecord,
   ThreadInfo,
   Service as Interface,
+  PeerID,
+  MultiaddrConstructor,
 } from '@textile/threads-core'
 import { Datastore } from 'interface-datastore'
 import { LogStore } from '../logstore'
 
 // @todo: Factor out libp2p crypto and peer-id
-const crypto = require('libp2p-crypto')
-const PeerId = require('peer-id')
-const multiaddr = require('multiaddr')
+const { keys } = require('libp2p-crypto')
+const { createFromPubKey } = require('peer-id')
+const multiaddr = require('multiaddr') as MultiaddrConstructor
 
 export type Events = {
   record: (record: ThreadRecord) => void
@@ -28,18 +30,16 @@ export type Events = {
 // Service is an API for working with threads. It also provides a DAG API to the network.
 export class Service extends EventEmitter<Events> implements Interface {
   public store: LogStore
-  constructor(store: LogStore | Datastore, public host: any /**, dag: DAGService*/) {
+  constructor(store: LogStore | Datastore, public host: PeerID) {
     super()
     this.store = store instanceof LogStore ? store : LogStore.fromDatastore(store)
-    this.host = new PeerId()
   }
 
   /**
    * CreateThread creates a new set of keys.
    * @param id Thread ID.
    */
-  // eslint-disable-next-line require-await
-  static async createThread(id: ThreadID) {
+  static createThread(id: ThreadID) {
     const replicatorKey = randomBytes(44)
     const readKey = randomBytes(44)
     const info: ThreadInfo = {
@@ -55,8 +55,8 @@ export class Service extends EventEmitter<Events> implements Interface {
    * @param log
    */
   static async createLog(log: LogID) {
-    const privKey: PrivateKey = await crypto.keys.generateKeyPair('ed25519', 32)
-    const id = await PeerId.createFromPubKey(privKey.public)
+    const privKey: PrivateKey = await keys.generateKeyPair('ed25519', 32)
+    const id = await createFromPubKey(privKey.public)
     const addrs: Set<Multiaddr> = new Set([multiaddr(`/p2p/${log}`)])
     const info: LogInfo = {
       id,
@@ -142,7 +142,7 @@ export class Service extends EventEmitter<Events> implements Interface {
   async getOrCreateOwnLog(id: ThreadID) {
     let info = await this.getOwnLog(id)
     if (info) return info
-    info = await Service.createLog(this.host.id())
+    info = await Service.createLog(this.host.toB58String())
     await this.store.addLog(id, info)
     return info
   }

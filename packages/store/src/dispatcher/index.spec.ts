@@ -17,7 +17,7 @@ describe('Dispatcher', () => {
 
   it('should add new (unique) reducers on registration', async () => {
     const d = new Dispatcher()
-    const reducer = { reduce: async (...event: Event[]) => undefined }
+    const reducer = { reduce: (...event: Event[]) => Promise.resolve(undefined) }
     await d.register(reducer)
     expect(d.reducers).to.have.length(1)
     await d.register(reducer)
@@ -26,7 +26,7 @@ describe('Dispatcher', () => {
 
   it('should only dispatch one (set of) events at a time', async () => {
     const d = new Dispatcher()
-    const slowReducer = async (..._event: Event[]) => new Promise<void>(r => setTimeout(r, 2000))
+    const slowReducer = (..._event: Event[]) => new Promise<void>(r => setTimeout(r, 2000))
     d.register({ reduce: slowReducer })
     const event: Event = {
       time: Buffer.from(pack(Date.now())),
@@ -51,9 +51,7 @@ describe('Dispatcher', () => {
     await d.dispatch(event)
     // Error reducer
     const reducer = {
-      reduce: async (...event: Event[]) => {
-        throw new Error('error')
-      },
+      reduce: (...event: Event[]) => Promise.reject(new Error('error')),
     }
     await d.register(reducer)
     try {
@@ -66,7 +64,7 @@ describe('Dispatcher', () => {
 
   it('should not be able to register a new reducer while dispatching', async () => {
     const d = new Dispatcher()
-    const slowReducer = async (..._event: Event[]) => new Promise<void>(r => setTimeout(r, 2000))
+    const slowReducer = (..._event: Event[]) => new Promise<void>(r => setTimeout(r, 2000))
     await d.register({ reduce: slowReducer })
     const event: Event = {
       time: Buffer.from(pack(Date.now())),

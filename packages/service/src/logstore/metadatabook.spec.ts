@@ -7,7 +7,7 @@ let book: MetadataBook
 const id: ThreadID = ThreadID.fromRandom(0, 24)
 
 describe('MetadataBook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     const mem = new MemoryDatastore()
     book = new MetadataBook(mem)
   })

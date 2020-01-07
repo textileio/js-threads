@@ -2,12 +2,12 @@
 import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
 import { ThreadID, PrivateKey, Variant } from '@textile/threads-core'
+import Multiaddr from 'multiaddr'
 import { LogStore } from './logstore'
 
 // @todo: Find or write type defs for these (or replace them with smaller deps)
 const crypto = require('libp2p-crypto')
 const PeerId = require('peer-id')
-const multiaddr = require('multiaddr')
 
 const createLogStore = () => {
   return LogStore.fromDatastore(new MemoryDatastore())
@@ -20,7 +20,7 @@ const createPeerAndKey = async () => {
 }
 
 const generateAddrs = (count: number) => {
-  return [...Array(count)].map((_, i) => multiaddr(`/ip4/1.1.1.${i}/tcp/1111`))
+  return [...Array(count)].map((_, i) => Multiaddr(`/ip4/1.1.1.${i}/tcp/1111`))
 }
 
 describe('LogStore', () => {

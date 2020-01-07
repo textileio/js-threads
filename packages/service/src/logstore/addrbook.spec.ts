@@ -2,14 +2,12 @@
 import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
 import { ThreadID, Variant } from '@textile/threads-core'
+import Multiaddr from 'multiaddr'
 
 import { AddrBook } from './addrbook'
 
-// @todo: Find or create types for this package
-const multiaddr = require('multiaddr')
-
 const generateAddrs = (count: number) => {
-  return [...Array(count)].map((_, i) => multiaddr(`/ip4/1.1.1.${i}/tcp/1111`))
+  return [...Array(count)].map((_, i) => Multiaddr(`/ip4/1.1.1.${i}/tcp/1111`))
 }
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 

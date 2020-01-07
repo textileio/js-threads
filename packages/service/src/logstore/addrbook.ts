@@ -2,11 +2,9 @@
 import { EventEmitter } from 'tsee'
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
+import Multiaddr from 'multiaddr'
 import { TTLDatastore, Duration, TTLDatastoreOptions } from '@textile/datastore-ttl'
-import { Closer, LogsThreads, Multiaddr, ThreadID, LogID } from '@textile/threads-core'
-
-// @todo: Find or create types for this package
-const multiaddr = require('multiaddr')
+import { Closer, LogsThreads, ThreadID, LogID } from '@textile/threads-core'
 
 // Thread addresses are stored db key pattern:
 // /thread/addrs/<b32 thread id no padding>/<b32 log id no padding>/<multiaddr string>
@@ -64,7 +62,7 @@ export class AddrBook extends EventEmitter<Events> implements LogsThreads, Close
     const addrs: Set<Multiaddr> = new Set()
     const it = this.datastore.query({ prefix: getKey(id, log).toString() })
     for await (const { value } of it) {
-      addrs.add(multiaddr(value))
+      addrs.add(Multiaddr(value))
     }
     return addrs
   }

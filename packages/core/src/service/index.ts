@@ -1,6 +1,6 @@
 import CID from 'cids'
+import Multiaddr from 'multiaddr'
 import { LogID, ThreadID, LogInfo, ThreadInfo } from '../thread'
-import { Multiaddr } from '../external'
 import { Closer, Block } from '../utils'
 // @todo: Replace this with actual peer-id types
 import { PeerID } from '../external'

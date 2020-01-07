@@ -42,7 +42,7 @@ export class Dispatcher {
       logger.debug(`dispatching reducers: ${this.reducers.size}`)
       await Promise.all([...this.reducers].map(reducer => reducer.reduce(...events)))
     } catch (err) {
-      logger.error(err)
+      logger.error(err.toString())
       throw err
     } finally {
       this.lock.unlock()

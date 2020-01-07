@@ -1,19 +1,18 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import randomBytes from 'randombytes'
 import CID from 'cids'
+import Multiaddr from 'multiaddr'
 import { EventEmitter } from 'tsee'
 import {
   ThreadID,
   LogID,
   LogInfo,
-  Multiaddr,
   PrivateKey,
   Block,
   ThreadRecord,
   ThreadInfo,
   Service as Interface,
   PeerID,
-  MultiaddrConstructor,
 } from '@textile/threads-core'
 import { Datastore } from 'interface-datastore'
 import { LogStore } from '../logstore'
@@ -21,7 +20,6 @@ import { LogStore } from '../logstore'
 // @todo: Factor out libp2p crypto and peer-id
 const { keys } = require('libp2p-crypto')
 const { createFromPubKey } = require('peer-id')
-const multiaddr = require('multiaddr') as MultiaddrConstructor
 
 export type Events = {
   record: (record: ThreadRecord) => void
@@ -57,7 +55,7 @@ export class Service extends EventEmitter<Events> implements Interface {
   static async createLog(log: LogID) {
     const privKey: PrivateKey = await keys.generateKeyPair('ed25519', 32)
     const id = await createFromPubKey(privKey.public)
-    const addrs: Set<Multiaddr> = new Set([multiaddr(`/p2p/${log}`)])
+    const addrs: Set<Multiaddr> = new Set([Multiaddr(`/p2p/${log}`)])
     const info: LogInfo = {
       id,
       pubKey: privKey.public,
@@ -70,6 +68,7 @@ export class Service extends EventEmitter<Events> implements Interface {
   async close() {
     this.removeAllListeners()
     await this.store.close()
+    // @todo: Right now, this is just a peer-id, eventually, should be a fully libp2p host.
     // await this.host.stop()
   }
 

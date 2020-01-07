@@ -1,5 +1,6 @@
 import CID from 'cids'
-import { PublicKey, PrivateKey, Multiaddr } from '../external'
+import Multiaddr from 'multiaddr'
+import { PublicKey, PrivateKey } from '../external'
 import { ThreadID, LogID } from './id'
 
 // Info holds a thread ID associated known logs.

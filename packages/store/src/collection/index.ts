@@ -21,7 +21,7 @@ export class ReadBatch<T extends Entity = object> {
   // Get returns the given Entity from the store if it exists.
   async get(id: EntityID) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     logger.debug(`getting entity ${id}`)
@@ -31,7 +31,7 @@ export class ReadBatch<T extends Entity = object> {
   // Find returns an async iterable of Entities that match the given criteria.
   async *find(query?: FilterQuery<T>) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     logger.debug(`running query`)
@@ -47,7 +47,7 @@ export class ReadBatch<T extends Entity = object> {
   // Has checks if the given Entity is in the store.
   has(id: EntityID) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     logger.debug(`checking for entity ${id}`)
@@ -56,7 +56,7 @@ export class ReadBatch<T extends Entity = object> {
 
   async start(timeout?: number) {
     if (this.active) {
-      logger.error(IsActiveError)
+      logger.error(IsActiveError.toString())
       throw IsActiveError
     }
     logger.debug(`batch started`)
@@ -67,7 +67,7 @@ export class ReadBatch<T extends Entity = object> {
 
   discard() {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     logger.debug(`batch ended`)
@@ -82,7 +82,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   private ids: Set<string> = new Set()
   async start(timeout?: number) {
     if (this.active) {
-      logger.error(IsActiveError)
+      logger.error(IsActiveError.toString())
       throw IsActiveError
     }
     logger.debug(`batch started`)
@@ -93,12 +93,12 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
 
   async create(entity: T) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     if (!this.collection.validator(entity)) {
       const err = new Error('Schema Validation')
-      logger.error(err)
+      logger.error(err.toString())
       throw err
     }
     // if (entity.ID && !isUUID(entity.ID)) throw InvalidIDError
@@ -107,7 +107,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
     const key = new Key(id)
     if ((await this.collection.datastore.has(key)) || this.ids.has(id)) {
       const err = new Error('Existing Entity')
-      logger.error(err)
+      logger.error(err.toString())
       throw err
     }
     const current = { ...entity, ID: id } as T
@@ -125,7 +125,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
 
   async delete(id: EntityID) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     // if (!isUUID(id)) throw InvalidIDError
@@ -139,7 +139,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
         return
       } else {
         const err = new Error('Not Found')
-        logger.error(err)
+        logger.error(err.toString())
         throw err
       }
     }
@@ -157,7 +157,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   // Get returns existing Entities from the store.
   async get(id: EntityID) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     logger.debug(`getting entity ${id}`)
@@ -168,7 +168,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
     if (last) {
       if (last.type === Action.Type.Delete) {
         const err = new Error('Entity Deleted')
-        logger.error(err)
+        logger.error(err.toString())
         throw err
       }
       return last.current as T
@@ -179,7 +179,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   // Has checks if the given Entities are in the store.
   async has(id: EntityID) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     logger.debug(`checking for entity ${id}`)
@@ -192,7 +192,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
   // Find returns an async iterable of Entities that match the given criteria.
   async *find(query?: FilterQuery<T>) {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     const deleted = [...this.actions]
@@ -233,7 +233,7 @@ export class WriteBatch<T extends Entity = object> extends ReadBatch<T> {
 
   async commit() {
     if (!this.active) {
-      logger.error(NotActiveError)
+      logger.error(NotActiveError.toString())
       throw NotActiveError
     }
     if (this.actions.length > 0) {

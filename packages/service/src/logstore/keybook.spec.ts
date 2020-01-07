@@ -67,12 +67,8 @@ describe('KeyBook', () => {
   })
   it('ReadKey', async () => {
     // No readKey exists yet
-    try {
-      const err = await kb.readKey(tid)
-      throw new Error('should have rejected')
-    } catch (err) {
-      expect(err.toString()).to.equal('Error: Not Found')
-    }
+    const key = await kb.readKey(tid)
+    expect(key).to.be.undefined
 
     const key128 = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 
@@ -87,12 +83,8 @@ describe('KeyBook', () => {
 
   it('ReplicatorKey', async () => {
     // No readKey exists yet
-    try {
-      const err = await kb.replicatorKey(tid)
-      throw new Error('should have rejected')
-    } catch (err) {
-      expect(err.toString()).to.equal('Error: Not Found')
-    }
+    const key = await kb.replicatorKey(tid)
+    expect(key).to.be.undefined
 
     const key128 = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 

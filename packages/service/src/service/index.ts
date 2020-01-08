@@ -80,8 +80,6 @@ export class Service extends EventEmitter<Events> implements Interface {
    * @param addr Multiaddress.
    */
   async addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer) {
-    //}: Promise<ThreadInfo> {
-    // @fixme: Implement this.
     const thread = addr.stringTuples().find(([code]) => code === ThreadProtocol.code)
     if (!thread || !thread[1]) return
     const idStr = thread[1].toString()
@@ -114,7 +112,10 @@ export class Service extends EventEmitter<Events> implements Interface {
   }
 
   // PullThread for new records.
+  // Logs owned by this host are traversed locally.
+  // Remotely addressed logs are pulled from the network.
   async pullThread(id: ThreadID): Promise<void> {
+    log.debug(`pulling thread ${id.string()}...`)
     // @fixme: Implement this.
     throw new Error('not implemented')
   }

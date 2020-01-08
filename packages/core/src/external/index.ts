@@ -19,11 +19,6 @@ export interface PrivateKey {
   id(): Promise<string>
 }
 
-export interface Keypair {
-  privateKey: PrivateKey
-  publicKey: PublicKey
-}
-
 // Metadata holds info pertaining to event retention.
 export interface Metadata {
   // The max age of an event after which it can be discarded.

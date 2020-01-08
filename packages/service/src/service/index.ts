@@ -2,17 +2,22 @@
 import randomBytes from 'randombytes'
 import CID from 'cids'
 import Multiaddr from 'multiaddr'
+import log from 'loglevel'
 import { EventEmitter } from 'tsee'
 import {
   ThreadID,
   LogID,
   LogInfo,
-  PrivateKey,
   Block,
   ThreadRecord,
   ThreadInfo,
   Service as Interface,
   PeerID,
+  ThreadProtocol,
+  Network,
+  Events,
+  PublicKey,
+  PrivateKey,
 } from '@textile/threads-core'
 import { Datastore } from 'interface-datastore'
 import { LogStore } from '../logstore'
@@ -21,14 +26,12 @@ import { LogStore } from '../logstore'
 const { keys } = require('libp2p-crypto')
 const { createFromPubKey } = require('peer-id')
 
-export type Events = {
-  record: (record: ThreadRecord) => void
-}
+const logger = log.getLogger('service:service')
 
 // Service is an API for working with threads. It also provides a DAG API to the network.
 export class Service extends EventEmitter<Events> implements Interface {
   public store: LogStore
-  constructor(store: LogStore | Datastore, public host: PeerID) {
+  constructor(store: LogStore | Datastore, public host: PeerID, private server: Network) {
     super()
     this.store = store instanceof LogStore ? store : LogStore.fromDatastore(store)
   }
@@ -76,9 +79,38 @@ export class Service extends EventEmitter<Events> implements Interface {
    * Add a thread from a multiaddress.
    * @param addr Multiaddress.
    */
-  async addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer): Promise<ThreadInfo> {
+  async addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer) {
+    //}: Promise<ThreadInfo> {
     // @fixme: Implement this.
-    throw new Error('not implemented')
+    const thread = addr.stringTuples().find(([code]) => code === ThreadProtocol.code)
+    if (!thread || !thread[1]) return
+    const idStr = thread[1].toString()
+    const id = ThreadID.fromEncoded(idStr)
+    const pid = addr.getPeerId()
+    if (!pid) return
+    if (pid === this.host.toB58String()) {
+      return this.store.threadInfo(id)
+    }
+    const info: ThreadInfo = {
+      id,
+      replicatorKey,
+      readKey,
+    }
+    this.store.addThread(info)
+    // const threadAddr = new Multiaddr(`/${ThreadProtocol.protocol}/${idStr}`)
+    // const peerAddr = addr.decapsulate(threadAddr)
+    const logs = await this.server.getLogs(id, replicatorKey)
+    // @todo: Ensure we don't overwrite with newer info from owner?
+    for (const log of logs) {
+      const pubKey = keys.unmarshalPublicKey(log.pubKey)
+      const privKey = log.privKey ? keys.unmarshalPrivateKey(log.privKey) : undefined
+      await this.maybeCreateExternalLog(id, log.id, pubKey, privKey, new Set(log.addrs))
+    }
+    // Don't await...
+    this.pullThread(id).catch(err => {
+      logger.error(`Error: Pulling thread ${id.string()}: ${err.toString()}`)
+    })
+    return this.store.threadInfo(id)
   }
 
   // PullThread for new records.
@@ -144,5 +176,26 @@ export class Service extends EventEmitter<Events> implements Interface {
     info = await Service.createLog(this.host.toB58String())
     await this.store.addLog(id, info)
     return info
+  }
+  async maybeCreateExternalLog(
+    id: ThreadID,
+    log: LogID,
+    pubKey: PublicKey,
+    privKey?: PrivateKey,
+    addrs: Set<Multiaddr> = new Set(),
+  ) {
+    // @todo: Do we need to worry about locks here at all, or leave this to the remote host?
+    const heads = await this.store.heads.get(id, log)
+    if (heads.size < 1) {
+      const info: LogInfo = {
+        id: log,
+        pubKey,
+        privKey,
+        addrs,
+        heads,
+      }
+      await this.store.addLog(id, info)
+    }
+    return
   }
 }

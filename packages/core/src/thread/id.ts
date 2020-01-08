@@ -1,9 +1,6 @@
 import { encode, decode } from 'varint'
 import randomBytes from 'randombytes'
-
-// @todo: find or create types for these
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const multibase = require('multibase')
+import multibase, { name as Name } from 'multibase'
 
 export type LogID = string
 
@@ -131,9 +128,8 @@ export class ThreadID {
         throw new Error('unknown ID version')
     }
   }
-
   // String returns the string representation of an ID encoded is selected base.
-  stringOfBase(base: string | number): string {
+  stringOfBase(base: Name): string {
     switch (this.version()) {
       case V1:
         return multibase.encode(base, this.buf).toString()

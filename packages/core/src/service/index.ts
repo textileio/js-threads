@@ -1,6 +1,7 @@
+import EventEmitter from 'events'
 import CID from 'cids'
 import Multiaddr from 'multiaddr'
-import { LogID, ThreadID, LogInfo, ThreadInfo } from '../thread'
+import { LogID, ThreadID, LogInfo, ThreadInfo, Log } from '../thread'
 import { Closer, Block } from '../utils'
 // @todo: Replace this with actual peer-id types
 import { PeerID } from '../external'
@@ -28,17 +29,21 @@ export interface LogStore extends Closer {
   logInfo(id: ThreadID, log: string): Promise<LogInfo>
 }
 
-export interface Service extends Closer {
+export type Events = {
+  record: (record: ThreadRecord) => void
+}
+
+export interface Service extends EventEmitter, Closer {
   store: LogStore
   host: PeerID
   // dag: DAGService
   close(): Promise<void>
-  addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer): Promise<ThreadInfo>
+  addThread(addr: Multiaddr, replicatorKey: Buffer, readKey?: Buffer): Promise<ThreadInfo | undefined>
   pullThread(id: ThreadID): Promise<void>
   deleteThread(id: ThreadID): Promise<void>
   addReplicator(id: ThreadID, peer: string): Promise<void>
-  addRecord(id: ThreadID, body: Block): Promise<ThreadRecord>
-  getRecord(id: ThreadID, rid: CID): Promise<ThreadRecord>
+  addRecord(id: ThreadID, body: Block): Promise<ThreadRecord | undefined>
+  getRecord(id: ThreadID, rid: CID): Promise<ThreadRecord | undefined>
 }
 
 // Record is a thread record containing link data.
@@ -51,18 +56,6 @@ export interface Record {
   headernode: Uint8Array | string
   // bodyNode is the body node's raw data.
   bodynode: Uint8Array | string
-}
-
-// Log represents a thread log.
-export interface Log {
-  // ID of the log.
-  id: Uint8Array | string
-  // pubKey of the log.
-  pubkey: Uint8Array | string
-  // addrs of the log.
-  addrsList: Array<Uint8Array | string>
-  // heads of the log.
-  headsList: Array<Uint8Array | string>
 }
 
 // LogEntry represents a single log.

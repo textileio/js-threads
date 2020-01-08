@@ -1,2 +1,3 @@
 export * from './id'
-export * from './info'
+export * from './log'
+export * from './thread'

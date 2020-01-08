@@ -1,4 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web'
+import Multiaddr from 'multiaddr'
 import {
   GetLogsRequest,
   GetLogsReply,
@@ -9,7 +10,18 @@ import {
 } from '@textile/threads-service-grpc/service_pb'
 import { Service } from '@textile/threads-service-grpc/service_pb_service'
 import CID from 'cids'
-import { ThreadID, LogID, LogInfo, Network, LogEntry } from '@textile/threads-core'
+import { ThreadID, LogID, LogInfo, Network, LogEntry, Log } from '@textile/threads-core'
+
+const protoToLog = (protoLog: ProtoLog.AsObject) => {
+  const log: Log = {
+    id: protoLog.id.toString(),
+    addrs: protoLog.addrsList.map(addr => Multiaddr(Buffer.from(addr as string))),
+    heads: protoLog.headsList.map(head => new CID(Buffer.from(head as string))),
+    pubKey: Buffer.from(protoLog.pubkey as string),
+    privKey: undefined, // @todo: Is this always the case?
+  }
+  return log
+}
 
 /**
  * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
@@ -38,7 +50,8 @@ export class Client implements Network {
     header.setFrom(this.hostID)
     req.setHeader(header)
     const res = (await this.unary(Service.GetLogs, req)) as GetLogsReply.AsObject
-    return res.logsList
+    const logs = res.logsList.map(protoToLog)
+    return logs
   }
   // PushLog to a peer.
   async pushLog(id: ThreadID, log: LogInfo, replicatorKey: Buffer, readKey?: Buffer) {
@@ -83,7 +96,7 @@ export class Client implements Network {
       ret.push({
         ID: entry.logid as string,
         records: entry.recordsList,
-        log: entry.log,
+        log: entry.log && protoToLog(entry.log),
       })
     }
     return ret

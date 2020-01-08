@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@types/multiaddr": "^7.2.0",
+    "@types/multibase": "^0.6.0",
     "@types/node": "^12.12.21",
     "@types/randombytes": "^2.0.0",
     "@types/varint": "^5.0.0",

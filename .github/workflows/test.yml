@@ -45,23 +45,8 @@ jobs:
     - name: Lint
       run: npm run lint
 
-    - name: Test Setup
-      run: mkdir coverage && mkdir tests
-
     - name: Test Node
-      run: MOCHA_FILE=tests/results.xml npm run test:node -- --reporter=mocha-junit-reporter
+      run: npm run test:node
 
     - name: Test Browser
       run: npm run test:browser
-
-    - name: Results
-      uses: actions/upload-artifact@v1
-      with:
-        name: Results
-        path: tests
-
-    - name: Coverage
-      uses: actions/upload-artifact@v1
-      with:
-        name: Coverage
-        path: coverage

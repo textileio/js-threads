@@ -8,13 +8,12 @@ module.exports = function (config) {
     preprocessors: {
       "**/*.ts": ["karma-typescript"]
     },
-    reporters: ["progress", "karma-typescript", "dots"],
+    reporters: ["karma-typescript", "mocha"],
     browsers: ["FirefoxHeadless"],
     singleRun: true,
     karmaTypescriptConfig: {
       tsconfig: "./tsconfig.json",
       reports: {
-        html: 'coverage',
         'text-summary': '', // Destination "" will redirect output to the console
       },
       bundlerOptions: {

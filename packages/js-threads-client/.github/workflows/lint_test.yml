@@ -44,10 +44,12 @@ jobs:
       uses: actions/setup-go@v1
       with:
         go-version: 1.13
+        
     - name: Checkout
       uses: actions/checkout@v1
 
     - name: Cache Build
+      id: npm-dependencies
       uses: actions/cache@v1
       with:
         path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
@@ -57,13 +59,8 @@ jobs:
           ${{ runner.os }}-build-
           ${{ runner.os }}-
 
-    - name: Get Daemon
-      run: |
-            mkdir -p ~/daemon && cd ~/daemon
-            git clone --depth=1  https://github.com/textileio/go-threads.git
-
     - name: Cache Go Dependencies
-      id: cache-dependencies
+      id: go-dependencies
       uses: actions/cache@v1
       with:
         path: ~/go/pkg/mod
@@ -71,19 +68,24 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    - name: Setup
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12
-
-    - name: Install
-      run: npm install
+    - name: Download Daemon
+      run: |
+            mkdir -p ~/daemon && cd ~/daemon
+            git clone --depth=1  https://github.com/textileio/go-threads.git
 
     - name: Build Daemon
       run: |
             cd ~/daemon/go-threads
             go mod download
             go build threadsd/main.go
+
+    - name: Setup
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+
+    - name: NPM Install
+      run: npm install
 
     - name: Test Node
       run: |

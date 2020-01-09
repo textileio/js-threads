@@ -4,7 +4,7 @@
 [![Chat on Slack](https://img.shields.io/badge/slack-slack.textile.io-informational.svg?style=popout-square)](https://slack.textile.io)
 [![Threads version](https://img.shields.io/badge/dynamic/json?style=popout-square&color=3527ff&label=Threads&prefix=v&query=%24.dependencies%5B%27%40textile%2Fthreads-client-grpc%27%5D.version&url=https%3A%2F%2Fraw.githubusercontent.com%2Ftextileio%2Fjs-threads-client%2Fmaster%2Fpackage-lock.json)](https://github.com/textileio/go-threads)
 [![GitHub license](https://img.shields.io/github/license/textileio/js-threads-client.svg?style=popout-square)](./LICENSE)
-[![Build status](https://img.shields.io/github/workflow/status/textileio/js-threads-client/lint_test/master.svg?style=popout-square)](https://github.com/RichardLitt/standard-readme)
+[![Build status](https://img.shields.io/github/workflow/status/textileio/js-threads-client/lint_test/master.svg?style=popout-square)](https://github.com/textileio/js-threads-client/actions?query=branch%3Amaster)
 
 > Textile's JS client for interacting with remote Threads
 

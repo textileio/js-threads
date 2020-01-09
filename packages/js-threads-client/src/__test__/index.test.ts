@@ -287,12 +287,12 @@ describe('Client', function() {
         await client.modelSave(store.id, 'Person', [existingPerson])
         existingPerson.age = 40
         await client.modelSave(store.id, 'Person', [existingPerson])
-        await sleep(2000)
+        await sleep(3000)
         expect(events.length).to.equal(2)
       } finally {
         expect(closer()).to.not.throw
       }
-    }).timeout(5000) // Make sure our test doesn't timeout
+    }).timeout(3500) // Make sure our test doesn't timeout
   })
   describe('Query', () => {
     before(async () => {

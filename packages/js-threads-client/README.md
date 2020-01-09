@@ -106,7 +106,7 @@ The following has been tested on **Android Only**.
 You can run the daemon released as part of the early preview. To do so, 
 
 ```sh
-git clone git@github.com:textileio/go-textile-threads.git
+git clone git@github.com:textileio/go-threads.git
 cd go-textile-threads
 go run threadsd/main.go
 ```

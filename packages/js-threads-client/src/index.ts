@@ -39,7 +39,7 @@ export { Query, Where } from './query'
 /**
  * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
  * This client library can be used to interact with a local or remote Textile gRPC-service
- *  It is a wrapper around Textile's 'Store' API, which is defined here: https://github.com/textileio/go-textile-threads/blob/master/api/pb/api.proto.
+ *  It is a wrapper around Textile's 'Store' API, which is defined here: https://github.com/textileio/go-threads/blob/master/api/pb/api.proto.
  */
 export class Client {
   /**

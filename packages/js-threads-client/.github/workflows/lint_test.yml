@@ -82,6 +82,11 @@ jobs:
             go mod download
             go build threadsd/main.go
 
+    - name: Run Daemon
+      run: |
+           (cd ~/daemon/go-threads && rm -rf .threads && go run threadsd/main.go) &
+           sleep 10
+
     - name: Setup
       uses: actions/setup-node@v1
       with:
@@ -92,9 +97,6 @@ jobs:
 
     - name: Test Node
       run: |
-           (cd ~/daemon/go-threads && rm -rf .threads && go run threadsd/main.go) &
-           sleep 10
-           mkdir -p allure-results
            npm run test:node
 
     - name: Test Browser

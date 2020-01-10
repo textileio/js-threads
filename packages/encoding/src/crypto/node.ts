@@ -12,7 +12,7 @@ export interface CodecOptions {
 
 export const defaultCodecOpts = { codec: 'dag-cbor', algo: 'sha2-256' }
 
-export async function decodeBlock(data: Buffer, key: string, opts: CodecOptions = defaultCodecOpts) {
+export function decodeBlock(data: Buffer, key: string, opts: CodecOptions = defaultCodecOpts) {
   // Start with an IPLD node wrapping raw encrypted bytes
   const cipherText: Buffer = Block.decoder(data, opts.codec, opts.algo).decode()
   // Extract the tag from the payload
@@ -26,10 +26,11 @@ export async function decodeBlock(data: Buffer, key: string, opts: CodecOptions 
   decipher.setAuthTag(tag)
   const decrypted = decipher.update(cipher)
   // Return decoded IPLD Node as an object
-  return Block.decoder(decrypted, opts.codec, opts.algo).decode()
+  const block = Block.decoder(decrypted, opts.codec, opts.algo)
+  return block.decode()
 }
 
-export async function encodeBlock(obj: any, key?: string, opts: CodecOptions = defaultCodecOpts) {
+export function encodeBlock(obj: any, key?: string, opts: CodecOptions = defaultCodecOpts) {
   const data = Block.encoder(obj, opts.codec, opts.algo).encode()
 
   const keyiv = key ? Base58.decode(key) : crypto.randomBytes(44)

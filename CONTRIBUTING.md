@@ -25,7 +25,7 @@ The following is a set of guidelines for contributing to this project. These are
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [carson.farmer@gmail.com](mailto:carson.farmer@gmail.com).
+This project and everyone participating in it is governed by the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [contact@textile.io](mailto:contact@textile.io).
 
 ## I don't want to read this whole thing I just have a question!!!
 

@@ -3,6 +3,7 @@ import randomBytes from 'randombytes'
 import CID from 'cids'
 import Multiaddr from 'multiaddr'
 import log from 'loglevel'
+import RWLock from 'async-rwlock'
 import { EventEmitter } from 'tsee'
 import {
   ThreadID,
@@ -18,6 +19,7 @@ import {
   Events,
   PublicKey,
   PrivateKey,
+  RecordNode,
 } from '@textile/threads-core'
 import { Datastore } from 'interface-datastore'
 import { LogStore } from '../logstore'
@@ -27,13 +29,28 @@ const { keys } = require('libp2p-crypto')
 const { createFromPubKey } = require('peer-id')
 
 const logger = log.getLogger('service:service')
+// MaxPullLimit is the maximum page size for pulling records.
+const maxPullLimit = 10_000
+// InitialPullInterval is the interval between automatic log pulls.
+const initialPullInterval = 1000 // 1 Second
+// PullInterval is the interval between automatic log pulls.
+const pullInterval = 10_000 // 10 seconds
 
 // Service is an API for working with threads. It also provides a DAG API to the network.
 export class Service extends EventEmitter<Events> implements Interface {
   public store: LogStore
+  private semaphore: Map<ThreadID, RWLock> = new Map()
   constructor(store: LogStore | Datastore, public host: PeerID, private server: Network) {
     super()
     this.store = store instanceof LogStore ? store : LogStore.fromDatastore(store)
+  }
+  private getSemaphore(id: ThreadID) {
+    let lock = this.semaphore.get(id)
+    if (!lock) {
+      lock = new RWLock()
+      this.semaphore.set(id, lock)
+    }
+    return lock
   }
 
   /**
@@ -115,9 +132,37 @@ export class Service extends EventEmitter<Events> implements Interface {
   // Logs owned by this host are traversed locally.
   // Remotely addressed logs are pulled from the network.
   async pullThread(id: ThreadID): Promise<void> {
-    log.debug(`pulling thread ${id.string()}...`)
-    // @fixme: Implement this.
-    throw new Error('not implemented')
+    // const lock = this.getSemaphore(id)
+    // if (lock.getState() > 0) {
+    //   log.warn(`Pull thread ${id.string()} ignored. Already being pulled`)
+    //   return
+    // }
+    // await lock.writeLock()
+    // try {
+    //   log.debug(`Pulling thread ${id.string()}...`)
+    //   const logs = await this.getLogs(id)
+    //   const replicatorKey = await this.store.keys.replicatorKey(id)
+    //   if (!replicatorKey) {
+    //     throw new Error('replicator key required')
+    //   }
+    //   // Gather offsets for each log
+    //   const offsets = new Map<LogID, CID | undefined>()
+    //   for (const log of logs) {
+    //     // @todo: As in Go, we should check to see if we have the CID locally in the blockstore
+    //     // For now, we're going to assume if we know about it, we have it...
+    //     offsets.set(log.id, [...(log.heads || [])].shift())
+    //   }
+    //   const records: RecordNode[] = []
+    //   // @todo: In go, we'd ask all known peers for records, perhaps abstract this out a bit into a Server interface...
+    //   const entries = await this.server.getRecords(id, replicatorKey, offsets, maxPullLimit)
+    //   for (const entry of entries) {
+    //     for (const rec of entry.records) {
+    //       await this.putRecord(id, entry.id, rec)
+    //     }
+    //   }
+    // } finally {
+    //   lock.unlock()
+    // }
   }
   // DeleteThread with id.
   async deleteThread(id: ThreadID): Promise<void> {
@@ -146,14 +191,22 @@ export class Service extends EventEmitter<Events> implements Interface {
     throw new Error('not implemented')
   }
 
+  // Utitilities
+
   /**
-   * GetLog returns the log with the given thread and log id.
+   * GetLogs returns info about the logs in the given thread.
    * @param id Thread ID.
-   * @param log Log ID.
    */
-  async getLog(id: ThreadID, log: LogID) {
-    return await this.store.logInfo(id, log)
+  async getLogs(id: ThreadID) {
+    const logs: LogInfo[] = []
+    const info = await this.store.threadInfo(id)
+    for (const logID of info.logs || []) {
+      const log = await this.store.logInfo(id, logID)
+      logs.push(log)
+    }
+    return logs
   }
+
   /**
    * GetOwnLoad returns the log owned by the host under the given thread.
    * @param id Thread ID.
@@ -185,18 +238,22 @@ export class Service extends EventEmitter<Events> implements Interface {
     privKey?: PrivateKey,
     addrs: Set<Multiaddr> = new Set(),
   ) {
-    // @todo: Do we need to worry about locks here at all, or leave this to the remote host?
-    const heads = await this.store.heads.get(id, log)
-    if (heads.size < 1) {
-      const info: LogInfo = {
-        id: log,
-        pubKey,
-        privKey,
-        addrs,
-        heads,
+    const lock = this.getSemaphore(id)
+    await lock.writeLock()
+    try {
+      const heads = await this.store.heads.get(id, log)
+      if (heads.size < 1) {
+        const info: LogInfo = {
+          id: log,
+          pubKey,
+          privKey,
+          addrs,
+          heads,
+        }
+        await this.store.addLog(id, info)
       }
-      await this.store.addLog(id, info)
+    } finally {
+      lock.unlock()
     }
-    return
   }
 }

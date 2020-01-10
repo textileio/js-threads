@@ -3,13 +3,13 @@ import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
 import { ThreadID, Variant } from '@textile/threads-core'
 import Multiaddr from 'multiaddr'
+import delay from 'delay'
 
 import { AddrBook } from './addrbook'
 
 const generateAddrs = (count: number) => {
   return [...Array(count)].map((_, i) => Multiaddr(`/ip4/1.1.1.${i}/tcp/1111`))
 }
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
 let ab: AddrBook
 
@@ -56,7 +56,7 @@ describe('AddrBook', () => {
       // same address as before but with a higher TTL
       await ab.put(id, log, 600, addr[2]) // 1 min
       // after the initial TTL has expired, check that only the third address is present.
-      await sleep(400)
+      await delay(400)
       expect((await ab.get(id, log)).size).to.equal(1)
       // make sure we actually set the TTL
       await ab.put(id, log, 0)
@@ -71,7 +71,7 @@ describe('AddrBook', () => {
       await ab.put(id, log, 100, addr[2]) // 1 sec
       // after the initial TTL has expired, check that all three addresses are still present (i.e. the TTL on
       // the modified one was not shortened)
-      await sleep(210)
+      await delay(210)
       expect((await ab.get(id, log)).size).to.equal(3)
     })
     it('adding an existing address with an earlier expiration never reduces the TTL', async () => {
@@ -79,11 +79,11 @@ describe('AddrBook', () => {
       const addr = generateAddrs(1)[0]
       await ab.put(id, log, 4 * 100, addr)
       // 4 units left
-      await sleep(300)
+      await delay(300)
       // 1 unit left
       await ab.put(id, log, 3 * 100, addr)
       // 3 units left
-      await sleep(200)
+      await delay(200)
       // 1 unit left
       // We still have the address
       expect((await ab.get(id, log)).size).to.equal(1)

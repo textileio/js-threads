@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import Base58 from 'bs58'
-import { BaseRecord, HeaderNode, EventNode, RecordNode } from './interface'
-import { decodeBlock, CodecOptions, createEvent, defaultCodecOpts } from './crypto/node'
+import CID from 'cids'
+import { LinkRecord, EventHeader, RecordNode, EventNode, PrivateKey } from '@textile/threads-core'
+import { decodeBlock, CodecOptions, createEvent, defaultCodecOpts, encodeBlock } from './crypto/node'
 
 const Block = require('@ipld/block')
 
 export { CodecOptions }
-export { BaseRecord }
 
 export class RecordEncoder {
-  constructor(private logRecord: BaseRecord, private opts: CodecOptions = defaultCodecOpts) {}
+  constructor(public logRecord: LinkRecord, private opts: CodecOptions = defaultCodecOpts) {}
   /**
    * Create new Record from existing LogRecord
    * @param record The input LogRecord
    * @param opts The encoding options to use when decoding the data from IPLD blocks.
    */
-  static async decode(record: BaseRecord, opts: CodecOptions = defaultCodecOpts) {
+  static decode(record: LinkRecord, opts: CodecOptions = defaultCodecOpts) {
     return new RecordEncoder(record, opts)
   }
   /**
@@ -25,60 +25,77 @@ export class RecordEncoder {
    * @param key The optional symmetric key to use to encrypt the raw body data.
    * @param opts The encoding options to use when encoding the data as IPLD blocks.
    */
-  static async encode(obj: any, readKey: string, key?: string, opts: CodecOptions = defaultCodecOpts) {
+  static async encode(
+    obj: any,
+    readKey: string,
+    key?: string,
+    privKey?: PrivateKey,
+    followKey?: string,
+    prev?: CID,
+    opts: CodecOptions = defaultCodecOpts,
+  ) {
     const { body, header } = await createEvent(obj, readKey, key, opts)
     const event = {
       body: await body.cid(),
       header: await header.cid(),
     }
-    const codedEvent = Block.encoder(event, opts.codec, opts.codec).encode()
-    const record = {
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      event_node: codedEvent.toString('base64'),
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      body_node: body.encode().toString('base64'),
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      header_node: header.encode().toString('base64'),
+    const codedEvent = Block.encoder(event, opts.codec, opts.algo)
+    const record: LinkRecord = {
+      event: codedEvent.encode().toString('base64'),
+      body: body.encode().toString('base64'),
+      header: header.encode().toString('base64'),
     }
+
+    const block = await codedEvent.cid()
+    let payload: Buffer = block.buffer
+    if (prev) {
+      payload = Buffer.concat([payload, prev.buffer])
+    }
+    const sig = (await privKey?.sign(payload)) || Buffer.from('')
+    const rec: RecordNode = { block, sig }
+    if (prev) rec.prev = prev
+    const encoded = encodeBlock(rec, followKey).encode()
+    record.record = encoded.toString('base64')
     return new RecordEncoder(record, opts)
   }
-  async header(readKey: string) {
-    if (this.logRecord.header_node) {
-      const headerNode = this.logRecord.header_node
-      const headerRaw = Buffer.from(headerNode, 'base64')
-      const header = await decodeBlock(headerRaw, readKey, this.opts)
-      return header as HeaderNode
+  header(readKey: string) {
+    if (this.logRecord.header) {
+      const headerNode = this.logRecord.header
+      const headerRaw = headerNode instanceof Buffer ? headerNode : Buffer.from(headerNode, 'base64')
+      const header = decodeBlock(headerRaw, readKey, this.opts)
+      return header as EventHeader
     }
     return undefined
   }
-  async body(readKey: string) {
-    const head = await this.header(readKey)
-    if (this.logRecord.body_node && head) {
+  body(readKey: string) {
+    const head = this.header(readKey)
+    if (this.logRecord.body && head) {
       const key = Base58.encode(head.key)
-      const bodyNode = this.logRecord.body_node
-      const bodyRaw = Buffer.from(bodyNode, 'base64')
-      const body = await decodeBlock(bodyRaw, key, this.opts)
+      const bodyNode = this.logRecord.body
+      const bodyRaw = bodyNode instanceof Buffer ? bodyNode : Buffer.from(bodyNode, 'base64')
+      const body = decodeBlock(bodyRaw, key, this.opts)
       return body
     }
     return undefined
   }
-  async event() {
-    if (this.logRecord.event_node) {
-      const eventNode = this.logRecord.event_node
-      const eventRaw = Buffer.from(eventNode, 'base64')
+  event() {
+    if (this.logRecord.event) {
+      const eventNode = this.logRecord.event
+      const eventRaw = eventNode instanceof Buffer ? eventNode : Buffer.from(eventNode, 'base64')
       // Event 'body' is not encrypted, so don't use decodeBlock
       const event = Block.decoder(eventRaw, this.opts.codec, this.opts.algo).decode()
       return event as EventNode
     }
     return undefined
   }
-  async record(followKey: string) {
-    if (this.logRecord.record_node) {
-      const recordNode = this.logRecord.record_node
-      const recordRaw = Buffer.from(recordNode, 'base64')
-      const record = await decodeBlock(recordRaw, followKey, this.opts)
+  record(followKey: string) {
+    if (this.logRecord.record) {
+      const recordNode = this.logRecord.record
+      const recordRaw = recordNode instanceof Buffer ? recordNode : Buffer.from(recordNode, 'base64')
+      const record = decodeBlock(recordRaw, followKey, this.opts)
       return record as RecordNode
     }
+
     return undefined
   }
 }

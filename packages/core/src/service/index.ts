@@ -1,7 +1,7 @@
 import EventEmitter from 'events'
 import CID from 'cids'
 import Multiaddr from 'multiaddr'
-import { LogID, ThreadID, LogInfo, ThreadInfo, Log } from '../thread'
+import { LogID, ThreadID, LogInfo, ThreadInfo } from '../thread'
 import { Closer, Block } from '../utils'
 // @todo: Replace this with actual peer-id types
 import { PeerID } from '../external'
@@ -13,8 +13,8 @@ export interface ThreadRecord {
 }
 
 export interface RecordNode {
-  sig: Buffer
-  prev: CID
+  sig: Buffer | string
+  prev?: CID
   block: CID
 }
 
@@ -46,35 +46,50 @@ export interface Service extends EventEmitter, Closer {
   getRecord(id: ThreadID, rid: CID): Promise<ThreadRecord | undefined>
 }
 
-// Record is a thread record containing link data.
-export interface Record {
+export interface EventHeader {
+  key: Buffer
+  time: number
+}
+
+export interface EventNode {
+  header: any
+  body: any
+}
+
+// LinkRecord is a thread record containing link data.
+export interface LinkRecord {
   // recordNode is the top-level node's raw data.
-  recordnode: Uint8Array | string
+  record?: Buffer | string
   // eventNode is the event node's raw data.
-  eventnode: Uint8Array | string
+  event: Buffer | string
   // headerNode is the header node's raw data.
-  headernode: Uint8Array | string
+  header: Buffer | string
   // bodyNode is the body node's raw data.
-  bodynode: Uint8Array | string
+  body: Buffer | string
 }
 
 // LogEntry represents a single log.
 export interface LogEntry {
   // logID of this entry.
-  ID: LogID
+  id: LogID
   // records returned for this entry.
-  records: Record[]
+  records: LinkRecord[]
   // log contains new log info that was missing from the request.
-  log?: Log
+  log?: LogInfo
 }
 
 export interface Network {
   // GetLogs from a peer.
-  getLogs(id: ThreadID, replicatorKey: Buffer): Promise<Log[]>
+  getLogs(id: ThreadID, replicatorKey: Buffer): Promise<LogInfo[]>
   // PushLog to a peer.
   pushLog(id: ThreadID, log: LogInfo, replicatorKey: Buffer, readKey?: Buffer): Promise<void>
   // GetRecords from a peer.
-  getRecords(id: ThreadID, replicatorKey: Buffer, offsets?: Map<LogID, CID>, limit?: number): Promise<LogEntry[]>
+  getRecords(
+    id: ThreadID,
+    replicatorKey: Buffer,
+    offsets?: Map<LogID, CID | undefined>,
+    limit?: number,
+  ): Promise<LogEntry[]>
   // PushRecord to a peer.
-  // pushRecord(id: ThreadID, log: LogID, record: Record): Promise<void>
+  pushRecord(id: ThreadID, log: LogID, record: LinkRecord): Promise<void>
 }

@@ -275,28 +275,22 @@ describe('Client', function() {
       const entities = create.entitiesList
       const existingPerson = entities.pop()!
       const events: number[] = []
-      let closer: Function = () => {
-        throw new Error('closer function not updated')
+      const closer = client.listen<Person>(store.id, 'Person', existingPerson.ID, reply => {
+        const entity = reply.entity
+        expect(entity).to.not.be.undefined
+        expect(entity).to.have.property('age')
+        expect(entity.age).to.be.greaterThan(21)
+        events.push(entity.age)
+      })
+      existingPerson.age = 30
+      await client.modelSave(store.id, 'Person', [existingPerson])
+      existingPerson.age = 40
+      await client.modelSave(store.id, 'Person', [existingPerson])
+      closer()
+      while (events.length < 2) {
+        await sleep(250) // simply wait for our events to fire
       }
-      try {
-        closer = client.listen<Person>(store.id, 'Person', existingPerson.ID, reply => {
-          const entity = reply.entity
-          expect(entity).to.not.be.undefined
-          expect(entity).to.have.property('age')
-          expect(entity.age).to.be.greaterThan(21)
-          events.push(entity.age)
-        })
-
-        existingPerson.age = 30
-        await client.modelSave(store.id, 'Person', [existingPerson])
-        existingPerson.age = 40
-        await client.modelSave(store.id, 'Person', [existingPerson])
-        await sleep(5000)
-        expect(events.length).to.equal(2)
-      } finally {
-        expect(closer()).to.not.throw
-      }
-    }).timeout(5500) // Make sure our test doesn't timeout
+    }).timeout(25000) // Make sure our test doesn't timeout
   })
   describe('Query', () => {
     before(async () => {

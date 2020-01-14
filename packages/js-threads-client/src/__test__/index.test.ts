@@ -84,6 +84,9 @@ describe('Client', function() {
     it('response should be defined and be an array of strings', async () => {
       const invites = await client.getStoreLink(store.id)
       expect(invites).to.not.be.undefined
+      expect(invites[0].address).to.not.be.undefined
+      expect(invites[0].followKey).to.not.be.undefined
+      expect(invites[0].readKey).to.not.be.undefined
       // @todo: Combine this with startFromAddress for a better 'round-trip' test
       expect(invites).to.not.be.empty
     })

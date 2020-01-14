@@ -136,11 +136,15 @@ export class Client {
     const req = new GetStoreLinkRequest()
     req.setStoreid(storeID)
     const res = (await this.unary(API.GetStoreLink, req)) as GetStoreLinkReply.AsObject
-    const invites = []
+    const invites: Array<{ address: string; followKey: string; readKey: string }> = []
     for (const addr of res.addressesList) {
       const fk = Buffer.from(res.followkey as string, 'base64')
       const rk = Buffer.from(res.readkey as string, 'base64')
-      invites.push(`${addr}?${encode(fk)}&${encode(rk)}`)
+      invites.push({
+        address: addr,
+        followKey: encode(fk),
+        readKey: encode(rk),
+      })
     }
     return invites
   }

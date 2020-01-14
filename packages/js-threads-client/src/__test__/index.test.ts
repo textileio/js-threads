@@ -10,6 +10,7 @@ import { WriteTransaction } from 'src/WriteTransaction'
 import { Client } from '../index'
 import { JSONQuery, JSONOperation } from '../models'
 import { Where } from '../query'
+import { ReadTransaction } from 'src/ReadTransaction'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const client = new Client('http://localhost:7006')
@@ -183,12 +184,12 @@ describe('Client', function() {
   })
   describe('.readTransaction', () => {
     let existingPerson: Person
-    let transaction: WriteTransaction | undefined
+    let transaction: ReadTransaction | undefined
     before(async () => {
       const create = await client.modelCreate<Person>(store.id, 'Person', [createPerson()])
       const entities = create.entitiesList
       existingPerson = entities.pop()!
-      transaction = client.writeTransaction(store.id, 'Person')
+      transaction = client.readTransaction(store.id, 'Person')
     })
     it('should start a transaction', async () => {
       expect(transaction).to.not.be.undefined

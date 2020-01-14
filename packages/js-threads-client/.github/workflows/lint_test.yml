@@ -42,12 +42,13 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'skip-ci')"
 
-    steps:
-    - name: Set up Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
+    services:
+      threads:
+        image: textile/go-threads
+        ports:
+        - 7006:7006
         
+    steps:
     - name: Checkout
       uses: actions/checkout@v1
 
@@ -61,31 +62,6 @@ jobs:
           ${{ runner.os }}-build-${{ env.cache-name }}-
           ${{ runner.os }}-build-
           ${{ runner.os }}-
-
-    - name: Cache Go Dependencies
-      id: go-dependencies
-      uses: actions/cache@v1
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
-    - name: Download Daemon
-      run: |
-            mkdir -p ~/daemon && cd ~/daemon
-            git clone --depth=1  https://github.com/textileio/go-threads.git
-
-    - name: Build Daemon
-      run: |
-            cd ~/daemon/go-threads
-            go mod download
-            go build threadsd/main.go
-
-    - name: Run Daemon
-      run: |
-           (cd ~/daemon/go-threads && rm -rf .threads && go run threadsd/main.go) &
-           sleep 10
 
     - name: Setup
       uses: actions/setup-node@v1

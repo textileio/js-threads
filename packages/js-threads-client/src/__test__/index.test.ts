@@ -290,6 +290,7 @@ describe('Client', function() {
       while (events.length < 2) {
         await sleep(250) // simply wait for our events to fire
       }
+      expect(events.length).to.equal(2)
     }).timeout(25000) // Make sure our test doesn't timeout
   })
   describe('Query', () => {

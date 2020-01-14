@@ -6,7 +6,7 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test:node": "mocha --require ts-node/register --require source-map-support/register --recursive src/__test__/**/*.test.ts",
+    "test:node": "mocha --exit --require ts-node/register --require source-map-support/register --recursive src/__test__/**/*.test.ts",
     "test:node:coverage": "nyc npm run test",
     "test:browser": "npx polendina@1.0.0 --cleanup src/**/*.test.ts --webpack-config webpack.test.js",
     "test": "npm run test:node && npm run test:browser",

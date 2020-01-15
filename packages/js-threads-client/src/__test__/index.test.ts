@@ -277,23 +277,22 @@ describe('Client', function() {
       const entities = create.entitiesList
       existingPerson = entities.pop()!
     })
-    it('should stream responses.', async () => {
-      const closer = client.listen<Person>(store.id, 'Person', existingPerson.ID, reply => {
+    it('should stream responses.', done => {
+      client.listen<Person>(store.id, 'Person', existingPerson.ID, reply => {
         const entity = reply.entity
         expect(entity).to.not.be.undefined
         expect(entity).to.have.property('age')
         expect(entity.age).to.be.greaterThan(21)
         events.push(entity.age)
+        if (events.length == 2) {
+          done()
+        }
       })
       existingPerson.age = 30
-      await client.modelSave(store.id, 'Person', [existingPerson])
-      existingPerson.age = 40
-      await client.modelSave(store.id, 'Person', [existingPerson])
-      closer()
-      while (events.length < 2) {
-        await sleep(250) // simply wait for our events to fire
-      }
-      expect(events.length).to.equal(2)
+      client.modelSave(store.id, 'Person', [existingPerson]).then(() => {
+        existingPerson.age = 40
+        return client.modelSave(store.id, 'Person', [existingPerson])
+      })
     }).timeout(25000) // Make sure our test doesn't timeout
   })
   describe('Query', () => {

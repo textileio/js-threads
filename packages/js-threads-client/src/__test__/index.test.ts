@@ -270,11 +270,14 @@ describe('Client', function() {
     })
   })
   describe('.listen', () => {
-    it('should stream responses.', async () => {
+    let existingPerson: Person
+    const events: number[] = []
+    before(async () => {
       const create = await client.modelCreate<Person>(store.id, 'Person', [createPerson()])
       const entities = create.entitiesList
-      const existingPerson = entities.pop()!
-      const events: number[] = []
+      existingPerson = entities.pop()!
+    })
+    it('should stream responses.', async () => {
       const closer = client.listen<Person>(store.id, 'Person', existingPerson.ID, reply => {
         const entity = reply.entity
         expect(entity).to.not.be.undefined

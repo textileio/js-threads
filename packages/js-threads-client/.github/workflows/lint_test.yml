@@ -46,7 +46,7 @@ jobs:
       threads:
         image: textile/go-threads
         ports:
-        - 7006:7006
+        - 6007:6007
         
     steps:
     - name: Checkout

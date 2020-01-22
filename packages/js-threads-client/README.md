@@ -47,7 +47,7 @@ npm run test:{node,browser}
 **create a client**
 
 ```js
-this.client = new Client('http://localhost:7006')
+this.client = new Client('http://localhost:6007')
 ```
 
 **create a store**
@@ -115,7 +115,7 @@ go run threadsd/main.go
 You can make the daemon API port available to your app with,
 
 ```sh
-adb reverse tcp:7006 tcp:7006
+adb reverse tcp:6007 tcp:6007
 ```
 
 Altenatively, you can ensure this is run whenever you run your app by modifying your `package.json` as follows.
@@ -125,7 +125,7 @@ Altenatively, you can ensure this is run whenever you run your app by modifying 
   ...
   "scripts": {
     ...
-    "bind": "adb reverse tcp:7006 tcp:7006",
+    "bind": "adb reverse tcp:6007 tcp:6007",
     "android": "npm run bind && npx react-native run-android",
     ...
   },

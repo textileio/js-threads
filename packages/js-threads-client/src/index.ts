@@ -56,7 +56,7 @@ export class Client {
 
   /**
    * Client creates a new gRPC client instance.
-   * @param host The local/remote host url. Defaults to 'localhost:7006'.
+   * @param host The local/remote host url. Defaults to 'localhost:6007'.
    * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
    */
   constructor(host: string, defaultTransport?: grpc.TransportFactory) {

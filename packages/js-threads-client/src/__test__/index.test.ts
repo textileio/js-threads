@@ -13,7 +13,7 @@ import { Where } from '../query'
 import { ReadTransaction } from 'src/ReadTransaction'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
-const client = new Client('http://localhost:7006')
+const client = new Client('http://localhost:6007')
 
 const personSchema = {
   $id: 'https://example.com/person.schema.json',

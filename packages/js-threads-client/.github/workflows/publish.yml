@@ -25,6 +25,9 @@ jobs:
           npm install
           npm install -g json
           npm install -g yaml-cli
+      - name: Build Library
+        run: |
+          npm run build
       - name: Publish NPM Package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}

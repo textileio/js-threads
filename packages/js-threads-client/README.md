@@ -106,7 +106,7 @@ You can run the daemon released as part of the early preview. To do so,
 
 ```sh
 git clone git@github.com:textileio/go-threads.git
-cd go-textile-threads
+cd go-threads
 go run threadsd/main.go
 ```
 

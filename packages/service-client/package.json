@@ -9,7 +9,6 @@
   "scripts": {
     "prepublishOnly": "npm run build",
     "prebuild": "npm run clean",
-    "build": "tsc -p tsconfig.json",
     "clean": "rimraf ./dist"
   },
   "dependencies": {
@@ -25,7 +24,7 @@
     "@types/bs58": "^4.0.1",
     "@types/multiaddr": "^7.2.0",
     "@types/randombytes": "^2.0.0",
-    "cids": "github:multiformats/js-cid#master",
+    "cids": "^0.7.2",
     "delay": "^4.3.0",
     "isomorphic-ws": "^4.0.1",
     "peer-id": "^0.13.6",

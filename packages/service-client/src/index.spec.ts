@@ -16,7 +16,7 @@ const { create } = require('peer-id')
 
 const host = 'http://127.0.0.1:5006'
 
-describe.skip('Client', function() {
+describe('Client', function() {
   // before(async () => {
   //   const id = await create()
   //   client = new Client(id, host)

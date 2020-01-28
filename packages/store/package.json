@@ -35,7 +35,7 @@
     "@types/lexicographic-integer": "^1.1.0",
     "@types/to-json-schema": "^0.2.0",
     "@types/uuid": "^3.4.6",
-    "cids": "github:multiformats/js-cid#master",
+    "cids": "^0.7.2",
     "rimraf": "^3.0.0",
     "streaming-iterables": "^4.1.1",
     "typescript": "^3.7.2"

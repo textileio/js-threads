@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import randomBytes from 'randombytes'
 import CID from 'cids'
 import Multiaddr from 'multiaddr'
@@ -13,20 +12,14 @@ import {
   ThreadRecord,
   ThreadInfo,
   Service as Interface,
-  PeerID,
   ThreadProtocol,
   Network,
   Events,
-  PublicKey,
-  PrivateKey,
-  RecordNode,
 } from '@textile/threads-core'
 import { Datastore } from 'interface-datastore'
+import { keys, PrivateKey, PublicKey } from 'libp2p-crypto'
+import PeerId, { createFromPubKey } from 'peer-id'
 import { LogStore } from '../logstore'
-
-// @todo: Factor out libp2p crypto and peer-id
-const { keys } = require('libp2p-crypto')
-const { createFromPubKey } = require('peer-id')
 
 const logger = log.getLogger('service:service')
 // MaxPullLimit is the maximum page size for pulling records.
@@ -40,7 +33,7 @@ const pullInterval = 10_000 // 10 seconds
 export class Service extends EventEmitter<Events> implements Interface {
   public store: LogStore
   private semaphore: Map<ThreadID, RWLock> = new Map()
-  constructor(store: LogStore | Datastore, public host: PeerID, private server: Network) {
+  constructor(store: LogStore | Datastore, public host: PeerId, private server: Network) {
     super()
     this.store = store instanceof LogStore ? store : LogStore.fromDatastore(store)
   }
@@ -74,7 +67,7 @@ export class Service extends EventEmitter<Events> implements Interface {
    */
   static async createLog(log: LogID) {
     const privKey: PrivateKey = await keys.generateKeyPair('ed25519', 32)
-    const id = await createFromPubKey(privKey.public)
+    const id = await createFromPubKey(privKey.public.bytes)
     const addrs: Set<Multiaddr> = new Set([Multiaddr(`/p2p/${log}`)])
     const info: LogInfo = {
       id,
@@ -117,8 +110,8 @@ export class Service extends EventEmitter<Events> implements Interface {
     const logs = await this.server.getLogs(id, replicatorKey)
     // @todo: Ensure we don't overwrite with newer info from owner?
     for (const log of logs) {
-      const pubKey = keys.unmarshalPublicKey(log.pubKey)
-      const privKey = log.privKey ? keys.unmarshalPrivateKey(log.privKey) : undefined
+      const pubKey = keys.unmarshalPublicKey(log.pubKey.bytes)
+      const privKey = log.privKey ? keys.unmarshalPrivateKey(log.privKey.bytes) : undefined
       await this.maybeCreateExternalLog(id, log.id, pubKey, privKey, new Set(log.addrs))
     }
     // Don't await...

@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
-import { ThreadID, PrivateKey, Variant } from '@textile/threads-core'
+import { ThreadID, Variant } from '@textile/threads-core'
 import Multiaddr from 'multiaddr'
+import crypto, { PrivateKey } from 'libp2p-crypto'
+import PeerId from 'peer-id'
 import { LogStore } from './logstore'
-
-// @todo: Find or write type defs for these (or replace them with smaller deps)
-const crypto = require('libp2p-crypto')
-const PeerId = require('peer-id')
 
 const createLogStore = () => {
   return LogStore.fromDatastore(new MemoryDatastore())

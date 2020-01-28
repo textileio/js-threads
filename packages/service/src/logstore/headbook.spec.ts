@@ -3,10 +3,8 @@ import { expect } from 'chai'
 import CID from 'cids'
 import { MemoryDatastore } from 'interface-datastore'
 import { ThreadID } from '@textile/threads-core'
+import PeerId from 'peer-id'
 import { HeadBook } from './headbook'
-
-// @todo: Find or write the types for this library
-const PeerId = require('peer-id')
 
 let hb: HeadBook
 const id: ThreadID = ThreadID.fromRandom(0, 24)

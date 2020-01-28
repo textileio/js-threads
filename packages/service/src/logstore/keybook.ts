@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
-import { Closer, LogsThreads, ThreadID, LogID, PublicKey, PrivateKey } from '@textile/threads-core'
-
-const crypto = require('libp2p-crypto')
-const PeerId = require('peer-id')
+import { Closer, LogsThreads, ThreadID, LogID } from '@textile/threads-core'
+import crypto, { PrivateKey, PublicKey } from 'libp2p-crypto'
+import PeerId from 'peer-id'
 
 // Public and private keys are stored under the following db key pattern:
 // /threads/keys/<b32 thread id no padding>/<b32 log id no padding>:(pub|priv)

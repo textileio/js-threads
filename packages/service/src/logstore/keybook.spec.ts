@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
-import { ThreadID, PrivateKey } from '@textile/threads-core'
+import { ThreadID } from '@textile/threads-core'
+import PeerId from 'peer-id'
+import crypto, { PrivateKey } from 'libp2p-crypto'
 import { KeyBook } from './keybook'
-
-// @todo: Find or write type defs for these (or replace them with smaller deps)
-const crypto = require('libp2p-crypto')
-const PeerId = require('peer-id')
 
 let kb: KeyBook
 const tid: ThreadID = ThreadID.fromRandom(0, 24)

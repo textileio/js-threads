@@ -15,7 +15,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'skip-ci')"
 
     services:
-      threads2:
+      threads1:
         image: textile/go-threads
         ports:
           - 5007:5007

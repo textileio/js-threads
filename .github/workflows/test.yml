@@ -1,0 +1,60 @@
+name: Test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'skip-ci')"
+
+    services:
+      threads2:
+        image: textile/go-threads
+        ports:
+          - 5007:5007
+      threads2:
+        image: textile/go-threads
+        ports:
+          - 5008:5008
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+    - name: Setup
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+
+    - name: Install
+      run: npm install
+
+    - name: Bootstrap
+      run: |
+        npm run bootstrap -- --hoist --no-ci
+        npm run build
+    - name: Lint
+      run: npm run lint
+
+    - name: Test Node
+      run: npm run test:node
+
+    - name: Test Browser
+      run: npm run test:browser

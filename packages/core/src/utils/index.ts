@@ -1,11 +1,4 @@
-import Buffer from 'buffer'
-import CID from 'cids'
 import { ThreadID, LogID } from '../thread'
-
-export interface Block {
-  data: Buffer
-  cid: CID
-}
 
 export interface LogsThreads {
   // logs returns a list of log IDs for a thread.

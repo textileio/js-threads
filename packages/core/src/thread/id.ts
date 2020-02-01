@@ -105,6 +105,15 @@ export class ThreadID {
     return this.buf.toString()
   }
 
+  // hexEncode returns the hex encoding of the TheadID prefixed by size.
+  // For use with Multiaddr.
+  hexEncode(): string {
+    const bytes = Buffer.from(this.string())
+    const size = Buffer.from(encode(bytes.byteLength))
+    // return Buffer.concat([size, bytes]).toString()
+    return Buffer.from(size).toString('hex') + this.string()
+  }
+
   // Version returns the ID version.
   version(): number {
     return decode(this.buf)

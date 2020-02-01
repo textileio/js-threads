@@ -1,9 +1,11 @@
 import CID from 'cids'
 import Multiaddr from 'multiaddr'
-import { PublicKey, PrivateKey } from '../external'
+import { PublicKey, PrivateKey } from 'libp2p-crypto'
 import { LogID, ThreadID } from './id'
 
-// LogInfo holds known info about a log.
+/**
+ * LogInfo holds known info about a log.
+ */
 export interface LogInfo {
   id: LogID
   pubKey: PublicKey

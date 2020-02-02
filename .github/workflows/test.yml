@@ -22,7 +22,7 @@ jobs:
       threads2:
         image: textile/go-threads
         ports:
-          - 5008:5008
+          - 5008:5007
 
     steps:
 

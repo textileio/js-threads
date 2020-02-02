@@ -21,6 +21,8 @@ jobs:
           - 5007:5007
       threads2:
         image: textile/go-threads
+        env:
+          HOSTADDR: /ip4/0.0.0.0/tcp/4007
         ports:
           - 5008:5007
 

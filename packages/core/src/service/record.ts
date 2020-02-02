@@ -41,9 +41,9 @@ export interface RecordNode {
 }
 
 /**
- * RecordInfo wraps a LogRecord within a thread and log context.
+ * ThreadRecord wraps a LogRecord within a thread and log context.
  */
-export interface RecordInfo {
+export interface ThreadRecord {
   /**
    * The underlying LogRecord.
    */

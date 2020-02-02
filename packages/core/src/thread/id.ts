@@ -1,5 +1,5 @@
 import { encode, decode } from 'varint'
-import randomBytes from 'randombytes'
+import { randomBytes } from 'libp2p-crypto'
 import multibase, { name as Name } from 'multibase'
 
 /**

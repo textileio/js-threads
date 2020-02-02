@@ -1,44 +1,7 @@
 import CID from 'cids'
-import { Block } from '@textile/threads-core'
+import { Block, Event, EventNode, LogRecord, RecordNode } from '@textile/threads-core'
 import { randomBytes, PrivateKey } from 'libp2p-crypto'
 import { Options, defaultOptions, encodeBlock, decodeBlock } from './coding'
-import { Event, EventNode } from './event'
-
-/**
- * LogRecord is an Block node representing a record.
- */
-export interface LogRecord {
-  /**
-   * The node structure of the record.
-   */
-  value: Block<Uint8Array>
-  /**
-   * The underlying event block.
-   */
-  block: Event
-  /**
-   * The underlying record node.
-   */
-  obj?: RecordNode
-}
-
-/**
- * Node defines the node structure of a record.
- */
-export interface RecordNode {
-  /**
-   * Signature of current and previous blocks.
-   */
-  sig: Uint8Array
-  /**
-   * CID of record block.
-   */
-  block: CID
-  /**
-   * CID of previous record.
-   */
-  prev?: CID
-}
 
 /**
  * EncodedRecord is a serialized version of a record that contains link data.

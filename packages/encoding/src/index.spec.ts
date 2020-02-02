@@ -1,9 +1,9 @@
 import { expect } from 'chai'
 import { randomBytes, keys } from 'libp2p-crypto'
-import { Block } from '@textile/threads-core'
+import { Block, EventHeader, RecordNode } from '@textile/threads-core'
 import { defaultOptions, decodeBlock } from './coding'
-import { createEvent, EventHeader } from './event'
-import { createRecord, RecordNode } from './record'
+import { createEvent } from './event'
+import { createRecord } from './record'
 
 const readKey = randomBytes(44)
 const replicatorKey = randomBytes(44)

@@ -26,7 +26,9 @@ const version = '0.0.1'
 // Thread protocol name
 const name = 'thread'
 
-// ThreadProtocol describes the default Threads Protocol parameters
+/**
+ * ThreadProtocol describes the default Threads Protocol parameters
+ */
 export const ThreadProtocol = {
   /**
    * Name is the protocol slug.

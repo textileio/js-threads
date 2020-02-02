@@ -1,57 +1,6 @@
 import { randomBytes } from 'libp2p-crypto'
-import { Block } from '@textile/threads-core'
-import CID from 'cids'
+import { Block, Event, EventNode, EventHeader } from '@textile/threads-core'
 import { Options, defaultOptions, encodeBlock } from './coding'
-
-/**
- * Event is a Block node representing an event.
- */
-export interface Event {
-  /**
-   * The node structure of the event.
-   */
-  value: Block<EventNode>
-  /**
-   * The header content for the event.
-   */
-  header: Block<Uint8Array>
-  /**
-   * The body content for the event.
-   */
-  body: Block<Uint8Array>
-  /**
-   * The underlying event node.
-   */
-  obj?: EventNode
-}
-
-/**
- * Node defines the node structure of an event.
- */
-export interface EventNode {
-  /**
-   * CID of body block
-   */
-  body: CID
-  /**
-   * CID of header block
-   */
-  header: CID
-}
-
-/**
- * Header defines the node structure of an event header.
- */
-export interface EventHeader {
-  /**
-   * Single-use symmetric key
-   */
-  key?: Uint8Array
-  /**
-   * Unix seconds since epoch
-   */
-  time: number
-}
 
 export async function createEvent(body: Block, readKey: Uint8Array, key?: Uint8Array, opts: Options = defaultOptions) {
   const keyiv = key || randomBytes(44)

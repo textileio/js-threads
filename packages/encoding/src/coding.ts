@@ -45,7 +45,3 @@ export function decodeBlock<T = any>(block: Block<Uint8Array>, keyiv: Uint8Array
   const decrypted = decipher.update(cipher)
   return Block.decoder<T>(decrypted, opts.codec, opts.algo)
 }
-
-export function wrapBlock(data: any) {
-  return Block.encoder(data, defaultOptions.codec)
-}

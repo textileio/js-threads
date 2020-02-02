@@ -3,17 +3,10 @@ import CID from 'cids'
 import Multiaddr from 'multiaddr'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import { ThreadID, ThreadInfo, KeyOptions, LogInfo, Block } from '@textile/threads-core'
+import { ThreadID, ThreadInfo, KeyOptions, LogInfo, Block, RecordInfo, LogRecord } from '@textile/threads-core'
 import * as pb from '@textile/threads-service-grpc/api_pb'
 import { API } from '@textile/threads-service-grpc/api_pb_service'
-import * as encoding from '@textile/threads-encoding'
-import { RecordNode } from '@textile/threads-encoding'
-
-export interface RecordInfo {
-  record?: encoding.LogRecord
-  threadID: ThreadID
-  logID: PeerId
-}
+import { recordFromProto, recordToProto } from '@textile/threads-encoding'
 
 function getThreadKeys(opts: KeyOptions) {
   const threadKeys = new pb.ThreadKeys()
@@ -27,7 +20,7 @@ function threadRecordFromProto(proto: pb.NewRecordReply.AsObject, keyiv: Uint8Ar
   const threadID = ThreadID.fromBytes(Buffer.from(proto.threadid as string, 'base64'))
   const rawID = Buffer.from(proto.logid as string, 'base64')
   const logID = PeerId.createFromBytes(rawID)
-  const record = proto.record && encoding.recordFromProto(proto.record, keyiv)
+  const record = proto.record && recordFromProto(proto.record, keyiv)
   const info: RecordInfo = {
     record,
     threadID,
@@ -180,8 +173,8 @@ export class Client {
     return info.replicatorKey && threadRecordFromProto(res, info.replicatorKey)
   }
 
-  async addRecord(id: ThreadID, logID: PeerId, rec: encoding.LogRecord) {
-    const prec = encoding.recordToProto(rec)
+  async addRecord(id: ThreadID, logID: PeerId, rec: LogRecord) {
+    const prec = recordToProto(rec)
     const req = new pb.AddRecordRequest()
     req.setThreadid(id.bytes())
     req.setLogid(logID.toBytes())
@@ -203,7 +196,7 @@ export class Client {
     const record = (await this.unary(API.GetRecord, req)) as pb.GetRecordReply.AsObject
     if (!info.replicatorKey) throw new Error('Missing replicatorKey')
     if (!record.record) throw new Error('Missing return value')
-    const res = encoding.recordFromProto(record.record, info.replicatorKey)
+    const res = recordFromProto(record.record, info.replicatorKey)
     return res
   }
 
@@ -226,7 +219,7 @@ export class Client {
       }
       const keyiv = keys.get(id)
       if (!keyiv) return cb(undefined, new Error('Missing replicatorKey'))
-      const record = proto.record && encoding.recordFromProto(proto.record, keyiv)
+      const record = proto.record && recordFromProto(proto.record, keyiv)
       return cb(
         {
           record,

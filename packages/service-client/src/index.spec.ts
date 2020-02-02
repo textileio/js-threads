@@ -11,25 +11,25 @@ import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
 import delay from 'delay'
-import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block } from '@textile/threads-core'
+import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, RecordInfo } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import Multiaddr from 'multiaddr'
-import { Client, RecordInfo } from '.'
+import { Client } from '.'
 
 const hostAddrPort = 4006
 const proxyAddr = 'http://127.0.0.1:5007'
 const ed25519 = keys.supportedKeys.ed25519
 
-const protocol = {
-  code: ThreadProtocol.code,
-  name: ThreadProtocol.name,
-  resolvable: false,
-  size: -1,
-  path: false,
-}
+// const protocol = {
+//   code: ThreadProtocol.code,
+//   name: ThreadProtocol.name,
+//   resolvable: false,
+//   size: -1,
+//   path: false,
+// }
 
-Multiaddr.protocols.names[ThreadProtocol.name] = protocol
-Multiaddr.protocols.codes[ThreadProtocol.code] = protocol
+// Multiaddr.protocols.names[ThreadProtocol.name] = protocol
+// Multiaddr.protocols.codes[ThreadProtocol.code] = protocol
 
 async function createThread(client: Client) {
   const id = ThreadID.fromRandom(Variant.Raw, 32)

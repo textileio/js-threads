@@ -1,7 +1,10 @@
 import CID from 'cids'
+import log from 'loglevel'
 import { Block, Event, EventNode, LogRecord, RecordNode } from '@textile/threads-core'
 import { randomBytes, PrivateKey } from 'libp2p-crypto'
 import { Options, defaultOptions, encodeBlock, decodeBlock } from './coding'
+
+const logger = log.getLogger('encoding:record')
 
 /**
  * EncodedRecord is a serialized version of a record that contains link data.
@@ -21,6 +24,7 @@ export async function createRecord(
   key?: Uint8Array,
   opts: Options = defaultOptions,
 ) {
+  logger.debug('creating record')
   const block = await data.value.cid()
   let payload = block.buffer
   if (prev && CID.isCID(prev)) {
@@ -48,6 +52,7 @@ export async function createRecord(
 // RecordToProto returns a proto version of a record for transport.
 // Nodes are sent encrypted.
 export function recordToProto(rec: LogRecord) {
+  logger.debug('converting log record to proto object')
   const event = rec.block
   const eventnode = event.value.encodeUnsafe().toString('base64')
   const headernode = event.header.encodeUnsafe().toString('base64')
@@ -64,6 +69,7 @@ export function recordToProto(rec: LogRecord) {
 
 // recordFromProto returns a node from a serialized version that contains link data.
 export function recordFromProto(proto: EncodedRecord, keyiv: Uint8Array, opts: Options = defaultOptions) {
+  logger.debug('converting proto object to log record')
   const rawRecord = Buffer.from(proto.recordnode as string, 'base64')
   const rnode = Block.decoder<Buffer>(rawRecord, opts.codec, opts.algo)
   const rawEvent = Buffer.from(proto.eventnode as string, 'base64')

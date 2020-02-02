@@ -8,6 +8,8 @@
   ],
   "scripts": {
     "prepublishOnly": "npm run build",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
     "clean": "rimraf ./dist"
   },
   "dependencies": {

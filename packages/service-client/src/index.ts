@@ -3,7 +3,16 @@ import CID from 'cids'
 import Multiaddr from 'multiaddr'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import { ThreadID, ThreadInfo, KeyOptions, LogInfo, Block, RecordInfo, LogRecord } from '@textile/threads-core'
+import {
+  ThreadID,
+  ThreadInfo,
+  KeyOptions,
+  LogInfo,
+  Block,
+  ThreadRecord,
+  LogRecord,
+  API as Service,
+} from '@textile/threads-core'
 import * as pb from '@textile/threads-service-grpc/api_pb'
 import { API } from '@textile/threads-service-grpc/api_pb_service'
 import { recordFromProto, recordToProto } from '@textile/threads-encoding'
@@ -21,7 +30,7 @@ function threadRecordFromProto(proto: pb.NewRecordReply.AsObject, keyiv: Uint8Ar
   const rawID = Buffer.from(proto.logid as string, 'base64')
   const logID = PeerId.createFromBytes(rawID)
   const record = proto.record && recordFromProto(proto.record, keyiv)
-  const info: RecordInfo = {
+  const info: ThreadRecord = {
     record,
     threadID,
     logID,
@@ -62,7 +71,7 @@ function threadInfoFromProto(proto: pb.ThreadInfoReply.AsObject) {
  * Client is a web-gRPC wrapper client for communicating with a webgRPC-enabled Textile server.
  * This client library can be used to interact with a local or remote Textile gRPC-service.
  */
-export class Client {
+export class Client implements Service {
   /**
    * Client creates a new gRPC client instance.
    * @param host The local/remote host url. Defaults to 'localhost:7006'.
@@ -83,7 +92,7 @@ export class Client {
   }
 
   /**
-   * CreateThread with id.
+   * createThread with id.
    * @param id The Thread id.
    * @param opts The set of keys to use when creating the Thread. All keys are "optional", though if no replicator key
    * is provided, one will be created (and returned) on the remote service. Similarly, if no LogKey is provided, then
@@ -101,7 +110,7 @@ export class Client {
   }
 
   /**
-   * AddThread from a multiaddress.
+   * addThread from a multiaddress.
    * @param addr The Thread multiaddr.
    * @param opts The set of keys to use when adding the Thread.
    */
@@ -116,7 +125,7 @@ export class Client {
   }
 
   /**
-   * GetThread with id.
+   * getThread with id.
    * @param id The Thread ID.
    */
   async getThread(id: ThreadID) {
@@ -128,7 +137,7 @@ export class Client {
   }
 
   /**
-   * PullThread for new records.
+   * pullThread for new records.
    * @param id The Thread ID.
    */
   async pullThread(id: ThreadID) {
@@ -139,7 +148,7 @@ export class Client {
   }
 
   /**
-   * DeleteThread with id.
+   * deleteThread with id.
    * @param id The Thread ID.
    */
   async deleteThread(id: ThreadID) {
@@ -150,7 +159,7 @@ export class Client {
   }
 
   /**
-   * AddFollower to a thread.
+   * addReplicator to a thread.
    * @param id The Thread ID.
    * @param addr The multiaddr of the replicator peer.
    */
@@ -163,6 +172,11 @@ export class Client {
     return PeerId.createFromBytes(rawId)
   }
 
+  /**
+   * createRecord with body.
+   * @param id The Thread ID.
+   * @param body The body to add as content.
+   */
   async createRecord(id: ThreadID, body: any) {
     const info = await this.getThread(id)
     const block = Block.encoder(body, 'dag-cbor').encode()
@@ -173,6 +187,12 @@ export class Client {
     return info.replicatorKey && threadRecordFromProto(res, info.replicatorKey)
   }
 
+  /**
+   * addRecord to the given log.
+   * @param id The Thread ID.
+   * @param logID The Log ID.
+   * @param rec The log record to add.
+   */
   async addRecord(id: ThreadID, logID: PeerId, rec: LogRecord) {
     const prec = recordToProto(rec)
     const req = new pb.AddRecordRequest()
@@ -188,6 +208,11 @@ export class Client {
     return
   }
 
+  /**
+   * getRecord returns the record at cid.
+   * @param id The Thread ID.
+   * @param rec The record's CID.
+   */
   async getRecord(id: ThreadID, rec: CID) {
     const info = await this.getThread(id)
     const req = new pb.GetRecordRequest()
@@ -200,7 +225,12 @@ export class Client {
     return res
   }
 
-  subscribe(cb: (rec?: RecordInfo, err?: Error) => void, ...threads: ThreadID[]) {
+  /**
+   * subscribe to new record events in the given threads.
+   * @param cb The callback to call on each new thread record.
+   * @param threads The variadic set of threads to subscribe to.
+   */
+  subscribe(cb: (rec?: ThreadRecord, err?: Error) => void, ...threads: ThreadID[]) {
     const ids = threads.map(thread => thread.bytes())
     const request = new pb.SubscribeRequest()
     request.setThreadidsList(ids)

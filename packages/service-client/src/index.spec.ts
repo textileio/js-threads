@@ -11,7 +11,7 @@ import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
 import delay from 'delay'
-import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, RecordInfo } from '@textile/threads-core'
+import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, ThreadRecord } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import Multiaddr from 'multiaddr'
 import { Client } from '.'
@@ -176,7 +176,7 @@ describe('Service Client...', () => {
       const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))
       await client.addReplicator(info.id, peerAddr)
       let rcount = 0
-      const res = client2.subscribe((rec?: RecordInfo, err?: Error) => {
+      const res = client2.subscribe((rec?: ThreadRecord, err?: Error) => {
         if (rec) rcount += 1
         else if (err) rcount -= 1
       }, info.id)

@@ -3,6 +3,7 @@ import CID from 'cids'
 import Multiaddr from 'multiaddr'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
+import log from 'loglevel'
 import {
   ThreadID,
   ThreadInfo,
@@ -16,6 +17,8 @@ import {
 import * as pb from '@textile/threads-service-grpc/api_pb'
 import { API } from '@textile/threads-service-grpc/api_pb_service'
 import { recordFromProto, recordToProto } from '@textile/threads-encoding'
+
+const logger = log.getLogger('service-client')
 
 function getThreadKeys(opts: KeyOptions) {
   const threadKeys = new pb.ThreadKeys()
@@ -86,6 +89,7 @@ export class Client implements Service {
    * getHostID returns the service's (remote) host peer ID.
    */
   async getHostID() {
+    logger.debug('making get host ID request')
     const req = new pb.GetHostIDRequest()
     const res = (await this.unary(API.GetHostID, req)) as pb.GetHostIDReply.AsObject
     return PeerId.createFromBytes(Buffer.from(res.peerid as string, 'base64'))
@@ -100,6 +104,7 @@ export class Client implements Service {
    * service will be unable to write records (but it can return records).
    */
   async createThread(id: ThreadID, opts: KeyOptions) {
+    logger.debug('making create thread request')
     const keys = getThreadKeys(opts)
     const req = new pb.CreateThreadRequest()
     req.setThreadid(id.bytes())
@@ -115,6 +120,7 @@ export class Client implements Service {
    * @param opts The set of keys to use when adding the Thread.
    */
   async addThread(addr: Multiaddr, opts: KeyOptions) {
+    logger.debug('making add thread request')
     const keys = getThreadKeys(opts)
     const req = new pb.AddThreadRequest()
     req.setAddr(addr.buffer)
@@ -129,6 +135,7 @@ export class Client implements Service {
    * @param id The Thread ID.
    */
   async getThread(id: ThreadID) {
+    logger.debug('making get thread request')
     const req = new pb.GetThreadRequest()
     req.setThreadid(id.bytes())
     const res = (await this.unary(API.GetThread, req)) as pb.ThreadInfoReply.AsObject
@@ -141,6 +148,7 @@ export class Client implements Service {
    * @param id The Thread ID.
    */
   async pullThread(id: ThreadID) {
+    logger.debug('making pull thread request')
     const req = new pb.PullThreadRequest()
     req.setThreadid(id.bytes())
     await this.unary(API.PullThread, req)
@@ -152,6 +160,7 @@ export class Client implements Service {
    * @param id The Thread ID.
    */
   async deleteThread(id: ThreadID) {
+    logger.debug('making delete thread request')
     const req = new pb.DeleteThreadRequest()
     req.setThreadid(id.bytes())
     await this.unary(API.DeleteThread, req)
@@ -164,6 +173,7 @@ export class Client implements Service {
    * @param addr The multiaddr of the replicator peer.
    */
   async addReplicator(id: ThreadID, addr: Multiaddr) {
+    logger.debug('making add replicator request')
     const req = new pb.AddFollowerRequest()
     req.setThreadid(id.bytes())
     req.setAddr(addr.buffer)
@@ -178,6 +188,7 @@ export class Client implements Service {
    * @param body The body to add as content.
    */
   async createRecord(id: ThreadID, body: any) {
+    logger.debug('making create record request')
     const info = await this.getThread(id)
     const block = Block.encoder(body, 'dag-cbor').encode()
     const req = new pb.CreateRecordRequest()
@@ -194,6 +205,7 @@ export class Client implements Service {
    * @param rec The log record to add.
    */
   async addRecord(id: ThreadID, logID: PeerId, rec: LogRecord) {
+    logger.debug('making add record request')
     const prec = recordToProto(rec)
     const req = new pb.AddRecordRequest()
     req.setThreadid(id.bytes())
@@ -214,6 +226,7 @@ export class Client implements Service {
    * @param rec The record's CID.
    */
   async getRecord(id: ThreadID, rec: CID) {
+    logger.debug('making get record request')
     const info = await this.getThread(id)
     const req = new pb.GetRecordRequest()
     req.setThreadid(id.bytes())
@@ -231,6 +244,7 @@ export class Client implements Service {
    * @param threads The variadic set of threads to subscribe to.
    */
   subscribe(cb: (rec?: ThreadRecord, err?: Error) => void, ...threads: ThreadID[]) {
+    logger.debug('making subscribe request')
     const ids = threads.map(thread => thread.bytes())
     const request = new pb.SubscribeRequest()
     request.setThreadidsList(ids)

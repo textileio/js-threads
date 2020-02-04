@@ -106,7 +106,7 @@ describe('Service Client...', () => {
     it('should add a replicator to a thread', async () => {
       const client2 = new Client('http://127.0.0.1:5207')
       const hostID2 = await client2.getHostID()
-      const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4206`)
+      const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
 
       const info1 = await createThread(client)
 
@@ -171,7 +171,7 @@ describe('Service Client...', () => {
     it('should support thread subscriptions', async () => {
       const client2 = new Client('http://127.0.0.1:5207')
       const hostID2 = await client2.getHostID()
-      const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4206`)
+      const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
 
       const info = await createThread(client)
       const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))

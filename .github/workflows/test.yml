@@ -16,15 +16,35 @@ jobs:
 
     services:
       threads1:
-        image: textile/go-threads
-        ports:
-          - 5007:5007
-      threads2:
-        image: textile/go-threads
+        image: textile/go-threads:latest
         env:
-          HOSTADDR: /ip4/0.0.0.0/tcp/4007
+          - THRDS_HOSTADDR=/ip4/0.0.0.0/tcp/4006
+          - THRDS_SERVICEAPIADDR=/ip4/0.0.0.0/tcp/5006
+          - THRDS_SERVICEAPIPROXYADDR=/ip4/0.0.0.0/tcp/5007
+          - THRDS_APIADDR=/ip4/0.0.0.0/tcp/6006
+          - THRDS_APIPROXYADDR=/ip4/0.0.0.0/tcp/6007
+          - THRDS_DEBUG=true
         ports:
-          - 5008:5007
+          - "4106:4006"
+          - "127.0.0.1:5106:5006"
+          - "127.0.0.1:5107:5007"
+          - "127.0.0.1:6106:6006"
+          - "127.0.0.1:6107:6007"
+      threads2:
+        image: textile/go-threads:latest
+        env:
+          - THRDS_HOSTADDR=/ip4/0.0.0.0/tcp/4006
+          - THRDS_SERVICEAPIADDR=/ip4/0.0.0.0/tcp/5006
+          - THRDS_SERVICEAPIPROXYADDR=/ip4/0.0.0.0/tcp/5007
+          - THRDS_APIADDR=/ip4/0.0.0.0/tcp/6006
+          - THRDS_APIPROXYADDR=/ip4/0.0.0.0/tcp/6007
+          - THRDS_DEBUG=true
+        ports:
+          - "4206:4006"
+          - "127.0.0.1:5206:5006"
+          - "127.0.0.1:5207:5007"
+          - "127.0.0.1:6206:6006"
+          - "127.0.0.1:6207:6007"
 
     steps:
 

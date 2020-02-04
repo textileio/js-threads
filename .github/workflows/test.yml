@@ -18,12 +18,12 @@ jobs:
       threads1:
         image: textile/go-threads:latest
         env:
-          THRDS_HOSTADDR:/ip4/0.0.0.0/tcp/4006
-          THRDS_SERVICEAPIADDR:/ip4/0.0.0.0/tcp/5006
-          THRDS_SERVICEAPIPROXYADDR:/ip4/0.0.0.0/tcp/5007
-          THRDS_APIADDR:/ip4/0.0.0.0/tcp/6006
-          THRDS_APIPROXYADDR:/ip4/0.0.0.0/tcp/6007
-          THRDS_DEBUG:true
+          THRDS_HOSTADDR: /ip4/0.0.0.0/tcp/4006
+          THRDS_SERVICEAPIADDR: /ip4/0.0.0.0/tcp/5006
+          THRDS_SERVICEAPIPROXYADDR: /ip4/0.0.0.0/tcp/5007
+          THRDS_APIADDR: /ip4/0.0.0.0/tcp/6006
+          THRDS_APIPROXYADDR: /ip4/0.0.0.0/tcp/6007
+          THRDS_DEBUG: true
         ports:
           - "4106:4006"
           - "127.0.0.1:5106:5006"
@@ -33,12 +33,12 @@ jobs:
       threads2:
         image: textile/go-threads:latest
         env:
-          THRDS_HOSTADDR:/ip4/0.0.0.0/tcp/4006
-          THRDS_SERVICEAPIADDR:/ip4/0.0.0.0/tcp/5006
-          THRDS_SERVICEAPIPROXYADDR:/ip4/0.0.0.0/tcp/5007
-          THRDS_APIADDR:/ip4/0.0.0.0/tcp/6006
-          THRDS_APIPROXYADDR:/ip4/0.0.0.0/tcp/6007
-          THRDS_DEBUG:true
+          THRDS_HOSTADDR: /ip4/0.0.0.0/tcp/4006
+          THRDS_SERVICEAPIADDR: /ip4/0.0.0.0/tcp/5006
+          THRDS_SERVICEAPIPROXYADDR: /ip4/0.0.0.0/tcp/5007
+          THRDS_APIADDR: /ip4/0.0.0.0/tcp/6006
+          THRDS_APIPROXYADDR: /ip4/0.0.0.0/tcp/6007
+          THRDS_DEBUG: true
         ports:
           - "4206:4006"
           - "127.0.0.1:5206:5006"

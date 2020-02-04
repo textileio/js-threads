@@ -278,14 +278,18 @@ describe('Client', function() {
       existingPerson = entities.pop()!
     })
     it('should stream responses.', done => {
-      client.listen<Person>(store.id, 'Person', existingPerson.ID, reply => {
-        const entity = reply.entity
+      const close = client.listen<Person>(store.id, 'Person', existingPerson.ID, (reply, err) => {
+        const entity = reply?.entity
         expect(entity).to.not.be.undefined
         expect(entity).to.have.property('age')
-        expect(entity.age).to.be.greaterThan(21)
-        events.push(entity.age)
+        expect(entity?.age).to.be.greaterThan(21)
+        events.push(entity?.age || 0)
         if (events.length == 2) {
+          close()
           done()
+        }
+        if (err) {
+          throw err
         }
       })
       existingPerson.age = 30

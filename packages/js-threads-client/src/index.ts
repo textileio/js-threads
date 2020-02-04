@@ -293,7 +293,12 @@ export class Client {
    * @param entityID The id of the entity to monitor.
    * @param callback The callback to call on each update to the given entity.
    */
-  public listen<T = any>(storeID: string, modelName: string, entityID: string, callback: (reply: Entity<T>) => void) {
+  public listen<T = any>(
+    storeID: string,
+    modelName: string,
+    entityID: string,
+    callback: (reply?: Entity<T>, err?: Error) => void,
+  ) {
     const req = new ListenRequest()
     req.setStoreid(storeID)
     if (modelName && modelName !== '') {
@@ -306,24 +311,23 @@ export class Client {
       filter.setEntityid(entityID)
       req.addFilters(filter)
     }
-    const client = grpc.client(API.Listen, {
+    const res = grpc.invoke(API.Listen, {
       host: this.host,
-    }) as grpc.Client<ListenRequest, ListenReply>
-    client.onMessage((message: ListenReply) => {
-      const ret: Entity<T> = {
-        entity: JSON.parse(Buffer.from(message.getEntity_asU8()).toString()),
-      }
-      callback(ret)
+      request: req,
+      onMessage: (rec: ListenReply) => {
+        const ret: Entity<T> = {
+          entity: JSON.parse(Buffer.from(rec.getEntity_asU8()).toString()),
+        }
+        callback(ret)
+      },
+      onEnd: (status: grpc.Code, message: string, _trailers: grpc.Metadata) => {
+        if (status !== grpc.Code.OK) {
+          return callback(undefined, new Error(message))
+        }
+        callback()
+      },
     })
-    client.onEnd((status: grpc.Code, message: string) => {
-      if (status !== grpc.Code.OK) {
-        throw new Error(message)
-      }
-    })
-    client.start()
-    client.send(req)
-    // Bind to client here because the close call uses 'this'...
-    return client.close.bind(client)
+    return res.close.bind(res)
   }
 
   private async unary<

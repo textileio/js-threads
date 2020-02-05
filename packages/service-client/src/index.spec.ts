@@ -10,7 +10,6 @@ import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import delay from 'delay'
 import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, ThreadRecord } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import Multiaddr from 'multiaddr'
@@ -168,28 +167,37 @@ describe('Service Client...', () => {
       expect(cid1.toString()).to.equal(cid2.toString())
     })
 
-    it('should support thread subscriptions', async () => {
-      const client2 = new Client('http://127.0.0.1:5207')
-      const hostID2 = await client2.getHostID()
-      const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
+    describe('subscribe', () => {
+      let client2: Client
+      let info: ThreadInfo
+      before(async () => {
+        client2 = new Client('http://127.0.0.1:5207')
+        const hostID2 = await client2.getHostID()
+        const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
+        const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))
+        info = await createThread(client)
+        await client.addReplicator(info.id, peerAddr)
+      })
 
-      const info = await createThread(client)
-      const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))
-      await client.addReplicator(info.id, peerAddr)
-      let rcount = 0
-      const res = client2.subscribe((rec?: ThreadRecord, err?: Error) => {
-        if (rec) rcount += 1
-        else if (err) rcount -= 1
-      }, info.id)
-      await client.createRecord(info.id, { foo: 'bar1' })
-      await client.createRecord(info.id, { foo: 'bar2' })
-      await delay(1000)
-      expect(rcount).to.equal(2)
-      res.close()
-      await client.createRecord(info.id, { foo: 'bar3' })
-      // Shouldn't pick it up
-      await delay(1000)
-      expect(rcount).to.equal(2)
-    }).timeout(5000)
+      it('should handle updates and close cleanly', done => {
+        let rcount = 0
+        const res = client2.subscribe((rec?: ThreadRecord, err?: Error) => {
+          expect(rec).to.not.be.undefined
+          if (rec) rcount += 1
+          if (err) throw new Error(`unexpected error: ${err.toString()}`)
+          if (rcount >= 2) {
+            res.close()
+            client.createRecord(info.id, { foo: 'bar3' }).then(() => {
+              // Should still be 2 because we closed the subscription
+              expect(rcount).to.equal(2)
+              done()
+            })
+          }
+        }, info.id)
+        client.createRecord(info.id, { foo: 'bar1' }).then(() => {
+          client.createRecord(info.id, { foo: 'bar2' })
+        })
+      }).timeout(7000)
+    })
   })
 })

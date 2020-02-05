@@ -2,10 +2,6 @@
 // Some hackery to get WebSocket in the global namespace on nodejs
 ;(global as any).WebSocket = require('isomorphic-ws')
 
-// Run two threads daemons:
-// go run threadsd/main.go -repo ".threads1"
-// go run threadsd/main.go -hostAddr "/ip4/0.0.0.0/tcp/4007" -serviceApiProxyAddr "/ip4/127.0.0.1/tcp/5008" -repo ".threads2" -apiProxyAddr "/ip4/127.0.0.1/tcp/6008" -apiAddr "/ip4/127.0.0.1/tcp/6009" -serviceApiAddr "/ip4/127.0.0.1/tcp/5009"
-
 import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
@@ -16,19 +12,8 @@ import Multiaddr from 'multiaddr'
 import { Client } from '.'
 
 const hostAddrPort = 4006
-const proxyAddr = 'http://127.0.0.1:5107'
+const proxyAddr = 'http://127.0.0.1:5007'
 const ed25519 = keys.supportedKeys.ed25519
-
-// const protocol = {
-//   code: ThreadProtocol.code,
-//   name: ThreadProtocol.name,
-//   resolvable: false,
-//   size: -1,
-//   path: false,
-// }
-
-// Multiaddr.protocols.names[ThreadProtocol.name] = protocol
-// Multiaddr.protocols.codes[ThreadProtocol.code] = protocol
 
 async function createThread(client: Client) {
   const id = ThreadID.fromRandom(Variant.Raw, 32)
@@ -73,7 +58,7 @@ describe('Service Client...', () => {
       const info1 = await createThread(client)
       const hostAddr = new Multiaddr(`/ip4/127.0.0.1/tcp/${hostAddrPort}`)
       const addr = threadAddr(hostAddr, hostID, info1)
-      const client2 = new Client('http://127.0.0.1:5008')
+      const client2 = new Client('http://127.0.0.1:5207')
       const info2 = await client2.addThread(addr, { ...info1 })
       expect(info2.id.string()).to.equal(info1.id.string())
     })

@@ -67,7 +67,7 @@ function threadAddr(hostAddr: Multiaddr, hostID: PeerId, info: ThreadInfo) {
   return full
 }
 
-describe('Service Client...', () => {
+describe('Service...', () => {
   let client: Service
   before(() => {
     client = new Service(new MemoryDatastore(), new Client(proxyAddr))

@@ -33,10 +33,10 @@ jobs:
 
     - name: Install
       run: npm install
-      
+
     - name: Lint
       run: npm run lint
-      
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -44,10 +44,12 @@ jobs:
 
     services:
       threads:
-        image: textile/go-threads
+        image: textile/go-threads:latest
+        env:
+          THRDS_APIPROXYADDR: /ip4/0.0.0.0/tcp/6007
         ports:
-        - 6007:6007
-        
+          - "127.0.0.1:6007:6007"
+
     steps:
     - name: Checkout
       uses: actions/checkout@v1

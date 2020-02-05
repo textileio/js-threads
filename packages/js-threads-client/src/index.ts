@@ -31,9 +31,10 @@ import { encode, decode } from 'bs58'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
+import { Config } from './config'
 import { JSONQuery, Entity, EntityList } from './models'
 
-export { JSONQuery, Entity, EntityList }
+export { Config, Entity, EntityList, JSONQuery }
 export { Query, Where } from './query'
 
 /**
@@ -50,19 +51,18 @@ export class Client {
   }
 
   /**
-   * host is the (private) remote host address.
+   * config is the (public) threads config.
    */
-  private readonly host: string
+  public readonly config: Config
 
   /**
    * Client creates a new gRPC client instance.
    * @param host The local/remote host url. Defaults to 'localhost:6007'.
    * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
    */
-  constructor(host: string, defaultTransport?: grpc.TransportFactory) {
-    this.host = host
-    const transport = defaultTransport || grpc.WebsocketTransport()
-    grpc.setDefaultTransport(transport)
+  constructor(config?: Config) {
+    this.config = config || new Config()
+    grpc.setDefaultTransport(this.config.transport)
   }
 
   /**
@@ -268,9 +268,9 @@ export class Client {
    */
   public readTransaction(storeID: string, modelName: string): ReadTransaction {
     const client = grpc.client(API.ReadTransaction, {
-      host: this.host,
+      host: this.config.host,
     }) as grpc.Client<ReadTransactionRequest, ReadTransactionReply>
-    return new ReadTransaction(client, storeID, modelName)
+    return new ReadTransaction(this.config, client, storeID, modelName)
   }
 
   /**
@@ -280,9 +280,9 @@ export class Client {
    */
   public writeTransaction(storeID: string, modelName: string): WriteTransaction {
     const client = grpc.client(API.WriteTransaction, {
-      host: this.host,
+      host: this.config.host,
     }) as grpc.Client<WriteTransactionRequest, WriteTransactionReply>
-    return new WriteTransaction(client, storeID, modelName)
+    return new WriteTransaction(this.config, client, storeID, modelName)
   }
 
   /**
@@ -312,8 +312,9 @@ export class Client {
       req.addFilters(filter)
     }
     const res = grpc.invoke(API.Listen, {
-      host: this.host,
+      host: this.config.host,
       request: req,
+      metadata: this.config._wrapMetadata(),
       onMessage: (rec: ListenReply) => {
         const ret: Entity<T> = {
           entity: JSON.parse(Buffer.from(rec.getEntity_asU8()).toString()),
@@ -338,7 +339,8 @@ export class Client {
     return new Promise((resolve, reject) => {
       grpc.unary(methodDescriptor, {
         request: req,
-        host: this.host,
+        host: this.config.host,
+        metadata: this.config._wrapMetadata(),
         onEnd: res => {
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {

@@ -1,3 +1,4 @@
+import { grpc } from '@improbable-eng/grpc-web'
 import * as uuid from 'uuid'
 import {
   ModelCreateRequest,
@@ -11,14 +12,22 @@ import {
   WriteTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
 import { toBase64, fromBase64 } from 'b64-lite'
+import { Config } from './config'
+import { Entity, EntityList, JSONQuery } from './models'
 import { Transaction } from './Transaction'
-import { Entity, EntityList } from './models'
-import { JSONQuery } from './models'
 
 /**
  * WriteTransaction performs a mutating bulk transaction on the underlying store.
  */
 export class WriteTransaction extends Transaction<WriteTransactionRequest, WriteTransactionReply> {
+  constructor(
+    protected readonly config: Config,
+    protected readonly client: grpc.Client<WriteTransactionRequest, WriteTransactionReply>,
+    protected readonly storeID: string,
+    protected readonly modelName: string,
+  ) {
+    super(client, storeID, modelName)
+  }
   /**
    * start begins the transaction. All operations between start and end will be applied as a single transaction upon a call to end.
    */
@@ -28,7 +37,8 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     startReq.setModelname(this.modelName)
     const req = new WriteTransactionRequest()
     req.setStarttransactionrequest(startReq)
-    this.client.start()
+    const metadata = this.config._wrapBrowserHeaders(new grpc.Metadata())
+    this.client.start(metadata)
     this.client.send(req)
   }
   /**

@@ -40,10 +40,9 @@ import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, ThreadRecord } from '@textile/threads-core'
+import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, ThreadRecord, Multiaddr } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Client } from '@textile/threads-service-client'
-import Multiaddr from 'multiaddr'
 import { MemoryDatastore } from 'interface-datastore'
 import { Service } from '.'
 
@@ -61,8 +60,7 @@ async function createThread(client: Service) {
 
 function threadAddr(hostAddr: Multiaddr, hostID: PeerId, info: ThreadInfo) {
   const pa = new Multiaddr(`/p2p/${hostID.toB58String()}`)
-  // todo: Figure out how to represent a custom multiaddr
-  const ta = new Multiaddr(`/unix/${ThreadProtocol.name}/${info.id.string()}`)
+  const ta = new Multiaddr(`/thread/${info.id.string()}`)
   const full = hostAddr.encapsulate(pa.encapsulate(ta)) as any
   return full
 }
@@ -88,7 +86,7 @@ describe('Service...', () => {
       expect(info.replicatorKey).to.not.be.undefined
     })
 
-    it.skip('should add a remote thread', async () => {
+    it('should add a remote thread', async () => {
       const hostID = await client.getHostID()
       const info1 = await createThread(client)
       const hostAddr = new Multiaddr(`/ip4/127.0.0.1/tcp/${hostAddrPort}`)

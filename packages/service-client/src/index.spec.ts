@@ -34,7 +34,7 @@ function threadAddr(hostAddr: Multiaddr, hostID: PeerId, info: ThreadInfo) {
 describe('Service Client...', () => {
   let client: Client
   before(() => {
-    client = new Client(proxyAddr)
+    client = new Client({ host: proxyAddr })
   })
   describe('Basic...', () => {
     it('should return a remote host peer id', async () => {
@@ -58,7 +58,7 @@ describe('Service Client...', () => {
       const info1 = await createThread(client)
       const hostAddr = new Multiaddr(`/ip4/127.0.0.1/tcp/${hostAddrPort}`)
       const addr = threadAddr(hostAddr, hostID, info1)
-      const client2 = new Client('http://127.0.0.1:5207')
+      const client2 = new Client({ host: 'http://127.0.0.1:5207' })
       const info2 = await client2.addThread(addr, { ...info1 })
       expect(info2.id.string()).to.equal(info1.id.string())
     })
@@ -88,7 +88,7 @@ describe('Service Client...', () => {
     })
 
     it('should add a replicator to a thread', async () => {
-      const client2 = new Client('http://127.0.0.1:5207')
+      const client2 = new Client({ host: 'http://127.0.0.1:5207' })
       const hostID2 = await client2.getHostID()
       const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
 
@@ -156,7 +156,7 @@ describe('Service Client...', () => {
       let client2: Client
       let info: ThreadInfo
       before(async () => {
-        client2 = new Client('http://127.0.0.1:5207')
+        client2 = new Client({ host: 'http://127.0.0.1:5207' })
         const hostID2 = await client2.getHostID()
         const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
         const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))

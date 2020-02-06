@@ -205,11 +205,7 @@ describe('Service...', () => {
           if (err) throw new Error(`unexpected error: ${err.toString()}`)
           if (rcount >= 2) {
             res.close()
-            client.createRecord(info.id, { foo: 'bar3' }).then(() => {
-              // Should still be 2 because we closed the subscription
-              expect(rcount).to.equal(2)
-              done()
-            })
+            done()
           }
         }, info.id)
         client.createRecord(info.id, { foo: 'bar1' }).then(() => {

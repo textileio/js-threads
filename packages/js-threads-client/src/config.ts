@@ -5,7 +5,7 @@ export class Config {
   public host: string
   public transport: grpc.TransportFactory
 
-  private session?: string
+  public session?: string
   constructor(host?: string, transport?: grpc.TransportFactory) {
     this.host = host || 'http://127.0.0.1:6007'
     this.transport = transport || grpc.WebsocketTransport()

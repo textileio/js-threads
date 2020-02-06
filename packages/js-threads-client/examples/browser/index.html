@@ -44,7 +44,7 @@
 
     (async function () {
 
-      window.client = new threads.Client('http://localhost:6007')
+      window.client = new threads.Client()
       try {
         // Create a new store
         const res = await client.newStore()

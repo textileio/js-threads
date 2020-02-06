@@ -44,11 +44,24 @@ npm run test:{node,browser}
 
 ## Basic use in Typescript
 
-**create a client**
+**create a threads client**
 
 ```js
-this.client = new Client('http://localhost:6007')
+import { Client } from '@textile/threads-client'
+
+this.client = new Client()
 ```
+
+**create a threads client using Textile APIs**
+
+```js
+import { API } from '@textile/textile'
+import { Client } from '@textile/threads-client'
+s
+const textile = API('<app token>', '<device id>')
+this.client = new Client(textile.threadsConfig)
+```
+
 
 **create a store**
 

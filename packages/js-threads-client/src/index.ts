@@ -31,10 +31,10 @@ import { encode, decode } from 'bs58'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
-import { Config } from './config'
+import { Config, BaseConfig } from './config'
 import { JSONQuery, Entity, EntityList } from './models'
 
-export { Config, Entity, EntityList, JSONQuery }
+export { BaseConfig, Config, Entity, EntityList, JSONQuery }
 export { Query, Where } from './query'
 
 /**
@@ -60,8 +60,12 @@ export class Client {
    * @param host The local/remote host url. Defaults to 'localhost:6007'.
    * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
    */
-  constructor(config?: Config) {
-    this.config = config || new Config()
+  constructor(config: Config | BaseConfig = {}) {
+    if (config instanceof Config) {
+      this.config = config
+    } else {
+      this.config = new Config(config.host, config.transport)
+    }
     grpc.setDefaultTransport(this.config.transport)
   }
 

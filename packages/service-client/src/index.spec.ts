@@ -6,11 +6,10 @@ import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, ThreadRecord, Multiaddr } from '@textile/threads-core'
+import { ThreadID, Variant, ThreadInfo, Block, ThreadRecord, Multiaddr } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Client } from '.'
 
-const hostAddrPort = 4006
 const proxyAddr = 'http://127.0.0.1:5007'
 const ed25519 = keys.supportedKeys.ed25519
 
@@ -54,7 +53,7 @@ describe('Service Client...', () => {
     it.skip('should add a remote thread', async () => {
       const hostID = await client.getHostID()
       const info1 = await createThread(client)
-      const hostAddr = new Multiaddr(`/ip4/127.0.0.1/tcp/${hostAddrPort}`)
+      const hostAddr = new Multiaddr(`/dns4/threads1/tcp/4006`)
       const addr = threadAddr(hostAddr, hostID, info1)
       const client2 = new Client({ host: 'http://127.0.0.1:5207' })
       const info2 = await client2.addThread(addr, { ...info1 })

@@ -40,6 +40,7 @@ import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
+import delay from 'delay'
 import { ThreadID, Variant, ThreadInfo, ThreadProtocol, Block, ThreadRecord, Multiaddr } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Client } from '@textile/threads-service-client'
@@ -91,6 +92,7 @@ describe('Service...', () => {
       const info1 = await createThread(client)
       const hostAddr = new Multiaddr(`/ip4/127.0.0.1/tcp/${hostAddrPort}`)
       const addr = threadAddr(hostAddr, hostID, info1)
+      await delay(1000)
       const client2 = new Client('http://127.0.0.1:5207')
       const info2 = await client2.addThread(addr, { ...info1 })
       expect(info2.id.string()).to.equal(info1.id.string())

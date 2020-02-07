@@ -76,7 +76,7 @@ jobs:
       run: npm run lint
 
     - name: Test Node
-      run: sleep 5; npm run test:node
+      run: npm run test:node
 
     - name: Test Browser
       run: npm run test:browser

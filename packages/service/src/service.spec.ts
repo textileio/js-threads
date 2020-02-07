@@ -46,7 +46,6 @@ import { Client } from '@textile/threads-service-client'
 import { MemoryDatastore } from 'interface-datastore'
 import { Service } from '.'
 
-const hostAddrPort = 4006
 const proxyAddr = 'http://127.0.0.1:5007'
 const ed25519 = keys.supportedKeys.ed25519
 
@@ -89,10 +88,9 @@ describe('Service...', () => {
     it('should add a remote thread', async () => {
       const hostID = await client.getHostID()
       const info1 = await createThread(client)
-      const hostAddr = new Multiaddr(`/ip4/127.0.0.1/tcp/${hostAddrPort}`)
+      const hostAddr = new Multiaddr(`/dns4/threads1/tcp/4006`)
       const addr = threadAddr(hostAddr, hostID, info1)
       const client2 = new Client('http://127.0.0.1:5207')
-      await client2.getHostID()
       const info2 = await client2.addThread(addr, { ...info1 })
       expect(info2.id.string()).to.equal(info1.id.string())
     })

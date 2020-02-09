@@ -88,7 +88,7 @@ describe('Service...', () => {
     it('should add a remote thread', async () => {
       const hostID = await client.getHostID()
       const info1 = await createThread(client)
-      const hostAddr = new Multiaddr(`/dns4/threads1/tcp/4006`)
+      const hostAddr = new Multiaddr('/dns4/threads1/tcp/4006')
       const addr = threadAddr(hostAddr, hostID, info1)
       const client2 = new Client({ host: 'http://127.0.0.1:5207' })
       const info2 = await client2.addThread(addr, { ...info1 })
@@ -185,10 +185,10 @@ describe('Service...', () => {
     })
 
     describe('subscribe', () => {
-      let client2: Client
+      let client2: Service
       let info: ThreadInfo
       before(async () => {
-        client2 = new Client({ host: 'http://127.0.0.1:5207' })
+        client2 = new Service(new MemoryDatastore(), new Client({ host: 'http://127.0.0.1:5207' }))
         const hostID2 = await client2.getHostID()
         const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
         const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))

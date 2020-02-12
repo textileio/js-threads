@@ -57,7 +57,7 @@ this.client = new Client()
 ```js
 import { API } from '@textile/textile'
 import { Client } from '@textile/threads-client'
-s
+
 const textile = API('<app token>', '<device id>')
 this.client = new Client(textile.threadsConfig)
 ```

@@ -58,7 +58,7 @@ this.client = new Client()
 import { API } from '@textile/textile'
 import { Client } from '@textile/threads-client'
 
-const textile = API('<app token>', '<device id>')
+const textile = await API('<app token>', '<device id>', true).start()
 this.client = new Client(textile.threadsConfig)
 ```
 

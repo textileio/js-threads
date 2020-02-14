@@ -15,7 +15,9 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 ## Table of Contents
 
 -   [Install](#install)
--   [Tests](#tests)
+-   [Usage](#usage-in-typescript)
+-   [React Native](#react-native)
+-   [Docs](#docs)
 -   [Contributing](#contributing)
 -   [Changelog](#changelog)
 -   [License](#license)
@@ -23,60 +25,49 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 ## Install
 
 ```
-git clone git@github.com:textileio/js-threads-client.git
-cd js-threads-client
-npm i
+npm install @textile/threads-client
 ```
 
-If you want to run the tests in both browser and Nodejs, you'll need to install a recent [Java Development Kit (JDK)](https://www.oracle.com/technetwork/java/javase/downloads/index.html), and [Firefox](https://www.mozilla.org/en-CA/firefox/) or [Chrome](https://www.google.com/chrome/) browser.
-
-## Tests
-
-```
-npm run test
-```
-
-Or to do just Nodejs or browser:
-
-```
-npm run test:{node,browser}
-```
-
-## Basic use in Typescript
+## Usage in Typescript
 
 **create a threads client**
 
 ```js
-import { Client } from '@textile/threads-client'
+import {Client} from '@textile/threads-client'
 
-this.client = new Client()
+client = new Client()
 ```
 
 **create a threads client using Textile APIs**
 
 ```js
-import { API } from '@textile/textile'
-import { Client } from '@textile/threads-client'
+import {API} from '@textile/textile'
+import {Client} from '@textile/threads-client'
 
-const textile = await API('<app token>', '<device id>', true).start()
-this.client = new Client(textile.threadsConfig)
+const api = new API({
+    token: '<project token>',
+    deviceId: '<user id>'
+})
+await api.start()
+
+const client = new Client(api.threadsConfig)
 ```
 
 
 **create a store**
 
 ```js
-const store = await this.client.newStore()
-await this.client.registerSchema(store.id, 'Folder2P', schema)
+const store = await client.newStore()
+await client.registerSchema(store.id, 'Folder2P', schema)
 ```
 
 **join a store by invite**
 
 ```js
-const store = await this.client.newStore()
-await this.client.registerSchema(store.id, 'Folder2P', schema)
+const store = await client.newStore()
+await client.registerSchema(store.id, 'Folder2P', schema)
 try {
-  const some = await this.client.startFromAddress(
+  const some = await client.startFromAddress(
     store.id,
     '/ip4/127.0.0.1/tcp/4006/p2p/12D3KooWS2QMPk53mi6xzjr6j87bB9NDfn6NnnQWFc31p86SwpBW/thread/bafktbzj3z4gc7x44dc7izjieurbboybszntx6vapj3umytpilvuqjva',
     'stAhc51y6tnTdDGxSzA9rrSgjudzenwF6YcMAKK5Dm2seEmQi55DfGXcxzco',
@@ -89,7 +80,7 @@ try {
 **get all entries**
 
 ```js
-const found = await this.client.modelFind(this.finderID, 'Folder2P', {})
+const found = await client.modelFind(this.finderID, 'Folder2P', {})
 console.debug('found:', found.entitiesList.length)
 this.folders = found.entitiesList.map((entity) => entity).map((obj) => {
   return new YourModel(obj)
@@ -100,7 +91,7 @@ this.folders = found.entitiesList.map((entity) => entity).map((obj) => {
 
 ```js
 // matches YourModel and schema
-const created = await this.client.modelCreate(this.finderID, 'Folder2', [{
+const created = await client.modelCreate(this.finderID, 'Folder2', [{
   some: 'data',
   numbers: [1, 2, 3]
 }])

@@ -36,11 +36,27 @@ Generally, Textile projects can be initialized with something like:
 
 **Step 1:** git clone this repo:
 
+```
+git clone git@github.com:textileio/js-threads-client.git
+```
+
+If you want to run the tests in both browser and Nodejs, you'll need to install a recent [Java Development Kit (JDK)](https://www.oracle.com/technetwork/java/javase/downloads/index.html), and [Firefox](https://www.mozilla.org/en-CA/firefox/) or [Chrome](https://www.google.com/chrome/) browser.
+
 **Step 2:** cd to the cloned repo:
 
 **Step 3:** Install the Application with `yarn` or `npm i`
 
-See each indiviual project's `README` for details.
+**Step 4:** Run the tests:
+
+```
+npm run test
+```
+
+Or to do just Nodejs or browser:
+
+```
+npm run test:{node,browser}
+```
 
 ### Reporting Bugs
 

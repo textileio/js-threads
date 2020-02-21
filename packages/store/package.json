@@ -1,0 +1,36 @@
+{
+  "name": "@textile/threads-store",
+  "version": "0.0.0",
+  "main": "dist/index",
+  "types": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf ./dist",
+    "test:browser": "polendina --cleanup --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js"
+  },
+  "dependencies": {
+    "@textile/threads-core": "^0.0.3-alpha.0",
+    "@textile/threads-service": "^0.0.3-alpha.0",
+    "async-rwlock": "^1.1.1",
+    "datastore-core": "^0.7.0",
+    "interface-datastore": "^0.8.0",
+    "loglevel": "^1.6.6",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/datastore-core": "^0.7.0",
+    "@types/interface-datastore": "^0.8.0",
+    "@types/uuid": "^3.4.7",
+    "rimraf": "^3.0.0",
+    "streaming-iterables": "^4.1.2",
+    "typescript": "^3.7.2"
+  }
+}

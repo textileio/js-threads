@@ -55,8 +55,8 @@
 
         // Create adam and eve
         const people = await client.modelCreate(storeID, 'Person', [adam, eve])
-        const adamID = JSON.parse(people.entitiesList[0]).ID
-        const eveID = JSON.parse(people.entitiesList[1]).ID
+        const adamID = people.entitiesList[0].ID
+        const eveID = people.entitiesList[1].ID
         console.debug('adam:', adamID)
         console.debug('eve:', eveID)
 

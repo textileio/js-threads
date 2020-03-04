@@ -3,8 +3,8 @@ import { ulid } from 'ulid'
 import { decode } from 'cbor-sync'
 import { Datastore, Key, Result } from 'interface-datastore'
 import { map } from 'streaming-iterables'
-import { encode } from 'cbor-sync'
 import { RWLock } from 'async-rwlock'
+import { CborEncoder } from './datastores/encoding'
 
 const logger = log.getLogger('store:dispatcher')
 
@@ -62,7 +62,7 @@ export class Dispatcher extends RWLock {
         logger.debug('persisting events')
         const batch = this.store.batch()
         for (const { key, value } of events) {
-          batch.put(key.instance(ulid()), encode(value))
+          batch.put(key.instance(ulid()), CborEncoder.encode(value))
         }
         await batch.commit()
       }

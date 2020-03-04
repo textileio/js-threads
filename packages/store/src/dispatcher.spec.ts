@@ -4,8 +4,8 @@ import { collect } from 'streaming-iterables'
 import { Dispatcher } from './dispatcher'
 
 interface TestEvent {
-  time: number
-  entity: string
+  timestamp: Buffer
+  id: string
   collection: string
 }
 
@@ -13,8 +13,8 @@ describe('Dispatcher', () => {
   it('should not require any arguments to initialize', async () => {
     const d = new Dispatcher()
     const value: TestEvent = {
-      time: Date.now(),
-      entity: 'null',
+      timestamp: Buffer.from('' + Date.now()),
+      id: 'null',
       collection: 'null',
     }
     await d.dispatch({ key: new Key('key'), value })
@@ -34,8 +34,8 @@ describe('Dispatcher', () => {
     const slowReducer = (..._event: Result<TestEvent>[]) => new Promise<void>(r => setTimeout(r, 2000))
     d.register({ reduce: slowReducer })
     const value: TestEvent = {
-      time: Date.now(),
-      entity: 'null',
+      timestamp: Buffer.from('' + Date.now()),
+      id: 'null',
       collection: 'null',
     }
     const t1 = Date.now()
@@ -49,8 +49,8 @@ describe('Dispatcher', () => {
   it('should persist events to the internal store when present', async () => {
     const d = new Dispatcher(new MemoryDatastore())
     const value: TestEvent = {
-      time: Date.now(),
-      entity: 'null',
+      timestamp: Buffer.from('' + Date.now()),
+      id: 'null',
       collection: 'null',
     }
     await d.dispatch({ key: new Key('one'), value })
@@ -62,8 +62,8 @@ describe('Dispatcher', () => {
   it('should throw on first error', async () => {
     const d = new Dispatcher()
     const value: TestEvent = {
-      time: Date.now(),
-      entity: 'null',
+      timestamp: Buffer.from('' + Date.now()),
+      id: 'null',
       collection: 'null',
     }
     await d.dispatch()
@@ -86,8 +86,8 @@ describe('Dispatcher', () => {
     const slowReducer = (..._event: Result<TestEvent>[]) => new Promise<void>(r => setTimeout(r, 2000))
     await d.register({ reduce: slowReducer })
     const value: TestEvent = {
-      time: Date.now(),
-      entity: 'null',
+      timestamp: Buffer.from('' + Date.now()),
+      id: 'null',
       collection: 'null',
     }
     const t1 = Date.now()

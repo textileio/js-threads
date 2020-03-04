@@ -1,31 +1,31 @@
-import { Result, MemoryDatastore, Key } from 'interface-datastore'
-import { Dispatcher } from '../dispatcher'
-import { Store, ActionBatch, Event } from './store'
+import { Result, Datastore, Key } from 'interface-datastore'
+import { Dispatcher, Event } from '../dispatcher'
+import { Store, ActionBatch } from './store'
 
-export class BasicStore extends Store {
-  async reduce(...events: Result<Event<any>>[]) {
+export class BasicStore<T = any> extends Store<T> {
+  constructor(child: Datastore<any>, prefix: Key, dispatcher?: Dispatcher | undefined) {
+    super(child, prefix, dispatcher)
+  }
+  reduce = async (...events: Result<Event<T>>[]) => {
     const batch = this.child.batch()
     for (const { key, value } of events) {
       if (!key.isDecendantOf(this.prefix)) continue // Only want to apply updates from this store
-      if (value === undefined) {
-        batch.delete(key)
+      const newKey = new Key(value.id)
+      if (value.patch === undefined) {
+        batch.delete(newKey)
       } else {
-        batch.put(key, value)
+        batch.put(newKey, value.patch)
       }
     }
     await batch.commit()
     this.emit('update', ...events.map(event => event.value))
   }
 
-  batch(): ActionBatch<any> {
-    return new ActionBatch(
+  batch(): ActionBatch<T> {
+    return new ActionBatch<T>(
       this,
       async _key => undefined,
-      async (_key, value) => value,
+      async (_key, patch) => patch,
     )
   }
 }
-
-const store = new BasicStore(new MemoryDatastore(), new Key('blah'), new Dispatcher())
-store.on('events', console.log)
-store.put(new Key('bar'), 'hello world').then(console.log)

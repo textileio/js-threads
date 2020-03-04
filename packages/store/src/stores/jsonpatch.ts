@@ -1,6 +1,7 @@
-import { Result, Key } from 'interface-datastore'
+import { Datastore, Result, Key } from 'interface-datastore'
 import jsonpatch, { Operation } from 'fast-json-patch'
-import { Store, ActionBatch, Event } from './store'
+import { Dispatcher, Event } from '../dispatcher'
+import { Store, ActionBatch } from './store'
 
 /**
  * Entity is any object with an ID field.
@@ -28,47 +29,37 @@ export interface Op<T extends Entity> {
   patch?: Operation[] | T
 }
 
-/**
- * Patch is a custom Event based on a JSON Patch.
- */
-export interface Patch<T extends Entity> {
-  patch: Op<T>
-}
-
-export interface Patches<T extends Entity> {
-  patches: (Patch<T> & Event<T>)[]
-}
-
-export class JsonPatchStore<T extends Entity> extends Store<T, Patch<T>> {
-  async reduce(...events: Result<Patch<T>>[]): Promise<void> {
+export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
+  constructor(child: Datastore<any>, prefix: Key, dispatcher?: Dispatcher | undefined) {
+    super(child, prefix, dispatcher)
+  }
+  reduce = async (...events: Result<Event<Op<T>>>[]) => {
     const batch = this.child.batch()
     for (const { key, value } of events) {
       if (!key.isDecendantOf(this.prefix)) continue // Only want to apply updates from this store
-      const update = value.patch.patch
-      if (update !== undefined) {
+      const newKey = new Key(value.id)
+      const update = value.patch?.patch
+      // If the patch or the patch itself is undefined, we delete
+      if (update === undefined) {
+        batch.delete(newKey)
+      } else {
         const prev = await this.safeGet(key)
         const merged =
           prev === undefined ? (update as T) : jsonpatch.applyPatch(prev, update as Operation[]).newDocument
-        batch.put(key, merged)
-      } else {
-        batch.delete(key)
+        batch.put(newKey, merged)
       }
     }
     return await batch.commit()
   }
 
-  batch(): ActionBatch<T> {
-    return new ActionBatch(
+  batch(): ActionBatch<T, Op<T>> {
+    return new ActionBatch<T, Op<T>>(
       this,
-      async key => {
-        return {
-          patch: {
-            type: Op.Type.Delete,
-            entityID: key.toString(),
-            patch: undefined,
-          },
-        }
-      },
+      async key => ({
+        type: Op.Type.Delete,
+        entityID: key.toString(),
+        patch: undefined,
+      }),
       async (key: Key, value: T) => {
         const entityID = key.toString()
         let patch: Op<T>
@@ -86,7 +77,7 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Patch<T>> {
             patch: jsonpatch.compare(old, value),
           }
         }
-        return { patch }
+        return patch
       },
     )
   }

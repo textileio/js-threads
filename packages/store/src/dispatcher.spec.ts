@@ -11,7 +11,7 @@ interface TestEvent {
 
 describe('Dispatcher', () => {
   it('should not require any arguments to initialize', async () => {
-    const d = new Dispatcher<TestEvent>()
+    const d = new Dispatcher()
     const value: TestEvent = {
       time: Date.now(),
       entity: 'null',
@@ -21,7 +21,7 @@ describe('Dispatcher', () => {
   })
 
   it('should add new (unique) reducers on registration', async () => {
-    const d = new Dispatcher<TestEvent>()
+    const d = new Dispatcher()
     const reducer = { reduce: (..._event: Result<TestEvent>[]) => Promise.resolve(undefined) }
     await d.register(reducer)
     expect(d.reducers).to.have.length(1)
@@ -30,7 +30,7 @@ describe('Dispatcher', () => {
   })
 
   it('should only dispatch one (set of) events at a time', async () => {
-    const d = new Dispatcher<TestEvent>()
+    const d = new Dispatcher()
     const slowReducer = (..._event: Result<TestEvent>[]) => new Promise<void>(r => setTimeout(r, 2000))
     d.register({ reduce: slowReducer })
     const value: TestEvent = {
@@ -47,7 +47,7 @@ describe('Dispatcher', () => {
   }).timeout(5000)
 
   it('should persist events to the internal store when present', async () => {
-    const d = new Dispatcher<TestEvent>(new MemoryDatastore())
+    const d = new Dispatcher(new MemoryDatastore())
     const value: TestEvent = {
       time: Date.now(),
       entity: 'null',
@@ -60,7 +60,7 @@ describe('Dispatcher', () => {
   }).timeout(5000)
 
   it('should throw on first error', async () => {
-    const d = new Dispatcher<TestEvent>()
+    const d = new Dispatcher()
     const value: TestEvent = {
       time: Date.now(),
       entity: 'null',
@@ -82,7 +82,7 @@ describe('Dispatcher', () => {
   })
 
   it('should not be able to register a new reducer while dispatching', async () => {
-    const d = new Dispatcher<TestEvent>()
+    const d = new Dispatcher()
     const slowReducer = (..._event: Result<TestEvent>[]) => new Promise<void>(r => setTimeout(r, 2000))
     await d.register({ reduce: slowReducer })
     const value: TestEvent = {

@@ -1,9 +1,26 @@
 import { Datastore, Key, Batch, Query } from 'interface-datastore'
 import { map } from 'streaming-iterables'
+import cbor from 'cbor-sync'
 
 export interface Encoder<T = Buffer, O = Buffer> {
   encode(data: T): O
   decode(stored: O): T
+}
+
+// 258 is the CBOR semantic tag number for a mathematical finite set:
+// https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
+cbor.addSemanticEncode(258, function(data) {
+  if (data instanceof Set) {
+    return Array.from(data)
+  }
+})
+cbor.addSemanticDecode(258, function(data) {
+  return new Set(data)
+})
+
+export const CborEncoder: Encoder<any, Buffer> = {
+  encode: (data: any) => cbor.encode(data),
+  decode: (stored: Buffer) => cbor.decode(stored),
 }
 
 /**

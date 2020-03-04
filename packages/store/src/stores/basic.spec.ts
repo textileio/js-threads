@@ -1,17 +1,17 @@
 import { expect } from 'chai'
 import { MemoryDatastore, Key } from 'interface-datastore'
 import { collect } from 'streaming-iterables'
-import uuid from 'uuid'
 import { Dispatcher } from '../dispatcher'
-import { JsonPatchStore } from './jsonpatch'
+import { BasicStore } from './basic'
 
-describe('JsonPatchStore', () => {
+describe('BasicStore', () => {
   it('basic', async () => {
     const mStore = new MemoryDatastore()
-    const store = new JsonPatchStore(mStore, new Key('test'), new Dispatcher())
+    const store = new BasicStore(mStore, new Key('test'), new Dispatcher(mStore))
+    // dispatcher.register(store)
     store.on('events', console.log)
     store.on('update', console.log)
-    await store.put(new Key('bar'), { ID: uuid(), hello: 'world' })
+    await store.put(new Key('hello'), 'world')
 
     const mRes = await collect(mStore.query({}))
     const nRes = await collect(store.query({}))

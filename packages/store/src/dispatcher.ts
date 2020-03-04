@@ -11,8 +11,20 @@ const logger = log.getLogger('store:dispatcher')
 /**
  * Reducer applies an event to an existing state.
  */
-export interface Reducer<T = any> {
+export interface Reducer<T extends Event> {
   reduce(...events: Result<T>[]): Promise<void>
+}
+
+export type EventDispatcher<A> = (...actions: Result<Event<A>>[]) => Promise<void>
+
+/**
+ * Event is a local or remote event.
+ */
+export interface Event<T = any> {
+  timestamp: Buffer
+  id: string
+  collection: string
+  patch?: T // actual event body
 }
 
 /**
@@ -36,7 +48,7 @@ export class Dispatcher extends RWLock {
    * Register takes a reducer to be invoked with each dispatched event.
    * @param reducer A reducer for processing dispatched events.
    */
-  async register<T>(reducer: Reducer<T>) {
+  async register<T extends Event>(reducer: Reducer<T>) {
     await this.writeLock()
     this.reducers.add(reducer)
     this.unlock()
@@ -55,7 +67,7 @@ export class Dispatcher extends RWLock {
    * Dispatch dispatches a payload to all registered reducers.
    * @param events The (variadic list of) events to dispatch.
    */
-  async dispatch<T>(...events: Result<T>[]) {
+  async dispatch<T extends Event>(...events: Result<T>[]) {
     await this.writeLock()
     try {
       if (this.store) {

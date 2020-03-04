@@ -1,8 +1,8 @@
 import { Datastore, Key, Result, Batch, Query } from 'interface-datastore'
 import lexInt from 'lexicographic-integer'
 import { EventEmitter } from 'tsee'
-import { mix } from 'ts-mixer'
-import { Reducer, Dispatcher } from '../dispatcher'
+import { Semaphore } from '../datastores/abstract/lockable'
+import { Reducer, Dispatcher, Event } from '../dispatcher'
 import { EncodingDatastore, Encoder, CborEncoder } from '../datastores/encoding'
 import { DomainDatastore } from '../datastores/domain'
 import { Lockable } from '../datastores/abstract/lockable'
@@ -26,26 +26,12 @@ export interface Update<T = any> {
   meta?: T
 }
 
-/**
- * Event is a local or remote event.
- */
-export interface Event<T = any> {
-  timestamp: Buffer
-  id: string
-  collection: string
-  patch?: T // actual event body
-}
-
-export interface ActionDispatcher {
-  dispatch(...actions: Action<Event>[]): Promise<void>
-}
-
-export class ActionBatch<T = any, A = any> implements Batch<T> {
-  private patches: Action<Event>[] = []
+export class ActionBatch<D = any, A = D> implements Batch<D> {
+  private patches: Action<Event<A>>[] = []
   constructor(
-    private store: Store<T, A>,
-    private onDelete: (key: Key) => Promise<A>,
-    private onPut: (key: Key, value: T) => Promise<A>,
+    private store: Store<D, A>,
+    private onDelete: (key: Key) => Promise<A | undefined>,
+    private onPut: (key: Key, value: D) => Promise<A>,
   ) {}
 
   delete(key: Key) {
@@ -61,7 +47,7 @@ export class ActionBatch<T = any, A = any> implements Batch<T> {
     this.patches.push(deferred)
   }
 
-  put(key: Key, value: T) {
+  put(key: Key, value: D) {
     const deferred = async () => {
       const event: Event = {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
@@ -82,22 +68,60 @@ export class ActionBatch<T = any, A = any> implements Batch<T> {
   }
 }
 
-export interface Store<D = any, A = any>
-  extends Lockable,
-    EventEmitter<Events<A>>,
-    Datastore<D>,
-    Reducer<A>,
-    ActionDispatcher {}
-@mix(EventEmitter, Lockable)
-export abstract class Store<D = any, A = any> implements Datastore<D>, Reducer<A>, ActionDispatcher {
+// export interface Store<D = any, A = D>
+//   extends Lockable,
+//     EventEmitter<Events<A>>,
+//     Datastore<D>,
+//     Reducer<Event<A>>,
+//     ActionDispatcher<A> {}
+// @mix(, Lockable)
+export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
+  implements Lockable, Datastore<D>, Reducer<Event<A>> {
   public child: Datastore<D>
+  readonly semaphore: Semaphore
   constructor(
     child: Datastore<Buffer>,
     public prefix: Key,
-    readonly dispatcher?: Dispatcher,
-    encoder: Encoder<D, Buffer> = CborEncoder,
+    public dispatcher?: Dispatcher,
+    public encoder: Encoder<D, Buffer> = CborEncoder,
   ) {
-    this.child = new EncodingDatastore(new DomainDatastore(child, prefix), encoder)
+    super()
+    this.child = new EncodingDatastore(new DomainDatastore(child, this.prefix), this.encoder)
+    this.semaphore = new Semaphore(this.prefix)
+    if (this.dispatcher) {
+      this.dispatcher.register(this)
+    }
+  }
+
+  /**
+   * Acquire a read lock on a given key.
+   * The datastore is only allowed to acquire a lock for keys it 'owns' (any decedents of its prefix key).
+   * @param key The key to lock for reading.
+   * @param timeout How long to wait to acquire the lock before rejecting the promise, in milliseconds.
+   * If timeout is not in range 0 <= timeout < Infinity, it will wait indefinitely.
+   */
+  readLock(key: Key, timeout?: number) {
+    return this.semaphore.get(key).readLock(timeout)
+  }
+
+  /**
+   * Acquire a write lock on a given key.
+   * The datastore is only allowed to acquire a lock for keys it 'owns' (any decedents of its prefix key).
+   * @param key The key to lock for writing.
+   * @param timeout How long to wait to acquire the lock before rejecting the promise, in milliseconds.
+   * If timeout is not in range 0 <= timeout < Infinity, it will wait indefinitely.
+   */
+  writeLock(key: Key, timeout?: number) {
+    return this.semaphore.get(key).writeLock(timeout)
+  }
+
+  /**
+   * Release current lock.
+   * Must be called after an operation using a read/write lock is finished.
+   * @param key The key to unlock.
+   */
+  unlock(key: Key) {
+    return this.semaphore.unlock(key)
   }
 
   async safeGet(key: Key) {
@@ -115,7 +139,7 @@ export abstract class Store<D = any, A = any> implements Datastore<D>, Reducer<A
     const events = await Promise.all(
       actions.map(async event => {
         const value = await event()
-        const key = new Key(value.id).child(new Key(value.collection)).child(new Key(value.timestamp.toString()))
+        const key = this.prefix.child(new Key(value.id))
         return { key, value }
       }),
     )
@@ -155,7 +179,7 @@ export abstract class Store<D = any, A = any> implements Datastore<D>, Reducer<A
     return this.child.query(query)
   }
 
-  abstract batch(): ActionBatch<D>
+  abstract batch(): ActionBatch<D, A>
 
-  abstract async reduce(...events: Result<A>[]): Promise<void>
+  abstract async reduce(...events: Result<Event<A>>[]): Promise<void>
 }

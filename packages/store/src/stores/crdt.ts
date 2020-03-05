@@ -1,10 +1,10 @@
 import { Datastore, Result, Key } from 'interface-datastore'
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+//@ts-ignore
+import CRDT from 'delta-crdts'
 import { Dispatcher, Event } from '../dispatcher'
 import { Encoder, CborEncoder } from '../datastores/encoding'
 import { Store, ActionBatch } from './store'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CRDT = require('delta-crdts')
 
 export interface CRDT {
   id: string

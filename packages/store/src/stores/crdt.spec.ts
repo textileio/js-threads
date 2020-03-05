@@ -1,6 +1,8 @@
 import { expect } from 'chai'
 import { MemoryDatastore, Key } from 'interface-datastore'
 import { collect } from 'streaming-iterables'
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+//@ts-ignore
 import CRDT from 'delta-crdts'
 import uuid from 'uuid'
 import { Dispatcher } from '../dispatcher'

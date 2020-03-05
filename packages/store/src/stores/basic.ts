@@ -3,7 +3,7 @@ import { Dispatcher, Event } from '../dispatcher'
 import { Store, ActionBatch } from './store'
 
 export class BasicStore<T = any> extends Store<T> {
-  constructor(child: Datastore<any>, prefix: Key, dispatcher?: Dispatcher | undefined) {
+  constructor(child: Datastore<any>, prefix: Key, dispatcher?: Dispatcher) {
     super(child, prefix, dispatcher)
   }
   reduce = async (...events: Result<Event<T>>[]) => {
@@ -19,13 +19,5 @@ export class BasicStore<T = any> extends Store<T> {
     }
     await batch.commit()
     this.emit('update', ...events.map(event => event.value))
-  }
-
-  batch(): ActionBatch<T> {
-    return new ActionBatch<T>(
-      this,
-      async _key => undefined,
-      async (_key, patch) => patch,
-    )
   }
 }

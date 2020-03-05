@@ -18,6 +18,16 @@ cbor.addSemanticDecode(258, function(data) {
   return new Set(data)
 })
 
+// 259 is the CBOR semantic tag number for a Map datatype with key-value operations
+cbor.addSemanticEncode(259, function(data) {
+  if (data instanceof Map) {
+    return Array.from(data)
+  }
+})
+cbor.addSemanticDecode(259, function(data) {
+  return new Map(data)
+})
+
 export const CborEncoder: Encoder<any, Buffer> = {
   encode: (data: any) => cbor.encode(data),
   decode: (stored: Buffer) => cbor.decode(stored),

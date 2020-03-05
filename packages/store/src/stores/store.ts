@@ -68,13 +68,6 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
   }
 }
 
-// export interface Store<D = any, A = D>
-//   extends Lockable,
-//     EventEmitter<Events<A>>,
-//     Datastore<D>,
-//     Reducer<Event<A>>,
-//     ActionDispatcher<A> {}
-// @mix(, Lockable)
 export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
   implements Lockable, Datastore<D>, Reducer<Event<A>> {
   public child: Datastore<D>
@@ -179,7 +172,13 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
     return this.child.query(query)
   }
 
-  abstract batch(): ActionBatch<D, A>
+  batch(): ActionBatch<D, A> {
+    return new ActionBatch(
+      this,
+      async _key => undefined,
+      async (_key, value) => (value as unknown) as A,
+    )
+  }
 
   abstract async reduce(...events: Result<Event<A>>[]): Promise<void>
 }

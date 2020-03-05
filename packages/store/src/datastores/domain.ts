@@ -1,8 +1,5 @@
 import { Datastore, Key, Query, Batch } from 'interface-datastore'
-import { RWLock, State } from 'async-rwlock'
 import { KeytransformDatastore, Transform } from 'datastore-core'
-
-const keyspaceError = new Error('Multilevel key')
 
 interface PrefixDatastore<Value = Buffer> extends Datastore<Value> {
   prefix?: Key
@@ -85,7 +82,6 @@ export class DomainDatastore<T = Buffer> extends KeytransformDatastore<T> {
    * @param value The value.
    */
   put(key: Key, value: T) {
-    if (!key.isTopLevel()) throw keyspaceError
     return super.put(key, value)
   }
 
@@ -95,7 +91,6 @@ export class DomainDatastore<T = Buffer> extends KeytransformDatastore<T> {
    * @param key The key.
    */
   delete(key: Key) {
-    if (!key.isTopLevel()) throw keyspaceError
     return super.delete(key)
   }
 
@@ -114,7 +109,6 @@ export class DomainDatastore<T = Buffer> extends KeytransformDatastore<T> {
        * @param value The value.
        */
       put: (key: Key, value: T) => {
-        if (!key.isTopLevel()) throw keyspaceError
         b.put(key, value)
       },
       /**
@@ -123,7 +117,6 @@ export class DomainDatastore<T = Buffer> extends KeytransformDatastore<T> {
        * @param key The key.
        */
       delete: (key: Key) => {
-        if (!key.isTopLevel()) throw keyspaceError
         b.delete(key)
       },
       /**

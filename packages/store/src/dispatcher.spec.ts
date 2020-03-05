@@ -55,8 +55,8 @@ describe('Dispatcher', () => {
     }
     await d.dispatch({ key: new Key('one'), value })
     await d.dispatch({ key: new Key('two'), value })
-    expect(d.store).to.not.be.undefined
-    expect(await collect(d.store?.query({}) || [])).to.have.lengthOf(2)
+    expect(d.child).to.not.be.undefined
+    expect(await collect(d.child?.query({}) || [])).to.have.lengthOf(2)
   }).timeout(5000)
 
   it('should throw on first error', async () => {

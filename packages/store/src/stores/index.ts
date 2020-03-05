@@ -1,4 +1,4 @@
 export { BasicStore } from './basic'
 export { JsonPatchStore } from './jsonpatch'
-export { MVRegStore } from './mvreg'
+export { CRDTStore } from './crdt'
 export * from './store'

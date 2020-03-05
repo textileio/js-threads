@@ -1,10 +1,11 @@
 import log from 'loglevel'
 import { ulid } from 'ulid'
 import { decode } from 'cbor-sync'
-import { Datastore, Key, Result } from 'interface-datastore'
+import { Datastore, Key, Result, MemoryDatastore } from 'interface-datastore'
 import { map } from 'streaming-iterables'
 import { RWLock } from 'async-rwlock'
 import { CborEncoder } from './datastores/encoding'
+import { DomainDatastore } from './datastores'
 
 const logger = log.getLogger('store:dispatcher')
 
@@ -35,13 +36,15 @@ export interface Event<T = any> {
  */
 export class Dispatcher extends RWLock {
   public reducers: Set<Reducer<any>> = new Set()
+  public child: Datastore<Buffer>
 
   /**
    * Dispatcher creates a new dispatcher.
    * @param store The optional event 'log' to persist events. If undefined this is treated as a stateless dispatcher.
    */
-  constructor(public store?: Datastore<Buffer>) {
+  constructor(child?: Datastore<Buffer>) {
     super()
+    this.child = new DomainDatastore(child || new MemoryDatastore(), new Key('dispatcher'))
   }
 
   /**
@@ -60,7 +63,7 @@ export class Dispatcher extends RWLock {
       const result: Result<any> = { key: new Key(key.type()), value: decode(value) }
       return result
     }
-    return map(mapper, this.store?.query({ prefix }) || [])
+    return map(mapper, this.child?.query({ prefix }) || [])
   }
 
   /**
@@ -70,9 +73,9 @@ export class Dispatcher extends RWLock {
   async dispatch<T extends Event>(...events: Result<T>[]) {
     await this.writeLock()
     try {
-      if (this.store) {
+      if (this.child) {
         logger.debug('persisting events')
-        const batch = this.store.batch()
+        const batch = this.child.batch()
         for (const { key, value } of events) {
           batch.put(key.instance(ulid()), CborEncoder.encode(value))
         }

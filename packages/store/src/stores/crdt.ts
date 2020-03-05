@@ -1,8 +1,10 @@
 import { Datastore, Result, Key } from 'interface-datastore'
-import CRDT from 'delta-crdts'
 import { Dispatcher, Event } from '../dispatcher'
 import { Encoder, CborEncoder } from '../datastores/encoding'
 import { Store, ActionBatch } from './store'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const CRDT = require('delta-crdts')
 
 export interface CRDT {
   id: string
@@ -28,7 +30,7 @@ export const CRDTEncoder = (type: string) => {
     },
     decode: stored => {
       const decoded = CborEncoder.decode(stored)
-      const replica = CRDT(type)(decoded.id)
+      const replica: CRDT = CRDT(type)(decoded.id)
       replica.apply(decoded.state)
       return replica
     },
@@ -49,7 +51,7 @@ export class CRDTStore extends Store<CRDT, State> {
       const prev = await this.safeGet(newKey)
       if (prev === undefined) {
         if (value.patch) {
-          const temp = CRDT(this.type)(value.patch.id)
+          const temp: CRDT = CRDT(this.type)(value.patch.id)
           temp.apply(value.patch.state)
           batch.put(newKey, temp)
         }

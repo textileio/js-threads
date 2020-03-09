@@ -1,11 +1,13 @@
 import { Datastore, Result, Key } from 'interface-datastore'
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-//@ts-ignore
-import CRDT from 'delta-crdts'
 import { Dispatcher, Event } from '../dispatcher'
 import { Encoder, CborEncoder } from '../datastores/encoding'
 import { Store, ActionBatch } from './store'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const CRDT = require('delta-crdts')
+
+// We should try to support any CRDT that supports Causal Context
+// https://arxiv.org/pdf/1603.01529.pdf
 export interface CRDT {
   id: string
   value(): any

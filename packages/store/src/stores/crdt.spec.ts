@@ -1,12 +1,12 @@
 import { expect } from 'chai'
 import { MemoryDatastore, Key } from 'interface-datastore'
 import { collect } from 'streaming-iterables'
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-//@ts-ignore
-import CRDT from 'delta-crdts'
 import uuid from 'uuid'
 import { Dispatcher } from '../dispatcher'
 import { CRDT as CRDTType, CRDTStore } from './crdt'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const CRDT = require('delta-crdts')
 
 describe('CRDTStore', () => {
   it('basic', async () => {

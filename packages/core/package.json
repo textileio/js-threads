@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@types/node": "^13.9.2",
+    "@ipld/block": "^2.1.3",
     "bs58": "^4.0.1",
     "libp2p-crypto": "^0.17.2",
     "multibase": "^0.6.0",

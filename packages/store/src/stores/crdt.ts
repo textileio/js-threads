@@ -9,17 +9,17 @@ const CRDT = require('delta-crdts')
 // We should try to support any CRDT that supports Causal Context
 // https://arxiv.org/pdf/1603.01529.pdf
 export interface CRDT {
-  id: string
-  value(): any
-  apply(delta: CRDT): CRDT
-  state(): any
-  join(other: CRDT): CRDT
-  [other: string]: any
+  id: string;
+  value(): any;
+  apply(delta: CRDT): CRDT;
+  state(): any;
+  join(other: CRDT): CRDT;
+  [other: string]: any;
 }
 
 export interface State {
-  id: string
-  state: any
+  id: string;
+  state: any;
 }
 
 /**

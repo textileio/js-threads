@@ -10,21 +10,21 @@ export interface LogInfo {
   /**
    * The logs ID.
    */
-  id: LogID
+  id: LogID;
   /**
    * The logs public key used to check signatures.
    */
-  pubKey?: PublicKey
+  pubKey?: PublicKey;
   /**
    * The logs private key, used to sign content when available.
    */
-  privKey?: PrivateKey
+  privKey?: PrivateKey;
   /**
    * The set of Multiaddrs associated with this log.
    */
-  addrs?: Set<Multiaddr>
+  addrs?: Set<Multiaddr>;
   /**
    * The set of heads for this log.
    */
-  heads?: Set<CID>
+  heads?: Set<CID>;
 }

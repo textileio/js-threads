@@ -11,15 +11,15 @@ export interface LogRecord {
   /**
    * The node structure of the record.
    */
-  value: Block<Uint8Array>
+  value: Block<Uint8Array>;
   /**
    * The underlying event block.
    */
-  block: Event
+  block: Event;
   /**
    * The underlying record node.
    */
-  obj?: RecordNode
+  obj?: RecordNode;
 }
 
 /**
@@ -29,15 +29,15 @@ export interface RecordNode {
   /**
    * Signature of current and previous blocks.
    */
-  sig: Uint8Array
+  sig: Uint8Array;
   /**
    * CID of record block.
    */
-  block: CID
+  block: CID;
   /**
    * CID of previous record.
    */
-  prev?: CID
+  prev?: CID;
 }
 
 /**
@@ -47,13 +47,13 @@ export interface ThreadRecord {
   /**
    * The underlying LogRecord.
    */
-  record?: LogRecord
+  record?: LogRecord;
   /**
    * The Thread to which this record belongs.
    */
-  threadID: ThreadID
+  threadID: ThreadID;
   /**
    * To Log to which this record belongs.
    */
-  logID: PeerId
+  logID: PeerId;
 }

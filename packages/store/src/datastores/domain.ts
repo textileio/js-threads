@@ -2,8 +2,8 @@ import { Datastore, Key, Query, Batch } from 'interface-datastore'
 import { KeytransformDatastore, Transform } from 'datastore-core'
 
 interface PrefixDatastore<Value = Buffer> extends Datastore<Value> {
-  prefix?: Key
-  child?: Datastore<Value>
+  prefix?: Key;
+  child?: Datastore<Value>;
 }
 
 /**

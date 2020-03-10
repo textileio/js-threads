@@ -40,11 +40,11 @@ const _table: TableRow[] = [
 ]
 
 export interface Protocol {
-  code: number
-  size: number
-  name: string
-  resolvable: boolean
-  path: boolean
+  code: number;
+  size: number;
+  name: string;
+  resolvable: boolean;
+  path: boolean;
 }
 
 function p([code, size, name, resolvable, path]: TableRow): Protocol {

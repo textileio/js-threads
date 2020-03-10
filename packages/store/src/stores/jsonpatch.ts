@@ -7,8 +7,8 @@ import { Store, ActionBatch } from './store'
  * Entity is any object with an ID field.
  */
 export interface Entity {
-  ID: string
-  [others: string]: any
+  ID: string;
+  [others: string]: any;
 }
 
 /**
@@ -24,9 +24,9 @@ export namespace Op {
 }
 
 export interface Op<T extends Entity> {
-  type: Op.Type
-  entityID: string
-  patch?: Operation[] | T
+  type: Op.Type;
+  entityID: string;
+  patch?: Operation[] | T;
 }
 
 export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
@@ -71,10 +71,12 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
             patch: value,
           }
         } else {
+          const ops = jsonpatch.compare(old, value)
           patch = {
             type: Op.Type.Save,
             entityID,
-            patch: jsonpatch.compare(old, value),
+            // If no ops, old == new
+            patch: ops.length > 0 ? ops : old,
           }
         }
         return patch

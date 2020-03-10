@@ -10,24 +10,24 @@ const logger = log.getLogger('store:queue')
 const notOpenError = new Error('Database not open')
 
 export interface Job<T> {
-  id: string
-  job: T
+  id: string;
+  job: T;
 }
 
 /**
  * Events for Queue's EventEmitter
  */
 type Events<T> = {
-  start: () => void
-  trigger_next: (index?: number) => void
-  stop: () => void
-  next: (task: Job<T>) => void
-  empty: () => void
-  push: (task: Job<T>) => void
-  open: (store: Datastore<Buffer>) => void
-  close: () => void
-  delete: (id: string) => void
-  error: (err: Error) => void
+  start: () => void;
+  trigger_next: (index?: number) => void;
+  stop: () => void;
+  next: (task: Job<T>) => void;
+  empty: () => void;
+  push: (task: Job<T>) => void;
+  open: (store: Datastore<Buffer>) => void;
+  close: () => void;
+  delete: (id: string) => void;
+  error: (err: Error) => void;
 }
 
 /**
@@ -38,7 +38,7 @@ export class Queue<T = any> extends EventEmitter<Events<T>> {
   /**
    * Instance variable for whether the queue is empty (not known at instantiation).
    */
-  private _empty? = false
+  private _empty?= false
 
   /**
    * The queue of objects to operate on

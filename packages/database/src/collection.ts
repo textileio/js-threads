@@ -1,4 +1,4 @@
-import { Datastore, Result, Key, Query, Batch, MemoryDatastore } from 'interface-datastore'
+import { Datastore, Key, Query, MemoryDatastore } from 'interface-datastore'
 import { EventEmitter } from 'tsee'
 import Ajv, { ValidateFunction, ValidationError } from 'ajv'
 import uuid from 'uuid'
@@ -8,29 +8,45 @@ import toJsonSchema, { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
 import { Dispatcher, JsonPatchStore, Entity } from '@textile/threads-store'
 import { FilterQuery } from './query'
 
+// Resolve the value of the field (dot separated) on the given object
+const dot = mingo._internal().resolve
+
+// Setup the key field for our collection
+mingo.setup({
+  key: 'ID' // @todo: We should really do '_id'
+})
+
+export const existingKeyError = new Error('Existing key')
+
 /**
  * Events for a collection's EventEmitter
  */
-type Events<T> = {
-  // open: () => void
-  // close: () => void
-  // events: (...events: Event<T>[]) => void
-  // update: (...updates: Update[]) => void
-  // error: (err: Error) => void
+type Events<T> = {}
+
+interface FindOptions<T extends Entity> extends Pick<Query<T>, 'limit' | 'offset' | 'keysOnly'> {
+  sort?: {
+    [key in keyof T]?: 1 | -1
+  };
 }
 
 /**
  * Options for creating a new collection.
  */
 interface Options<T extends Entity> {
-  child: Datastore<T>
-  dispatcher: Dispatcher
-  [key: string]: any
+  child: Datastore<T>;
+  dispatcher: Dispatcher;
+  [key: string]: any;
 }
 
 const defaultOptions: Options<any> = {
   child: new MemoryDatastore(),
   dispatcher: new Dispatcher(),
+}
+
+const cmp = (a: any, b: any, asc: 1 | -1 = 1) => {
+  if (a < b) return -1 * asc
+  if (a > b) return 1 * asc
+  return 0
 }
 
 // Entities/Documents
@@ -45,19 +61,24 @@ const handler = <T extends Entity>(obj: T) => {
       }
       return Reflect.get(target, property)
     },
-    set: (_target: T, property: keyof T, value: any, _receiver: any) => {
+    set: (_target: T | Document<T>, property: keyof T, value: any, _receiver: any) => {
       return Reflect.set(obj, property, value)
     },
   }
 }
 
+/**
+ * Document is a wrapper around a collection and a (proxy to) an entity object.
+ */
 export class Document<T extends Entity> {
-  constructor(private _collection: Collection<T>, private _data: T) {}
+  constructor(private _collection: Collection<T>, private _data: T) {
+    return new Proxy<Document<T>>(this, handler(this._data))
+  }
+
+  /**
+   * Save this entity to its parent collection.
+   */
   save() {
-    if (!this._collection.validator(this._data) && this._collection.validator.errors) {
-      throw new ValidationError(this._collection.validator.errors)
-    }
-    console.log(this._data)
     return this._collection.save(this._data)
   }
 }
@@ -65,30 +86,35 @@ export class Document<T extends Entity> {
 // Collections
 
 export interface Collection<T extends Entity> {
-  // @todo: Figure out how to have Document automatically have the same properties as T
-  <T extends Entity>(data: T): Document<T> & T
-  new <T extends Entity>(data: T): Document<T> & T
+  <T extends Entity>(data: T): Document<T> & T;
+  new <T extends Entity>(data: T): Document<T> & T;
 }
 
 /**
  * Collection is a store of entities defined by a single schema.
  */
-export class Collection<T extends Entity> extends EventEmitter<Events<T>> {
+export class Collection<T extends Entity> {
   readonly validator: ValidateFunction
   readonly child: JsonPatchStore<T>
+  readonly emitter: EventEmitter<Events<T>> = new EventEmitter()
   constructor(readonly name: string, schema: JSONSchema, options: Options<T> = defaultOptions) {
-    super()
     this.validator = new Ajv().compile(schema)
     this.child = new JsonPatchStore(options.child, new Key(name), options.dispatcher)
-    const self = (entity: T): Document<T> & T => {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const c = this
+    // Hacky function that gives us a nice ux for creating entities.
+    const self = function Doc(entity: T) {
       if (!entity.ID) entity.ID = uuid()
-      if (!this.validator(entity) && this.validator.errors) {
-        throw new ValidationError(this.validator.errors)
+      if (!c.validator(entity) && c.validator.errors) {
+        throw new ValidationError(c.validator.errors)
       }
-      const doc = new Document(this, entity)
-      return new Proxy(doc as any, handler(entity)) as Document<T> & T
+      return new Document(c, entity) as Document<T> & T
     }
     Object.setPrototypeOf(self, this.constructor.prototype)
+    Object.getOwnPropertyNames(this).forEach(p => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      Object.defineProperty(self, p, Object.getOwnPropertyDescriptor(this, p)!)
+    })
     return self as Collection<T>
   }
 
@@ -126,11 +152,23 @@ export class Collection<T extends Entity> extends EventEmitter<Events<T>> {
    * Find all entities matching the query
    * @param query Mongodb-style filter query.
    */
-  find(query: FilterQuery<T>) {
+  find(query: FilterQuery<T>, options: FindOptions<T> = {}) {
+    // @todo: Ideally, we'd use more mingo features here, but they don't support async iterators
     const m = new mingo.Query(query || {})
-    const f: Query.Filter<T> = ({ value }) => m.test(value)
+    const filters: Query.Filter<T>[] = [({ value }) => m.test(value)]
+    const orders: Query.Order<T>[] = []
+    if (options.sort) {
+      for (const [key, value] of Object.entries(options.sort)) {
+        orders.push(items => items.sort((a, b) => {
+          // @todo: value is a Buffer
+          return cmp(dot(a.value, key), dot(b.value, key), value || 1)
+        }))
+      }
+    }
     const q: Query<T> = {
-      filters: [f],
+      ...options,
+      filters,
+      orders
     }
     return this.child.query(q)
   }
@@ -139,8 +177,8 @@ export class Collection<T extends Entity> extends EventEmitter<Events<T>> {
    * Find the first entity matching the query
    * @param query Mongodb-style filter query.
    */
-  findOne(query: FilterQuery<T>) {
-    const it = this.find(query)
+  findOne(query: FilterQuery<T>, options: FindOptions<T> = {}) {
+    const it = this.find(query, options)
     return it[Symbol.asyncIterator]().next()
   }
 
@@ -148,18 +186,20 @@ export class Collection<T extends Entity> extends EventEmitter<Events<T>> {
    * Count all entities matching the query
    * @param query Mongodb-style filter query.
    */
-  count(query: FilterQuery<T>) {
+  count(query: FilterQuery<T>, options: FindOptions<T> = {}) {
     // @todo: See https://github.com/Ivshti/linvodb3/blob/master/lib/cursor.js
-    return reduce((acc, _value) => acc + 1, 0, this.find(query))
+    return reduce((acc, _value) => acc + 1, 0, this.find(query, options))
   }
 
   /**
    * Save (multiple) entities.
+   * @note Save is similar to insert, except it allows saving/overwriting existing entities.
    * @param entities A variadic array of entities.
    */
   save(...entities: T[]) {
     const batch = this.child.batch()
     for (const entity of entities) {
+      if (!entity.ID) entity.ID = uuid()
       if (!this.validator(entity) && this.validator.errors) {
         throw new ValidationError(this.validator.errors)
       }
@@ -178,5 +218,33 @@ export class Collection<T extends Entity> extends EventEmitter<Events<T>> {
       batch.delete(new Key(id))
     }
     return batch.commit()
+  }
+
+  /**
+   * Insert (multiple) new entities.
+   * @note Insert is similar to save, except it will not allow saving/overwriting existing entities.
+   * @param entities
+   */
+  async insert(...entities: T[]) {
+    // By convention we'll use insert here, but could use a specific key instead
+    const lockKey = new Key('insert')
+    await this.child.readLock(lockKey)
+    try {
+      const batch = this.child.batch()
+      for (const entity of entities) {
+        if (!entity.ID) entity.ID = uuid()
+        const key = new Key(entity.ID)
+        if (await this.child.has(key)) {
+          throw existingKeyError
+        }
+        if (!this.validator(entity) && this.validator.errors) {
+          throw new ValidationError(this.validator.errors)
+        }
+        batch.put(key, entity)
+      }
+      return await batch.commit()
+    } finally {
+      this.child.unlock(lockKey)
+    }
   }
 }

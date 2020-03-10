@@ -163,13 +163,13 @@ In order to focus the maintainers' attention on making progress, we will mark Is
 
 ### JavaScript Styleguide
 
-We use [Prettier](https://github.com/prettier/prettier), [ESLint](https://eslint.org), and other tools to help keep code consistent. If in doubt, stick with [JavaScript Standard Style](https://standardjs.com/), and let the linter and prettier fix things for you!
+We use [ESLint](https://eslint.org), and other tools to help keep code consistent. If in doubt, stick with [JavaScript Standard Style](https://standardjs.com/), and let the linter fix things for you!
 
 * Prefer the object spread operator (`{...anotherObj}`) to `Object.assign()`
 * Inline `export`s with expressions whenever possible
   ```js
   // Use this:
-  export default class ClassName {
+  export class ClassName {
 
   }
 
@@ -177,14 +177,14 @@ We use [Prettier](https://github.com/prettier/prettier), [ESLint](https://eslint
   class ClassName {
 
   }
-  export default ClassName
+  export ClassName
   ```
 * [Avoid platform-dependent code](https://flight-manual.atom.io/hacking-atom/sections/cross-platform-compatibility/)
-* No default exports!
+* [No default exports](https://humanwhocodes.com/blog/2019/01/stop-using-default-exports-javascript-module/)!
 
 ### Specs Styleguide
 
-- Include thoughtfully-worded, well-structured [Jasmine](https://jasmine.github.io/) specs.
+- Include thoughtfully-worded, well-structured, behavior-driven development (BDD) specs using [Mocha](https://jasmine.github.io/).
 - Treat `describe` as a noun or situation.
 - Treat `it` as a statement about state or how an operation changes state.
 

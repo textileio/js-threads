@@ -1,5 +1,4 @@
-import { Datastore, Key, Batch, Query } from 'interface-datastore'
-import { map } from 'streaming-iterables'
+import { Datastore, Key, Batch, Query, utils } from 'interface-datastore'
 import cbor from 'cbor-sync'
 
 export interface Encoder<T = Buffer, O = Buffer> {
@@ -87,10 +86,26 @@ export class EncodingDatastore<T = Buffer, O = Buffer> implements Datastore<T> {
    * @param query The query object.
    */
   query(q: Query<T>) {
-    const results = this.child.query((q as any) as Query<O>)
-    return map(({ key, value }) => {
+    // @todo: Wrap all filters and orders in a decode call?
+    const { keysOnly, prefix, ...rest } = q
+    const raw = this.child.query({ keysOnly, prefix })
+    let it = utils.map(raw, ({ key, value }) => {
       return { key, value: this.encoder.decode(value) }
-    }, results)
+    })
+    if (Array.isArray(rest.filters)) {
+      it = rest.filters.reduce((it, f) => utils.filter(it, f), it)
+    }
+    if (Array.isArray(rest.orders)) {
+      it = rest.orders.reduce((it, f) => utils.sortAll(it, f), it)
+    }
+    if (rest.offset) {
+      let i = 0
+      it = utils.filter(it, () => i++ >= (rest.offset || 0))
+    }
+    if (rest.limit) {
+      it = utils.take(it, rest.limit)
+    }
+    return it
   }
 
   close() {

@@ -1,8 +1,7 @@
 import log from 'loglevel'
 import { ulid } from 'ulid'
 import { decode } from 'cbor-sync'
-import { Datastore, Key, Result, MemoryDatastore } from 'interface-datastore'
-import { map } from 'streaming-iterables'
+import { Datastore, Key, Result, MemoryDatastore, utils } from 'interface-datastore'
 import { RWLock } from 'async-rwlock'
 import { CborEncoder } from './datastores/encoding'
 import { DomainDatastore } from './datastores'
@@ -13,7 +12,7 @@ const logger = log.getLogger('store:dispatcher')
  * Reducer applies an event to an existing state.
  */
 export interface Reducer<T extends Event> {
-  reduce(...events: Result<T>[]): Promise<void>
+  reduce(...events: Result<T>[]): Promise<void>;
 }
 
 export type EventDispatcher<A> = (...actions: Result<Event<A>>[]) => Promise<void>
@@ -22,10 +21,10 @@ export type EventDispatcher<A> = (...actions: Result<Event<A>>[]) => Promise<voi
  * Event is a local or remote event.
  */
 export interface Event<T = any> {
-  timestamp: Buffer
-  id: string
-  collection: string
-  patch?: T // actual event body
+  timestamp: Buffer;
+  id: string;
+  collection: string;
+  patch?: T; // actual event body
 }
 
 /**
@@ -63,7 +62,7 @@ export class Dispatcher extends RWLock {
       const result: Result<any> = { key: new Key(key.type()), value: decode(value) }
       return result
     }
-    return map(mapper, this.child?.query({ prefix }) || [])
+    return utils.map(this.child?.query({ prefix }) || [], mapper)
   }
 
   /**

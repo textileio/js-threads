@@ -71,10 +71,12 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
             patch: value,
           }
         } else {
+          const ops = jsonpatch.compare(old, value)
           patch = {
             type: Op.Type.Save,
             entityID,
-            patch: jsonpatch.compare(old, value),
+            // If no ops, old == new
+            patch: ops.length > 0 ? ops : old,
           }
         }
         return patch

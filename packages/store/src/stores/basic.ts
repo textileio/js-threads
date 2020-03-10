@@ -1,6 +1,6 @@
 import { Result, Datastore, Key } from 'interface-datastore'
 import { Dispatcher, Event } from '../dispatcher'
-import { Store, ActionBatch } from './store'
+import { Store } from './store'
 
 export class BasicStore<T = any> extends Store<T> {
   constructor(child: Datastore<any>, prefix: Key, dispatcher?: Dispatcher) {

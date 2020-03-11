@@ -1,4 +1,4 @@
-import { Datastore, Key, Query, MemoryDatastore } from 'interface-datastore'
+import { Datastore, Key, Query, MemoryDatastore, Result } from 'interface-datastore'
 import { EventEmitter } from 'tsee'
 import Ajv, { ValidateFunction, ValidationError } from 'ajv'
 import uuid from 'uuid'
@@ -13,7 +13,7 @@ const dot = mingo._internal().resolve
 
 // Setup the key field for our collection
 mingo.setup({
-  key: 'ID' // @todo: We should really do '_id'
+  key: 'ID',
 })
 
 export const existingKeyError = new Error('Existing key')
@@ -26,16 +26,16 @@ type Events<T> = {}
 interface FindOptions<T extends Entity> extends Pick<Query<T>, 'limit' | 'offset' | 'keysOnly'> {
   sort?: {
     [key in keyof T]?: 1 | -1
-  };
+  }
 }
 
 /**
  * Options for creating a new collection.
  */
 interface Options<T extends Entity> {
-  child: Datastore<T>;
-  dispatcher: Dispatcher;
-  [key: string]: any;
+  child: Datastore<T>
+  dispatcher: Dispatcher
+  [key: string]: any
 }
 
 const defaultOptions: Options<any> = {
@@ -86,8 +86,8 @@ export class Document<T extends Entity> {
 // Collections
 
 export interface Collection<T extends Entity> {
-  <T extends Entity>(data: T): Document<T> & T;
-  new <T extends Entity>(data: T): Document<T> & T;
+  <T extends Entity>(data: T): Document<T> & T
+  new <T extends Entity>(data: T): Document<T> & T
 }
 
 /**
@@ -124,7 +124,11 @@ export class Collection<T extends Entity> {
    * @param schema A valid JSON schema object.
    * @param options The underlying store options.
    */
-  static fromSchema<T extends Entity>(name: string, schema: JSONSchema, options: Options<T> = defaultOptions) {
+  static fromSchema<T extends Entity>(
+    name: string,
+    schema: JSONSchema,
+    options: Options<T> = defaultOptions,
+  ) {
     return new Collection<T>(name, schema, options)
   }
 
@@ -159,16 +163,17 @@ export class Collection<T extends Entity> {
     const orders: Query.Order<T>[] = []
     if (options.sort) {
       for (const [key, value] of Object.entries(options.sort)) {
-        orders.push(items => items.sort((a, b) => {
-          // @todo: value is a Buffer
-          return cmp(dot(a.value, key), dot(b.value, key), value || 1)
-        }))
+        orders.push(items =>
+          items.sort((a, b) => {
+            return cmp(dot(a.value, key), dot(b.value, key), value || 1)
+          }),
+        )
       }
     }
     const q: Query<T> = {
       ...options,
       filters,
-      orders
+      orders,
     }
     return this.child.query(q)
   }
@@ -187,7 +192,6 @@ export class Collection<T extends Entity> {
    * @param query Mongodb-style filter query.
    */
   count(query: FilterQuery<T>, options: FindOptions<T> = {}) {
-    // @todo: See https://github.com/Ivshti/linvodb3/blob/master/lib/cursor.js
     return reduce((acc, _value) => acc + 1, 0, this.find(query, options))
   }
 

@@ -5,9 +5,9 @@ import { Collection, existingKeyError } from './collection'
 describe('Collection', () => {
   it('basic', async () => {
     interface Info {
-      ID: string;
-      other?: number;
-      thing: string;
+      ID: string
+      other?: number
+      thing: string
     }
     const Thing = new Collection<Info>('things', {})
     const data: Info = { ID: '123', thing: 'one' }
@@ -27,11 +27,14 @@ describe('Collection', () => {
       expect(err).to.equal(existingKeyError)
     }
     await Thing.insert(
+      { ID: '', other: -1, thing: 'five' },
       { ID: '', other: 2, thing: 'two' },
       { ID: '', other: 3, thing: 'three' },
       { ID: '', other: 4, thing: 'four' },
     )
-    const all = await collect(Thing.find({}, { sort: { other: -1 } }))
+    const all = await collect(
+      Thing.find({ $or: [{ other: { $gt: 1 } }, { thing: 'one' }] }, { sort: { other: -1 } }),
+    )
     const last = all[0]
     expect(last.value).to.have.haveOwnProperty('other', 4)
   })

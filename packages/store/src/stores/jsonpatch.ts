@@ -7,8 +7,8 @@ import { Store, ActionBatch } from './store'
  * Entity is any object with an ID field.
  */
 export interface Entity {
-  ID: string;
-  [others: string]: any;
+  ID: string
+  [others: string]: any
 }
 
 /**
@@ -24,9 +24,9 @@ export namespace Op {
 }
 
 export interface Op<T extends Entity> {
-  type: Op.Type;
-  entityID: string;
-  patch?: Operation[] | T;
+  type: Op.Type
+  entityID: string
+  patch?: Operation[] | T
 }
 
 export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
@@ -45,7 +45,9 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
       } else {
         const prev = await this.safeGet(key)
         const merged =
-          prev === undefined ? (update as T) : jsonpatch.applyPatch(prev, update as Operation[]).newDocument
+          prev === undefined
+            ? (update as T)
+            : jsonpatch.applyPatch(prev, update as Operation[]).newDocument
         batch.put(newKey, merged)
       }
     }

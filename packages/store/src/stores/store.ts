@@ -11,19 +11,19 @@ import { Lockable } from '../datastores/abstract/lockable'
  * Events for Store's EventEmitter
  */
 type Events<T> = {
-  open: () => void;
-  close: () => void;
-  events: (...events: Event<T>[]) => void;
-  update: (...updates: Update[]) => void; // Generic not yet used...
-  error: (err: Error) => void;
+  open: () => void
+  close: () => void
+  events: (...events: Event<T>[]) => void
+  update: (...updates: Update[]) => void // Generic not yet used...
+  error: (err: Error) => void
 }
 
 export type Action<T> = () => Promise<T>
 
 export interface Update<T = any> {
-  id: string;
-  collection: string;
-  meta?: T;
+  id: string
+  collection: string
+  meta?: T
 }
 
 export class ActionBatch<D = any, A = D> implements Batch<D> {

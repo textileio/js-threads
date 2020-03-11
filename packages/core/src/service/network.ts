@@ -5,7 +5,7 @@ import { Multiaddr } from '../multiaddr'
 import { ThreadRecord, LogRecord } from './record'
 
 export interface Closer {
-  close(): void;
+  close(): void
 }
 
 /**
@@ -25,7 +25,7 @@ export interface API {
   /**
    * getHostID returns the service's (remote) host peer ID.
    */
-  getHostID(): Promise<PeerId>;
+  getHostID(): Promise<PeerId>
 
   /**
    * createThread with id.
@@ -35,46 +35,46 @@ export interface API {
    * generated (and returned). If no ReadKey is provided, the service will be unable to write records (but it may be
    * able to return records).
    */
-  createThread(id: ThreadID, opts: KeyOptions): Promise<ThreadInfo>;
+  createThread(id: ThreadID, opts: KeyOptions): Promise<ThreadInfo>
 
   /**
    * addThread from a multiaddress.
    * @param addr The Thread multiaddress.
    * @param opts The set of keys to use when adding the Thread.
    */
-  addThread(addr: Multiaddr, opts: KeyOptions): Promise<ThreadInfo>;
+  addThread(addr: Multiaddr, opts: KeyOptions): Promise<ThreadInfo>
 
   /**
    * getThread with id.
    * @param id The Thread ID.
    */
-  getThread(id: ThreadID): Promise<ThreadInfo>;
+  getThread(id: ThreadID): Promise<ThreadInfo>
 
   /**
    * pullThread for new records.
    * @param id The Thread ID.
    */
-  pullThread(id: ThreadID): Promise<void>;
+  pullThread(id: ThreadID): Promise<void>
 
   /**
    * deleteThread with id.
    * @param id The Thread ID.
    */
-  deleteThread(id: ThreadID): Promise<void>;
+  deleteThread(id: ThreadID): Promise<void>
 
   /**
    * addReplicator to a thread.
    * @param id The Thread ID.
    * @param addr The multiaddress of the replicator peer.
    */
-  addReplicator(id: ThreadID, addr: Multiaddr): Promise<PeerId>;
+  addReplicator(id: ThreadID, addr: Multiaddr): Promise<PeerId>
 
   /**
    * createRecord with body.
    * @param id The Thread ID.
    * @param body The body to add as content.
    */
-  createRecord(id: ThreadID, body: any): Promise<ThreadRecord | undefined>;
+  createRecord(id: ThreadID, body: any): Promise<ThreadRecord | undefined>
 
   /**
    * addRecord to the given log.
@@ -82,19 +82,19 @@ export interface API {
    * @param logID The Log ID.
    * @param rec The log record to add.
    */
-  addRecord(id: ThreadID, logID: LogID, rec: LogRecord): Promise<void>;
+  addRecord(id: ThreadID, logID: LogID, rec: LogRecord): Promise<void>
 
   /**
    * GetRecord returns the record at cid.
    * @param id The Thread ID.
    * @param rec The record's CID.
    */
-  getRecord(id: ThreadID, rec: CID): Promise<LogRecord>;
+  getRecord(id: ThreadID, rec: CID): Promise<LogRecord>
 
   /**
    * subscribe to new record events in the given threads.
    * @param cb The callback to call on each new thread record.
    * @param threads A (variadic) set of threads to subscribe to.
    */
-  subscribe(cb: (rec?: ThreadRecord, err?: Error) => void, ...threads: ThreadID[]): Closer;
+  subscribe(cb: (rec?: ThreadRecord, err?: Error) => void, ...threads: ThreadID[]): Closer
 }

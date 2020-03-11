@@ -2,28 +2,28 @@ import { Datastore, Key, Batch, Query, utils } from 'interface-datastore'
 import cbor from 'cbor-sync'
 
 export interface Encoder<T = Buffer, O = Buffer> {
-  encode(data: T): O;
-  decode(stored: O): T;
+  encode(data: T): O
+  decode(stored: O): T
 }
 
 // 258 is the CBOR semantic tag number for a mathematical finite set:
 // https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
-cbor.addSemanticEncode(258, function (data) {
+cbor.addSemanticEncode(258, function(data) {
   if (data instanceof Set) {
     return Array.from(data)
   }
 })
-cbor.addSemanticDecode(258, function (data) {
+cbor.addSemanticDecode(258, function(data) {
   return new Set(data)
 })
 
 // 259 is the CBOR semantic tag number for a Map datatype with key-value operations
-cbor.addSemanticEncode(259, function (data) {
+cbor.addSemanticEncode(259, function(data) {
   if (data instanceof Map) {
     return Array.from(data)
   }
 })
-cbor.addSemanticDecode(259, function (data) {
+cbor.addSemanticDecode(259, function(data) {
   return new Map(data)
 })
 
@@ -42,7 +42,7 @@ export class EncodingDatastore<T = Buffer, O = Buffer> implements Datastore<T> {
    * @param child The underlying datastore to wrap.
    * @param transform A transform object to use for encoding/decoding.
    */
-  constructor(public child: Datastore<O>, public encoder: Encoder<T, O>) { }
+  constructor(public child: Datastore<O>, public encoder: Encoder<T, O>) {}
 
   open() {
     return this.child.open()

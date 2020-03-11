@@ -9,16 +9,16 @@ export interface KeyOptions {
   /**
    * Symmetric encryption key. Should be 44 bytes in length. Can be generated with crypto.randomBytes().
    */
-  replicatorKey?: Uint8Array;
+  replicatorKey?: Uint8Array
   /**
    * Symmetric encryption key. Should be 44 bytes in length. Can be generated with crypto.randomBytes().
    */
-  readKey?: Uint8Array;
+  readKey?: Uint8Array
   /**
    * Asymmetric encryption key (pair). Can be either a public or private key. If a public key is specified, this
    * limits the types of operations the receiving Thread service can perform.
    */
-  logKey?: PublicKey | PrivateKey;
+  logKey?: PublicKey | PrivateKey
 }
 
 // Thread protocol version
@@ -55,17 +55,17 @@ export interface ThreadInfo {
   /**
    * Thread ID.
    */
-  id: ThreadID;
+  id: ThreadID
   /**
    * Set of log information.
    */
-  logs?: Set<LogInfo>;
+  logs?: Set<LogInfo>
   /**
    * Symmetric encryption key.
    */
-  replicatorKey?: Uint8Array;
+  replicatorKey?: Uint8Array
   /**
    * Symmetric encryption key.
    */
-  readKey?: Uint8Array;
+  readKey?: Uint8Array
 }

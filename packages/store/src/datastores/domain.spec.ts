@@ -10,9 +10,14 @@ describe('DomainDatastore', () => {
       const mStore = new MemoryDatastore()
       const store = new DomainDatastore(mStore, new Key(prefix))
 
-      const keys = ['foo', 'foo/bar', 'foo/bar/baz', 'foo/barb', 'foo/bar/bazb', 'foo/bar/baz/barb'].map(
-        s => new Key(s),
-      )
+      const keys = [
+        'foo',
+        'foo/bar',
+        'foo/bar/baz',
+        'foo/barb',
+        'foo/bar/bazb',
+        'foo/bar/baz/barb',
+      ].map(s => new Key(s))
 
       await Promise.all(keys.map(key => store.put(key, Buffer.from(key.toString()))))
       const nResults = Promise.all(keys.map(key => store.get(key)))

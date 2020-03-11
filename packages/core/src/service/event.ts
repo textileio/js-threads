@@ -8,19 +8,19 @@ export interface Event {
   /**
    * The node structure of the event.
    */
-  value: Block<EventNode>;
+  value: Block<EventNode>
   /**
    * The header content for the event.
    */
-  header: Block<Uint8Array>;
+  header: Block<Uint8Array>
   /**
    * The body content for the event.
    */
-  body: Block<Uint8Array>;
+  body: Block<Uint8Array>
   /**
    * The underlying event node.
    */
-  obj?: EventNode;
+  obj?: EventNode
 }
 
 /**
@@ -30,11 +30,11 @@ export interface EventNode {
   /**
    * CID of body block
    */
-  body: CID;
+  body: CID
   /**
    * CID of header block
    */
-  header: CID;
+  header: CID
 }
 
 /**
@@ -44,9 +44,9 @@ export interface EventHeader {
   /**
    * Single-use symmetric key
    */
-  key?: Uint8Array;
+  key?: Uint8Array
   /**
    * Unix seconds since epoch
    */
-  time: number;
+  time: number
 }

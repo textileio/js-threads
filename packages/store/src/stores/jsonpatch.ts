@@ -49,7 +49,8 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
         batch.put(newKey, merged)
       }
     }
-    return await batch.commit()
+    await batch.commit()
+    this.emit('update', ...events.map(event => event.value))
   }
 
   batch(): ActionBatch<T, Op<T>> {
@@ -57,11 +58,11 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
       this,
       async key => ({
         type: Op.Type.Delete,
-        entityID: key.toString(),
+        entityID: key.name(),
         patch: undefined,
       }),
       async (key: Key, value: T) => {
-        const entityID = key.toString()
+        const entityID = key.name()
         let patch: Op<T>
         const old = await this.safeGet(key)
         if (old === undefined) {

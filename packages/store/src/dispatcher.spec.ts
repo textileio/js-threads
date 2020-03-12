@@ -31,7 +31,8 @@ describe('Dispatcher', () => {
 
   it('should only dispatch one (set of) events at a time', async () => {
     const d = new Dispatcher()
-    const slowReducer = (..._event: Result<TestEvent>[]) => new Promise<void>(r => setTimeout(r, 2000))
+    const slowReducer = (..._event: Result<TestEvent>[]) =>
+      new Promise<void>(r => setTimeout(r, 2000))
     d.register({ reduce: slowReducer })
     const value: TestEvent = {
       timestamp: Buffer.from('' + Date.now()),
@@ -83,7 +84,8 @@ describe('Dispatcher', () => {
 
   it('should not be able to register a new reducer while dispatching', async () => {
     const d = new Dispatcher()
-    const slowReducer = (..._event: Result<TestEvent>[]) => new Promise<void>(r => setTimeout(r, 2000))
+    const slowReducer = (..._event: Result<TestEvent>[]) =>
+      new Promise<void>(r => setTimeout(r, 2000))
     await d.register({ reduce: slowReducer })
     const value: TestEvent = {
       timestamp: Buffer.from('' + Date.now()),

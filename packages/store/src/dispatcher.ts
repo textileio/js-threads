@@ -12,7 +12,7 @@ const logger = log.getLogger('store:dispatcher')
  * Reducer applies an event to an existing state.
  */
 export interface Reducer<T extends Event> {
-  reduce(...events: Result<T>[]): Promise<void>;
+  reduce(...events: Result<T>[]): Promise<void>
 }
 
 export type EventDispatcher<A> = (...actions: Result<Event<A>>[]) => Promise<void>
@@ -21,10 +21,10 @@ export type EventDispatcher<A> = (...actions: Result<Event<A>>[]) => Promise<voi
  * Event is a local or remote event.
  */
 export interface Event<T = any> {
-  timestamp: Buffer;
-  id: string;
-  collection: string;
-  patch?: T; // actual event body
+  timestamp: Buffer
+  id: string
+  collection: string
+  patch?: T // actual event body
 }
 
 /**

@@ -12,7 +12,7 @@ interface PrefixDatastore<Value = Buffer> extends Datastore<Value> {
  * @param prefix
  */
 const reachBack = <T = Buffer>(child: PrefixDatastore<T>, prefix: Key = new Key('')): Key => {
-  if (child.child) return reachBack(child, child.prefix?.child(prefix) || prefix)
+  if (child.child) return reachBack(child.child, child.prefix?.child(prefix) || prefix)
   return prefix
 }
 

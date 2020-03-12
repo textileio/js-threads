@@ -1,4 +1,4 @@
-import { Datastore, Key, Batch, Query, utils } from 'interface-datastore'
+import { Datastore, Key, Batch, Query, utils, Result } from 'interface-datastore'
 import cbor from 'cbor-sync'
 
 export interface Encoder<T = Buffer, O = Buffer> {
@@ -30,6 +30,35 @@ cbor.addSemanticDecode(259, function(data) {
 export const CborEncoder: Encoder<any, Buffer> = {
   encode: (data: any) => cbor.encode(data),
   decode: (stored: Buffer) => cbor.decode(stored),
+}
+
+function isString(x: any) {
+  return typeof x === 'string'
+}
+
+function isObject(x: any) {
+  return typeof x === 'object' && x !== null
+}
+
+function isBufferLike(x: any) {
+  return isObject(x) && x.type === 'Buffer' && (Array.isArray(x.data) || isString(x.data))
+}
+
+function reviver(_key: string, value: any) {
+  if (isBufferLike(value)) {
+    if (Array.isArray(value.data)) {
+      return Buffer.from(value.data)
+    } else if (isString(value.data)) {
+      // Assume that the string is UTF-8 encoded (or empty).
+      return Buffer.from(value.data)
+    }
+  }
+  return value
+}
+
+export const JsonEncoder: Encoder<any, Buffer> = {
+  encode: (data: any) => Buffer.from(JSON.stringify(data)),
+  decode: (stored: Buffer) => JSON.parse(stored.toString(), reviver),
 }
 
 /**
@@ -85,12 +114,14 @@ export class EncodingDatastore<T = Buffer, O = Buffer> implements Datastore<T> {
    * Returns an Iterable with each item being a Value (i.e., { key, value } pair).
    * @param query The query object.
    */
-  query(q: Query<T>) {
+  query(q: Query<T>): AsyncIterable<Result<T>> {
     // @todo: Wrap all filters and orders in a decode call?
     const { keysOnly, prefix, ...rest } = q
     const raw = this.child.query({ keysOnly, prefix })
     let it = utils.map(raw, ({ key, value }) => {
-      return { key, value: this.encoder.decode(value) }
+      const val = (keysOnly ? undefined : this.encoder.decode(value)) as T
+      const result: Result<T> = { key, value: val }
+      return result
     })
     if (Array.isArray(rest.filters)) {
       it = rest.filters.reduce((it, f) => utils.filter(it, f), it)

@@ -1,22 +1,29 @@
-import { MemoryDatastore } from 'interface-datastore'
-import cbor from 'cbor-sync'
-import { EncodingDatastore, Encoder } from './encoding'
+import { expect } from 'chai'
+import { MemoryDatastore, Key } from 'interface-datastore'
+import { EncodingDatastore, Encoder, CborEncoder, JsonEncoder } from './encoding'
 
-const JsonEncoder: Encoder<any, Buffer> = {
-  encode: (data: any) => Buffer.from(JSON.stringify(data)),
-  decode: (stored: Buffer) => JSON.parse(stored.toString()),
+const encoders: Record<string, Encoder> = {
+  cbor: CborEncoder,
 }
 
-const CborEncoder: Encoder<any, Buffer> = {
-  encode: (data: any) => cbor.encode(data),
-  decode: (stored: Buffer) => cbor.decode(stored),
-}
+describe('EncodingDatastore', () => {
+  it('basic', async () => {
+    const mStore = new MemoryDatastore()
+    const store = new EncodingDatastore(mStore, JsonEncoder)
+    const expected = {
+      some: 'random',
+      properties: false,
+      that: 123,
+      should: Buffer.from('be fine'),
+    }
+    const key = new Key('test')
+    await store.put(key, expected)
+    const returned = await store.get(key)
+    expect(expected).to.deep.equal(returned)
+  })
 
-const encoders: Encoder[] = [JsonEncoder, CborEncoder]
-
-describe('ValuetransformDatastore', () => {
-  encoders.forEach(encoder => {
-    describe('interface-datastore', () => {
+  for (const [name, encoder] of Object.entries(encoders)) {
+    describe(`interface-datastore: ${name}`, () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       require('interface-datastore/src/tests')({
         setup() {
@@ -27,5 +34,5 @@ describe('ValuetransformDatastore', () => {
         },
       })
     })
-  })
+  }
 })

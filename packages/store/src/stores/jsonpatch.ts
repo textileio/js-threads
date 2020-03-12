@@ -43,7 +43,7 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
       if (update === undefined) {
         batch.delete(newKey)
       } else {
-        const prev = await this.safeGet(key)
+        const prev = await this.safeGet(newKey)
         const merged =
           prev === undefined
             ? (update as T)
@@ -60,11 +60,11 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
       this,
       async key => ({
         type: Op.Type.Delete,
-        entityID: key.name(),
+        entityID: key.toString().slice(1),
         patch: undefined,
       }),
       async (key: Key, value: T) => {
-        const entityID = key.name()
+        const entityID = key.toString().slice(1)
         let patch: Op<T>
         const old = await this.safeGet(key)
         if (old === undefined) {

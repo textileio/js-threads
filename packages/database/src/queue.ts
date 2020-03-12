@@ -10,24 +10,24 @@ const logger = log.getLogger('store:queue')
 const notOpenError = new Error('Database not open')
 
 export interface Job<T> {
-  id: string;
-  job: T;
+  id: string
+  job: T
 }
 
 /**
  * Events for Queue's EventEmitter
  */
 type Events<T> = {
-  start: () => void;
-  trigger_next: (index?: number) => void;
-  stop: () => void;
-  next: (task: Job<T>) => void;
-  empty: () => void;
-  push: (task: Job<T>) => void;
-  open: (store: Datastore<Buffer>) => void;
-  close: () => void;
-  delete: (id: string) => void;
-  error: (err: Error) => void;
+  start: () => void
+  trigger_next: (index?: number) => void
+  stop: () => void
+  next: (task: Job<T>) => void
+  empty: () => void
+  push: (task: Job<T>) => void
+  open: (store: Datastore<Buffer>) => void
+  close: () => void
+  delete: (id: string) => void
+  error: (err: Error) => void
 }
 
 /**
@@ -38,7 +38,7 @@ export class Queue<T = any> extends EventEmitter<Events<T>> {
   /**
    * Instance variable for whether the queue is empty (not known at instantiation).
    */
-  private _empty?= false
+  private _empty? = false
 
   /**
    * The queue of objects to operate on
@@ -65,7 +65,10 @@ export class Queue<T = any> extends EventEmitter<Events<T>> {
    * @param store The underlying persistent Datastore.
    * @param batchSize How many objects to retrieve from DB into queue array at a time.
    */
-  constructor(public store: Datastore<Buffer> = new MemoryDatastore(), public batchSize: number = 10) {
+  constructor(
+    public store: Datastore<Buffer> = new MemoryDatastore(),
+    public batchSize: number = 10,
+  ) {
     super()
 
     if (batchSize < 1) throw new Error('Invalid batchSize parameter.  Must be a number > 0')
@@ -353,7 +356,12 @@ export class Queue<T = any> extends EventEmitter<Events<T>> {
     return new Promise<Array<string>>((resolve, reject) => {
       if (!this.isOpen) reject(notOpenError)
       const filter: Query.Filter = ({ value }) => value.equals(encoded)
-      collect(map(({ key }) => key.baseNamespace(), this.store.query({ filters: [filter], keysOnly: true })))
+      collect(
+        map(
+          ({ key }) => key.baseNamespace(),
+          this.store.query({ filters: [filter], keysOnly: true }),
+        ),
+      )
         .then(jobs => {
           resolve(jobs)
         })

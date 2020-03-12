@@ -4,7 +4,7 @@ import Ajv, { ValidateFunction, ValidationError } from 'ajv'
 import uuid from 'uuid'
 import { reduce } from 'streaming-iterables'
 import mingo from 'mingo'
-import toJsonSchema, { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
+import { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
 import { Dispatcher, JsonPatchStore, Entity } from '@textile/threads-store'
 import { FilterQuery } from './query'
 
@@ -32,10 +32,9 @@ interface FindOptions<T extends Entity> extends Pick<Query<T>, 'limit' | 'offset
 /**
  * Options for creating a new collection.
  */
-interface Options<T extends Entity> {
+export interface Options<T extends Entity> {
   child: Datastore<T>
   dispatcher: Dispatcher
-  [key: string]: any
 }
 
 const defaultOptions: Options<any> = {
@@ -70,7 +69,7 @@ const handler = <T extends Entity>(obj: T) => {
 /**
  * Document is a wrapper around a collection and a (proxy to) an entity object.
  */
-export class Document<T extends Entity> {
+export class Document<T extends Entity = any> {
   constructor(private _collection: Collection<T>, private _data: T) {
     return new Proxy<Document<T>>(this, handler(this._data))
   }
@@ -85,18 +84,34 @@ export class Document<T extends Entity> {
 
 // Collections
 
-export interface Collection<T extends Entity> {
-  <T extends Entity>(data: T): Document<T> & T
-  new <T extends Entity>(data: T): Document<T> & T
+export interface Collection<T extends Entity = any> {
+  <T extends Entity>(data: Partial<T>): Document<T> & T
+  new <T extends Entity>(data: Partial<T>): Document<T> & T
 }
 
 /**
  * Collection is a store of entities defined by a single schema.
  */
-export class Collection<T extends Entity> {
+export class Collection<T extends Entity = any> {
+  /**
+   * Validator is a function for validating inputs against a given schema.
+   */
   readonly validator: ValidateFunction
+  /**
+   * Child is the underlying datastore.
+   */
   readonly child: JsonPatchStore<T>
+  /**
+   * Emitter is the underlying event emitter for subscribing to collection events.
+   */
   readonly emitter: EventEmitter<Events<T>> = new EventEmitter()
+
+  /**
+   * Collection creates a new collection.
+   * @param name A name for the collection.
+   * @param schema A valid JSON schema object.
+   * @param options The underlying collection options.
+   */
   constructor(readonly name: string, schema: JSONSchema, options: Options<T> = defaultOptions) {
     this.validator = new Ajv().compile(schema)
     this.child = new JsonPatchStore(options.child, new Key(name), options.dispatcher)
@@ -116,32 +131,6 @@ export class Collection<T extends Entity> {
       Object.defineProperty(self, p, Object.getOwnPropertyDescriptor(this, p)!)
     })
     return self as Collection<T>
-  }
-
-  /**
-   * fromSchema creates a new empty store from an input JSON schema.
-   * @param name A name for the collection.
-   * @param schema A valid JSON schema object.
-   * @param options The underlying store options.
-   */
-  static fromSchema<T extends Entity>(
-    name: string,
-    schema: JSONSchema,
-    options: Options<T> = defaultOptions,
-  ) {
-    return new Collection<T>(name, schema, options)
-  }
-
-  /**
-   * fromObject creates a new store from a representative input object.
-   * It will attempt to infer the JSON schema from the input object.
-   * @param name A name for the collection.
-   * @param data A valid JSON object.
-   * @param options The underlying store options.
-   */
-  static fromObject<T extends Entity>(name: string, obj: T, options: Options<T> = defaultOptions) {
-    const schema = toJsonSchema(obj) as JSONSchema
-    return this.fromSchema(name, schema, options)
   }
 
   /**

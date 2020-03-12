@@ -1,5 +1,6 @@
+import { Datastore } from 'interface-datastore'
 import { Service } from '@textile/threads-service'
-import { ThreadID, ThreadRecord } from '@textile/threads-core'
+import { ThreadID, ThreadRecord, Closer } from '@textile/threads-core'
 import retry, { Options } from 'async-retry'
 import merge from 'deepmerge'
 import log from 'loglevel'
@@ -14,22 +15,34 @@ const retryOpts: Options = {
 }
 
 export type Events = {
-  [event in string | symbol]: (rec: ThreadRecord) => void
+  record: (rec: ThreadRecord) => void
 }
 
-export type EventJob<T> = { id: ThreadID; body: T }
+export type EventJob<T> = { id: Buffer; body: T }
 
 export class EventBus<T = any> extends EventEmitter<Events> {
-  started = false
-  constructor(public queue: Queue<EventJob<T>>, public service: Service, opts: Options = {}) {
+  isStarted = false
+  private closer?: Closer
+  public queue: Queue<EventJob<T>>
+  constructor(
+    queue: Queue<EventJob<T>> | Datastore<any>,
+    public service: Service,
+    opts: Options = {},
+  ) {
     super()
+    this.queue = queue instanceof Queue ? queue : new Queue(queue)
     this.queue.on('next', async ({ job }) => {
       const { id, body } = job
+      const threadID = ThreadID.fromBytes(id)
       try {
         await retry(async (_bail, _num) => {
           // @todo: We could use bail here to bail if the service errors out with a headers closed error
           // This would mean that the gRPC service isn't running, i.e., we are in 'offline' mode
-          await this.service.createRecord(id, body)
+          const rec = await this.service.createRecord(threadID, body)
+          const cid = await rec.record?.value.cid()
+          const thread = rec.threadID.string()
+          const log = rec.logID.toB58String()
+          console.log(`put record ${cid} (thread=${thread}, log=${log})`)
           return this.queue.done()
         }, merge(retryOpts, opts))
       } catch (err) {
@@ -39,22 +52,27 @@ export class EventBus<T = any> extends EventEmitter<Events> {
     })
   }
 
-  serviceWatcher(start = true) {
-    this.service.subscribe(async rec => {
-      if (rec) this.emit(rec.threadID.string(), rec)
-    })
+  private serviceWatcher(id?: ThreadID, start = true) {
+    if (start) {
+      const func = async (rec?: ThreadRecord) => {
+        if (rec) this.emit('record', rec)
+      }
+      this.closer = id ? this.service.subscribe(func, id) : this.service.subscribe(func)
+    } else if (this.closer) {
+      return this.closer.close()
+    }
   }
 
-  async start() {
-    this.started = true
+  async start(id?: ThreadID) {
+    this.isStarted = true
     await this.queue.open()
-    this.serviceWatcher()
+    this.serviceWatcher(id)
     return this.queue.start()
   }
 
   async stop() {
-    this.started = false
-    this.serviceWatcher(false)
+    this.isStarted = false
+    this.serviceWatcher(undefined, false)
     this.queue.stop()
     await this.queue.close()
   }

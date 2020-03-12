@@ -38,8 +38,8 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
     const deferred = async () => {
       const event: Event = {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
-        id: key.toString(),
-        collection: this.store.prefix.toString(),
+        id: key.name(),
+        collection: this.store.prefix.name(),
         patch: await this.onDelete(key),
       }
       return event
@@ -51,8 +51,8 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
     const deferred = async () => {
       const event: Event = {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
-        id: key.toString(),
-        collection: this.store.prefix.toString(),
+        id: key.name(),
+        collection: this.store.prefix.name(),
         patch: await this.onPut(key, value),
       }
       return event

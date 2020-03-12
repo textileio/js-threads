@@ -18,23 +18,26 @@ describe('JsonPatchStore', () => {
     })
   })
 
-  it('basic', async () => {
+  it('basic', done => {
     const mStore = new MemoryDatastore()
     const store = new JsonPatchStore(mStore, new Key('test'), new Dispatcher())
 
     let count = 0
     store.on('events', () => count++)
-    store.on('update', () => count++)
+    store.on('update', () => {
+      expect(++count).to.equal(2)
+      store.close().then(() => {
+        done()
+      })
+    })
 
-    await store.put(new Key('bar'), { ID: uuid(), hello: 'world' })
-
-    const mRes = await collect(mStore.query({}))
-    const nRes = await collect(store.query({}))
-
-    expect(nRes).to.have.length(1)
-    expect(mRes).to.have.length(1)
-
-    expect(count).to.equal(2)
-    await store.close()
+    store.put(new Key('bar'), { ID: uuid(), hello: 'world' }).then(() => {
+      collect(mStore.query({})).then(mRes => {
+        collect(store.query({})).then(nRes => {
+          expect(nRes).to.have.length(1)
+          expect(mRes).to.have.length(1)
+        })
+      })
+    })
   })
 })

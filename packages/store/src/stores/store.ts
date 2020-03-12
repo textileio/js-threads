@@ -38,8 +38,8 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
     const deferred = async () => {
       const event: Event = {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
-        id: key.name(),
-        collection: this.store.prefix.name(),
+        id: key.toString().slice(1),
+        collection: this.store.prefix.toString().slice(1),
         patch: await this.onDelete(key),
       }
       return event
@@ -51,8 +51,8 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
     const deferred = async () => {
       const event: Event = {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
-        id: key.name(),
-        collection: this.store.prefix.name(),
+        id: key.toString().slice(1),
+        collection: this.store.prefix.toString().slice(1),
         patch: await this.onPut(key, value),
       }
       return event
@@ -79,7 +79,7 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
     public encoder: Encoder<D, Buffer> = CborEncoder,
   ) {
     super()
-    this.child = new EncodingDatastore(new DomainDatastore(child, this.prefix), this.encoder)
+    this.child = new DomainDatastore(new EncodingDatastore(child, this.encoder), this.prefix)
     this.semaphore = new Semaphore(this.prefix)
     if (this.dispatcher) {
       this.dispatcher.register(this)

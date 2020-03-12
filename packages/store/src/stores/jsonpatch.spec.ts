@@ -6,6 +6,18 @@ import { Dispatcher } from '../dispatcher'
 import { JsonPatchStore } from './jsonpatch'
 
 describe('JsonPatchStore', () => {
+  describe('interface-datastore', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('interface-datastore/src/tests')({
+      setup() {
+        return new JsonPatchStore(new MemoryDatastore(), new Key('test'), new Dispatcher())
+      },
+      teardown() {
+        return
+      },
+    })
+  })
+
   it('basic', async () => {
     const mStore = new MemoryDatastore()
     const store = new JsonPatchStore(mStore, new Key('test'), new Dispatcher())

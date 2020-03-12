@@ -5,6 +5,18 @@ import { Dispatcher } from '../dispatcher'
 import { BasicStore } from './basic'
 
 describe('BasicStore', () => {
+  describe('interface-datastore', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('interface-datastore/src/tests')({
+      setup() {
+        return new BasicStore(new MemoryDatastore())
+      },
+      teardown() {
+        return
+      },
+    })
+  })
+
   it('basic', async () => {
     const mStore = new MemoryDatastore()
     const store = new BasicStore(mStore, new Key('test'), new Dispatcher(mStore))

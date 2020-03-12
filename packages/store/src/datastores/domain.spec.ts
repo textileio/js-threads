@@ -40,7 +40,7 @@ describe('DomainDatastore', () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       require('interface-datastore/src/tests')({
         setup() {
-          return new DomainDatastore(new MemoryDatastore())
+          return new DomainDatastore(new MemoryDatastore(), new Key(prefix))
         },
         teardown() {
           return

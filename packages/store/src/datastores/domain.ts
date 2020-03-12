@@ -68,10 +68,9 @@ export class DomainDatastore<T = Buffer> extends KeytransformDatastore<T> {
    */
   query(query: Query<T>) {
     // All queries should be prefixed with the base domain prefix
-    let prefix = this.prefix.toString()
-    if (query.prefix && prefix !== '/') {
-      prefix = this.prefix.child(new Key(query.prefix)).toString()
-    }
+    const prefix = query.prefix
+      ? this.prefix.child(new Key(query.prefix)).toString()
+      : this.prefix.toString()
     return super.query({ ...query, prefix })
   }
 

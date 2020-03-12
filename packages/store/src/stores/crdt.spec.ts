@@ -9,6 +9,17 @@ import { CRDT as CRDTType, CRDTStore } from './crdt'
 const CRDT = require('delta-crdts')
 
 describe('CRDTStore', () => {
+  describe('interface-datastore', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('interface-datastore/src/tests')({
+      setup() {
+        return new CRDTStore(new MemoryDatastore(), new Key('test'), undefined, 'mvreg')
+      },
+      teardown() {
+        return
+      },
+    })
+  })
   it('basic', async () => {
     const mvreg1: CRDTType = CRDT('mvreg')(uuid())
 

@@ -83,6 +83,7 @@ __pycache__
 docker-compose.swarm.yml
 
 # Other
+**/tmp.db
 _obj
 _test
 *.cgo1.go

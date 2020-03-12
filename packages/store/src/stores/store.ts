@@ -74,7 +74,7 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
   readonly semaphore: Semaphore
   constructor(
     child: Datastore<Buffer>,
-    public prefix: Key,
+    public prefix: Key = new Key(''),
     public dispatcher?: Dispatcher,
     public encoder: Encoder<D, Buffer> = CborEncoder,
   ) {

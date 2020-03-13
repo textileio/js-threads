@@ -1,4 +1,4 @@
-import { Datastore, Key, Result, Batch, Query } from 'interface-datastore'
+import { Datastore, Key, Result, Batch, Query, MemoryDatastore } from 'interface-datastore'
 import lexInt from 'lexicographic-integer'
 import { EventEmitter } from 'tsee'
 import { Semaphore } from '../datastores/abstract/lockable'
@@ -73,17 +73,15 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
   public child: Datastore<D>
   readonly semaphore: Semaphore
   constructor(
-    child: Datastore<Buffer>,
+    child: Datastore<Buffer> = new MemoryDatastore(),
     public prefix: Key = new Key(''),
-    public dispatcher?: Dispatcher,
+    public dispatcher: Dispatcher = new Dispatcher(child),
     public encoder: Encoder<D, Buffer> = CborEncoder,
   ) {
     super()
     this.child = new DomainDatastore(new EncodingDatastore(child, this.encoder), this.prefix)
     this.semaphore = new Semaphore(this.prefix)
-    if (this.dispatcher) {
-      this.dispatcher.register(this)
-    }
+    this.dispatcher.register(this)
   }
 
   /**

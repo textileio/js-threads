@@ -1,13 +1,12 @@
-import { Result } from 'interface-datastore'
-import toJsonSchema, { JSONSchema3or4 as JSONSchema } from 'to-json-schema'
-import { randomBytes, PrivateKey, PublicKey, keys } from 'libp2p-crypto'
+import toJsonSchema from 'to-json-schema'
+import { randomBytes, keys } from 'libp2p-crypto'
 import cbor from 'cbor-sync'
 import { Service, Client } from '@textile/threads-service'
 import { Dispatcher, Entity, DomainDatastore, Event, Update } from '@textile/threads-store'
 import { Datastore, MemoryDatastore, Key } from 'interface-datastore'
 import { ThreadID, Variant, ThreadRecord } from '@textile/threads-core'
 import { EventBus } from './eventbus'
-import { Collection } from './collection'
+import { Collection, JSONSchema } from './collection'
 
 const ed25519 = keys.supportedKeys.ed25519
 const metaKey = new Key('meta')
@@ -110,6 +109,7 @@ export class Database {
     }
     const { dispatcher, child } = this
     const collection = new Collection<T>(name, schema, { child, dispatcher })
+    // @todo: Switch to using the emitter
     collection.child.on('events', this.onEvents.bind(this))
     collection.child.on('update', this.onUpdate.bind(this))
     this.collections.set(name, collection)

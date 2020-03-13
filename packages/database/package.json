@@ -52,6 +52,7 @@
     "@types/datastore-core": "^0.7.0",
     "@types/datastore-level": "^0.14.0",
     "@types/interface-datastore": "^0.8.0",
+    "@types/json-schema": "^7.0.4",
     "@types/sinon": "^7.5.2",
     "@types/to-json-schema": "^0.2.0",
     "@types/uuid": "^3.4.7",

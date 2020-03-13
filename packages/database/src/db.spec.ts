@@ -21,4 +21,10 @@ describe('Database', () => {
       },
     )
   })
+
+  // it('should derive a schema from an entity', async () => {
+  //   const db = new Database()
+  //   const c = await db.newCollectionFromObject('Person', defaultPerson)
+  //   expect(c.validator(defaultPerson)).to.be.true
+  // })
 })

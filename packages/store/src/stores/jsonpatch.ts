@@ -30,7 +30,7 @@ export interface Op<T extends Entity> {
 }
 
 export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
-  constructor(child: Datastore<any>, prefix: Key, dispatcher?: Dispatcher | undefined) {
+  constructor(child?: Datastore<any>, prefix?: Key, dispatcher?: Dispatcher) {
     super(child, prefix, dispatcher)
   }
   reduce = async (...events: Result<Event<Op<T>>>[]) => {

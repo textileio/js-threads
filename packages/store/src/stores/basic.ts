@@ -3,7 +3,7 @@ import { Dispatcher, Event } from '../dispatcher'
 import { Store } from './store'
 
 export class BasicStore<T = any> extends Store<T> {
-  constructor(child: Datastore<any>, prefix?: Key, dispatcher?: Dispatcher) {
+  constructor(child?: Datastore<any>, prefix?: Key, dispatcher?: Dispatcher) {
     super(child, prefix, dispatcher)
   }
   reduce = async (...events: Result<Event<T>>[]) => {

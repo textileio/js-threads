@@ -9,7 +9,7 @@ export class Semaphore {
   /**
    * Map of RW locks.
    */
-  private locks: Map<Key, RWLock> = new Map()
+  private locks: Map<string, RWLock> = new Map()
 
   /**
    * Get the lock for a given key
@@ -17,7 +17,7 @@ export class Semaphore {
    * @param key
    */
   get(key: Key) {
-    const k = this.prefix.child(key)
+    const k = this.prefix.child(key).toString()
     let lock = this.locks.get(k)
     if (!lock) {
       lock = new RWLock()
@@ -32,7 +32,7 @@ export class Semaphore {
    * @param key
    */
   unlock(key: Key) {
-    const k = this.prefix.child(key)
+    const k = this.prefix.child(key).toString()
     const lock = this.locks.get(k)
     if (lock !== undefined) {
       lock.unlock()

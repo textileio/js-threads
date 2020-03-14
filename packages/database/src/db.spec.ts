@@ -16,7 +16,7 @@ interface DummyEntity {
 }
 
 describe('Database', () => {
-  it('should handle an end to end test', async () => {
+  it.skip('should handle an end to end test', async () => {
     // Peer 1: Create db1, register a collection, create and update an instance.
     const d1 = new Database() // All defaults
     await d1.open()

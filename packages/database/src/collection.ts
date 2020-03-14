@@ -43,7 +43,7 @@ const handler = <T extends Entity>(obj: T) => {
       if (Reflect.has(obj, property)) {
         return Reflect.get(obj, property)
       } else if (!Reflect.has(target, property)) {
-        throw Error(`Property ${property} does not exist`)
+        return undefined
       }
       return Reflect.get(target, property)
     },

@@ -367,8 +367,9 @@ describe('Collection', () => {
         const Person = setupCollection(store)
         const person = new Person(copyPerson())
         await person.save()
-        Person.readTransaction(async c => {
-          expect(await c.findById(person.ID)).to.deep.equal(person)
+        await Person.readTransaction(async c => {
+          const found = await c.findById(person.ID)
+          expect(found).to.deep.equal(person.toJSON())
           // await c.insert(person) // Compiler won't let us!
         })
       })

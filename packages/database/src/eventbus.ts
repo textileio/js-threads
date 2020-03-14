@@ -39,9 +39,9 @@ export class EventBus<T = any> extends EventEmitter<Events> {
           // @todo: We could use bail here to bail if the service errors out with a headers closed error
           // This would mean that the gRPC service isn't running, i.e., we are in 'offline' mode
           const rec = await this.service.createRecord(threadID, body)
-          const cid = await rec.record?.value.cid()
-          const thread = rec.threadID.string()
-          const log = rec.logID.toB58String()
+          // const cid = await rec.record?.value.cid()
+          // const thread = rec.threadID.string()
+          // const log = rec.logID.toB58String()
           // console.log(`put record ${cid} (thread=${thread}, log=${log})`)
           return this.queue.done()
         }, merge(retryOpts, opts))

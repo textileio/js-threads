@@ -8,7 +8,11 @@ export interface Options {
   cipher?: CipherGCMTypes
 }
 
-export const defaultOptions: Options = { codec: 'dag-cbor', algo: 'sha2-256', cipher: 'aes-256-gcm' }
+export const defaultOptions: Options = {
+  codec: 'dag-cbor',
+  algo: 'sha2-256',
+  cipher: 'aes-256-gcm',
+}
 
 /**
  * EncodeBlock returns a node by encrypting the block's raw bytes with key.
@@ -31,7 +35,11 @@ export function encodeBlock(block: Block, keyiv: Uint8Array, opts: Options = def
   return Block.encoder(payload, opts.codec, opts.algo)
 }
 
-export function decodeBlock<T = any>(block: Block<Uint8Array>, keyiv: Uint8Array, opts: Options = defaultOptions) {
+export function decodeBlock<T = any>(
+  block: Block<Uint8Array>,
+  keyiv: Uint8Array,
+  opts: Options = defaultOptions,
+) {
   // Start with Block node wrapping raw encrypted bytes
   const raw = block.decodeUnsafe()
   // Extract the tag from the payload

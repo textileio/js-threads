@@ -6,7 +6,14 @@ import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import { ThreadID, Variant, ThreadInfo, Block, ThreadRecord, Multiaddr } from '@textile/threads-core'
+import {
+  ThreadID,
+  Variant,
+  ThreadInfo,
+  Block,
+  ThreadRecord,
+  Multiaddr,
+} from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Client } from '.'
 

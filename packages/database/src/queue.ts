@@ -71,7 +71,7 @@ export class Queue<T = any> extends EventEmitter<Events<T>> {
   ) {
     super()
 
-    if (batchSize < 1) throw new Error('Invalid batchSize parameter.  Must be a number > 0')
+    if (batchSize < 1) throw new Error('Invalid batch size')
 
     this.on('trigger_next', (index = 0) => {
       logger.debug('on.trigger_next')

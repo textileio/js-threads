@@ -42,7 +42,7 @@ export class EventBus<T = any> extends EventEmitter<Events> {
           const cid = await rec.record?.value.cid()
           const thread = rec.threadID.string()
           const log = rec.logID.toB58String()
-          console.log(`put record ${cid} (thread=${thread}, log=${log})`)
+          // console.log(`put record ${cid} (thread=${thread}, log=${log})`)
           return this.queue.done()
         }, merge(retryOpts, opts))
       } catch (err) {

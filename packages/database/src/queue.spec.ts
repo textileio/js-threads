@@ -66,16 +66,14 @@ describe('Queue', () => {
         }
 
         // Wait for all tasks to be pushed before calling hasJob method to search for it
-        Promise.all(promises)
-          .then(() => {
-            for (let i = 1; i <= 500; ++i)
-              q.getFirstJobId({ sequence: i }).then(id => {
-                expect(id).to.equal(i)
-              })
+        Promise.all(promises).then(() => {
+          for (let i = 1; i <= 500; ++i)
+            q.getFirstJobId({ sequence: i }).then(id => {
+              expect(id).to.equal(i)
+            })
 
-            q.close().then(() => done())
-          })
-          .catch(err => console.log(err))
+          q.close().then(() => done())
+        })
       })
     })
 
@@ -102,13 +100,9 @@ describe('Queue', () => {
         })
 
         // Wait for all tasks to be pushed before calling hasJob method to search for it
-        Promise.all(promises)
-          .then(() => {
-            q.start()
-          })
-          .catch(err => {
-            console.log(err)
-          })
+        Promise.all(promises).then(() => {
+          q.start()
+        })
       })
     })
 

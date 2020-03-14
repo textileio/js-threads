@@ -16,29 +16,12 @@ export type JSONSchema = JSONSchema4 | JSONSchema6 | JSONSchema7
 const dot = mingo._internal().resolve
 
 // Setup the key field for our collection
-mingo.setup({
-  key: 'ID',
-})
+mingo.setup({ key: 'ID' })
 
 export const existingKeyError = new Error('Existing key')
 
-/**
- * Events for a collection's EventEmitter
- */
-type Events<T> = {}
-
 interface FindOptions<T extends Entity> extends Pick<Query<T>, 'limit' | 'offset' | 'keysOnly'> {
-  sort?: {
-    [key in keyof T]?: 1 | -1
-  }
-}
-
-/**
- * Options for creating a new collection.
- */
-export interface Options<T extends Entity> {
-  child?: Datastore<T>
-  dispatcher?: Dispatcher
+  sort?: { [key in keyof T]?: 1 | -1 }
 }
 
 const defaultOptions: Options<any> = {
@@ -68,6 +51,14 @@ const handler = <T extends Entity>(obj: T) => {
       return Reflect.set(obj, property, value)
     },
   }
+}
+
+/**
+ * Options for creating a new collection.
+ */
+export interface Options<T extends Entity> {
+  child?: Datastore<T>
+  dispatcher?: Dispatcher
 }
 
 /**
@@ -114,8 +105,8 @@ export class Document<T extends Entity = any> {
 // Collections
 
 export interface Collection<T extends Entity = any> {
-  <T extends Entity>(data: Partial<T>): Document<T> & T
-  new <T extends Entity>(data: Partial<T>): Document<T> & T
+  (data: Partial<T>): Document<T> & T
+  new (data: Partial<T>): Document<T> & T
 }
 
 export class ReadonlyCollection<T extends Entity = any> {
@@ -127,10 +118,6 @@ export class ReadonlyCollection<T extends Entity = any> {
    * Child is the underlying datastore.
    */
   public child: JsonPatchStore<T>
-  /**
-   * Emitter is the underlying event emitter for subscribing to collection events.
-   */
-  public emitter: EventEmitter<Events<T>> = new EventEmitter()
 
   /**
    * Collection creates a new collection.
@@ -147,7 +134,6 @@ export class ReadonlyCollection<T extends Entity = any> {
     const readonly = new ReadonlyCollection(other.name, {})
     readonly.validator = other.validator
     readonly.child = other.child
-    readonly.emitter = other.emitter
     return readonly
   }
 

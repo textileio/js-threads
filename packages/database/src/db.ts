@@ -1,14 +1,13 @@
 import toJsonSchema from 'to-json-schema'
-import { randomBytes, keys } from 'libp2p-crypto'
 import cbor from 'cbor-sync'
 import { Service, Client } from '@textile/threads-service'
 import { Dispatcher, Entity, DomainDatastore, Event, Update } from '@textile/threads-store'
 import { Datastore, MemoryDatastore, Key } from 'interface-datastore'
-import { ThreadID, Variant, ThreadRecord } from '@textile/threads-core'
+import { ThreadID, ThreadRecord, Multiaddr, ThreadInfo } from '@textile/threads-core'
 import { EventBus } from './eventbus'
 import { Collection, JSONSchema } from './collection'
+import { createThread, decodeRecord, Cache } from './utils'
 
-const ed25519 = keys.supportedKeys.ed25519
 const metaKey = new Key('meta')
 const schemaKey = metaKey.child(new Key('schema'))
 const duplicateCollection = new Error('Duplicate collection')
@@ -17,22 +16,6 @@ export type Options = {
   dispatcher?: Dispatcher
   eventBus?: EventBus
   service?: Service
-}
-
-export interface Database {
-  /**
-   * startFromAddress initializes the client with the given store, connecting to the given
-   * thread address (database). It should be called before any operation on the store, and is an
-   * alternative to start, which creates a local store. startFromAddress should also include the
-   * read and service keys, which should be Buffer, Uint8Array or base58-encoded strings.
-   * See `getStoreLink` for a possible source of the address and keys. It pulls the current
-   * database thread from the remote peer/address.
-   * @param address The address for the thread with which to connect.
-   * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
-   * @param followKey Symmetric key. Uint8Array or base58-encoded string of length 44 bytes.
-   * @param readKey Symmetric key. Uint8Array or base58-encoded string of length 44 bytes.
-   */
-  fromAddress(address: string, serviceKey: Uint8Array, readKey: Uint8Array): Promise<void>
 }
 
 export class Database {
@@ -60,12 +43,12 @@ export class Database {
   /**
    * Child is the primary datastore, and is used to partition out stores as sub-domains
    */
-  public child: Datastore<any>
+  public child: DomainDatastore<any>
 
   /**
    * Database creates a new database using the provided thread.
-   * @param datastore the primary datastore, and is used to partition out stores as sub-domains.
-   * @param options a set of database options.
+   * @param datastore The primary datastore, and is used to partition out stores as sub-domains.
+   * @param options A set of database options.
    */
   constructor(datastore: Datastore<any> = new MemoryDatastore<any>(), options: Options = {}) {
     this.child = new DomainDatastore(datastore, new Key('db'))
@@ -77,6 +60,34 @@ export class Database {
     this.eventBus =
       options.eventBus ??
       new EventBus(new DomainDatastore(this.child, new Key('eventbus')), this.service)
+  }
+
+  /**
+   * fromAddress creates a new database from a thread hosted by another peer.
+   * @param address The address for the thread with which to connect.
+   * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
+   * @param replicatorKey Symmetric key. Uint8Array or base58-encoded string of length 44 bytes.
+   * @param readKey Symmetric key. Uint8Array or base58-encoded string of length 44 bytes.
+   * @param datastore The primary datastore, and is used to partition out stores as sub-domains.
+   * @param options A set of database options.
+   */
+  static async fromAddress(
+    addr: Multiaddr,
+    replicatorKey?: Uint8Array,
+    readKey?: Uint8Array,
+    datastore: Datastore<any> = new MemoryDatastore<any>(),
+    options: Options = {},
+  ) {
+    const db = new Database(datastore, options)
+    const info = await db.service.addThread(addr, { replicatorKey, readKey })
+    await db.open(info.id)
+    db.service.pullThread(info.id) // Don't await
+    return db
+  }
+
+  @Cache()
+  async ownLogInfo() {
+    return this.threadID && this.service.getOwnLog(this.threadID, false)
   }
 
   /**
@@ -109,9 +120,8 @@ export class Database {
     }
     const { dispatcher, child } = this
     const collection = new Collection<T>(name, schema, { child, dispatcher })
-    // @todo: Switch to using the emitter
-    collection.child.on('events', this.onEvents.bind(this))
     collection.child.on('update', this.onUpdate.bind(this))
+    collection.child.on('events', this.onEvents.bind(this))
     this.collections.set(name, collection)
     return collection
   }
@@ -128,57 +138,50 @@ export class Database {
   async open(threadID?: ThreadID) {
     await this.child.open()
     const idKey = metaKey.child(new Key('threadid'))
-    if (await this.child.has(idKey)) {
-      const existing = ThreadID.fromBytes(await this.child.get(idKey))
-      if (threadID !== undefined && !existing.equals(threadID)) {
-        throw new Error('Thread id mismatch')
+    const hasExisting = await this.child.has(idKey)
+
+    if (threadID === undefined) {
+      if (hasExisting) {
+        const existing = ThreadID.fromBytes(await this.child.get(idKey))
+        this.threadID = existing
+      } else {
+        const info = await createThread(this.service)
+        await this.child.put(idKey, info.id.bytes())
+        this.threadID = info.id
       }
-      this.threadID = existing
     } else {
-      const replicatorKey = randomBytes(44)
-      const readKey = randomBytes(44)
-      // @todo: Let users/developers provide their own keys here.
-      const logKey = await ed25519.generateKeyPair()
-      const info = await this.service.createThread(
-        threadID ?? ThreadID.fromRandom(Variant.Raw, 32),
-        {
-          readKey,
-          replicatorKey,
-          logKey,
-        },
-      )
-      await this.child.put(idKey, info.id.bytes())
-      this.threadID = info.id
+      if (hasExisting) {
+        const existing = ThreadID.fromBytes(await this.child.get(idKey))
+        if (!existing.equals(threadID)) {
+          throw new Error('Thread id mismatch')
+        }
+        this.threadID = existing
+      } else {
+        let info: ThreadInfo
+        try {
+          info = await this.service.getThread(threadID)
+        } catch (_err) {
+          info = await createThread(this.service)
+        }
+        await this.child.put(idKey, info.id.bytes())
+        this.threadID = info.id
+        const logInfo = await this.service.getOwnLog(info.id, false)
+      }
     }
     await this.rehydrate()
     await this.eventBus.start(this.threadID)
     this.eventBus.on('record', this.onRecord.bind(this))
   }
 
-  private onRecord(rec: ThreadRecord) {
-    if (this.threadID?.equals(rec.threadID)) {
-      console.log('onRecord', rec)
-    }
-  }
-
-  private onEvents(...events: Event<any>[]) {
-    const id = this.threadID?.bytes()
-    console.log('onEvents', events)
-    if (id !== undefined) {
-      for (const body of events) {
-        this.eventBus.push({ id, body })
+  async getInfo() {
+    if (this.threadID !== undefined) {
+      const info = await this.service.getThread(this.threadID)
+      const host = await this.service.getHostID()
+      return {
+        replicatorKey: info.replicatorKey,
+        readKey: info.readKey,
+        dbAddr: host.toB58String(), // @todo: Not currently correct
       }
-    }
-  }
-
-  private onUpdate(...updates: Update<any>[]) {
-    console.log('onUpdate', updates)
-  }
-
-  private async rehydrate() {
-    const it = this.child.query({ prefix: schemaKey.toString() })
-    for await (const { key, value } of it) {
-      await this.newCollection(key.name(), cbor.decode(value) as JSONSchema)
     }
   }
 
@@ -191,5 +194,43 @@ export class Database {
     await this.eventBus.stop()
     await this.child.close()
     return
+  }
+
+  private async onRecord(rec: ThreadRecord) {
+    if (this.threadID?.equals(rec.threadID)) {
+      const logInfo = await this.service.getOwnLog(this.threadID, false)
+      if (logInfo?.id.isEqual(rec.logID)) {
+        return // Ignore our own events since DB already dispatches to DB reducers
+      }
+      const info = await this.service.getThread(this.threadID)
+      const value: Event<any> | undefined = decodeRecord(rec, info)
+      if (value !== undefined) {
+        const collection = this.collections.get(value.collection)
+        if (collection !== undefined) {
+          const key = collection.child.prefix.child(new Key(value.id))
+          await this.dispatcher.dispatch({ key, value })
+        }
+      }
+    }
+  }
+
+  private async onEvents(...events: Event<any>[]) {
+    const id = this.threadID?.bytes()
+    if (id !== undefined) {
+      for (const body of events) {
+        this.eventBus.push({ id, body })
+      }
+    }
+  }
+
+  private async onUpdate(...updates: Update<any>[]) {
+    console.log('onUpdate', updates)
+  }
+
+  private async rehydrate() {
+    const it = this.child.query({ prefix: schemaKey.toString() })
+    for await (const { key, value } of it) {
+      await this.newCollection(key.name(), cbor.decode(value) as JSONSchema)
+    }
   }
 }

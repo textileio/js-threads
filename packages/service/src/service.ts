@@ -71,7 +71,19 @@ export class Service implements Interface {
    * @param opts The set of keys to use when adding the Thread.
    */
   async addThread(addr: Multiaddr, opts: KeyOptions) {
-    return this.client.addThread(addr, opts)
+    const logInfo = await this.deriveLogKeys(opts.logKey)
+    // Don't send along readKey, or log's privKey information
+    const newOpts: KeyOptions = {
+      replicatorKey: opts.replicatorKey,
+      logKey: logInfo.pubKey,
+    }
+    // Don't send along readKey, or log's privKey information
+    const info = await this.client.addThread(addr, newOpts)
+    info.readKey = opts.readKey
+    logger.debug('caching thread + log information')
+    await this.store.addThread(info)
+    await this.store.addLog(info.id, logInfo)
+    return info
   }
 
   /**

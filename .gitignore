@@ -79,6 +79,9 @@ __pycache__
 # Keys
 **/*.pem
 
+# Docker
+docker-compose.yml
+
 # Swarm
 docker-compose.swarm.yml
 

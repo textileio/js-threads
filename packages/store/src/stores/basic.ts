@@ -1,6 +1,16 @@
 import { Result, Datastore, Key } from 'interface-datastore'
 import { Dispatcher, Event } from '../dispatcher'
-import { Store } from './store'
+import { Store, Update } from './store'
+
+// @todo: Factor this down into the base store abstract class
+const update = <T = any>(event: Result<Event<T>>): Update<T> => {
+  const { value } = event
+  return {
+    id: value.id,
+    collection: value.collection,
+    event: value.patch,
+  }
+}
 
 export class BasicStore<T = any> extends Store<T> {
   constructor(child?: Datastore<any>, prefix?: Key, dispatcher?: Dispatcher) {
@@ -18,6 +28,6 @@ export class BasicStore<T = any> extends Store<T> {
       }
     }
     await batch.commit()
-    this.emit('update', ...events.map(event => event.value))
+    this.emit('update', ...events.map(update))
   }
 }

@@ -14,7 +14,7 @@ type Events<T> = {
   open: () => void
   close: () => void
   events: (...events: Event<T>[]) => void
-  update: (...updates: Update[]) => void // Generic not yet used...
+  update: (...updates: Update<T>[]) => void
   error: (err: Error) => void
 }
 
@@ -23,7 +23,8 @@ export type Action<T> = () => Promise<T>
 export interface Update<T = any> {
   id: string
   collection: string
-  meta?: T
+  type?: string | number
+  event?: T
 }
 
 export class ActionBatch<D = any, A = D> implements Batch<D> {
@@ -64,6 +65,7 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
     if (this.patches.length > 0) {
       await this.store.dispatch(...this.patches)
     }
+    this.patches.length = 0
     return
   }
 }
@@ -170,6 +172,7 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
     return this.child.query(query)
   }
 
+  // @todo: Factor this out into an eventcodec class/interface
   batch(): ActionBatch<D, A> {
     return new ActionBatch(
       this,
@@ -178,5 +181,6 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
     )
   }
 
+  // @todo: Factor this out into an eventcodec class/interface
   abstract async reduce(...events: Result<Event<A>>[]): Promise<void>
 }

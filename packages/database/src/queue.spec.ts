@@ -217,7 +217,7 @@ describe('Queue', () => {
     })
 
     it('should count jobs as pushed and completed', done => {
-      const tmpdb = 'tmp.db'
+      const tmpdb = 'tmpdb'
       let q = new Queue(new LevelDatastore(tmpdb))
 
       // Count jobs

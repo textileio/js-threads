@@ -1,5 +1,4 @@
 import { Datastore, Key, Query, MemoryDatastore, Result } from 'interface-datastore'
-import { EventEmitter } from 'tsee'
 import Ajv, { ValidateFunction, ValidationError } from 'ajv'
 import uuid from 'uuid'
 import { reduce, time } from 'streaming-iterables'
@@ -126,7 +125,7 @@ export class ReadonlyCollection<T extends Entity = any> {
    * @param options The underlying collection options.
    */
   constructor(readonly name: string, schema: JSONSchema, options: Options<T> = defaultOptions) {
-    this.validator = new Ajv().compile(schema)
+    this.validator = new Ajv({ useDefaults: true }).compile(schema)
     this.child = new JsonPatchStore(options.child, new Key(name), options.dispatcher)
   }
 

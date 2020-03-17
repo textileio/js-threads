@@ -5,7 +5,7 @@ import retry, { Options } from 'async-retry'
 import merge from 'deepmerge'
 import log from 'loglevel'
 import { EventEmitter } from 'tsee'
-import { Queue } from './queue'
+import { Queue, Job } from './queue'
 
 const logger = log.getLogger('store:eventbus')
 
@@ -31,7 +31,9 @@ export class EventBus<T = any> extends EventEmitter<Events> {
   ) {
     super()
     this.queue = queue instanceof Queue ? queue : new Queue(queue)
-    this.queue.on('next', async ({ job }) => {
+    this.queue.on('next', async (task?: Job<EventJob<T>>) => {
+      if (task === undefined) return
+      const { job } = task
       const { id, body } = job
       const threadID = ThreadID.fromBytes(id)
       try {

@@ -23,8 +23,10 @@ export function decodeRecord<T = any>(rec: ThreadRecord, info: ThreadInfo) {
   return body
 }
 
-export async function createThread(service: Service) {
-  const id = ThreadID.fromRandom(Variant.Raw, 32)
+export async function createThread(
+  service: Service,
+  id: ThreadID = ThreadID.fromRandom(Variant.Raw, 32),
+) {
   const replicatorKey = randomBytes(44)
   const readKey = randomBytes(44)
   // @todo: Let users/developers provide their own keys here.

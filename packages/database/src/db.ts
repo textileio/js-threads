@@ -1,7 +1,8 @@
 import toJsonSchema from 'to-json-schema'
 import cbor from 'cbor-sync'
 import { Service, Client } from '@textile/threads-service'
-import { Dispatcher, Entity, DomainDatastore, Event, Update } from '@textile/threads-store'
+import { EventEmitter2 } from 'eventemitter2'
+import { Dispatcher, Entity, DomainDatastore, Event, Update, Op } from '@textile/threads-store'
 import { Datastore, MemoryDatastore, Key } from 'interface-datastore'
 import { ThreadID, ThreadRecord, Multiaddr, ThreadInfo } from '@textile/threads-core'
 import { EventBus } from './eventbus'
@@ -44,6 +45,8 @@ export class Database {
    * Child is the primary datastore, and is used to partition out stores as sub-domains
    */
   public child: DomainDatastore<any>
+
+  public emitter: EventEmitter2 = new EventEmitter2({ wildcard: true })
 
   /**
    * Database creates a new database using the provided thread.
@@ -161,11 +164,10 @@ export class Database {
         try {
           info = await this.service.getThread(threadID)
         } catch (_err) {
-          info = await createThread(this.service)
+          info = await createThread(this.service, threadID)
         }
         await this.child.put(idKey, info.id.bytes())
         this.threadID = info.id
-        const logInfo = await this.service.getOwnLog(info.id, false)
       }
     }
     await this.rehydrate()
@@ -191,8 +193,10 @@ export class Database {
    * underlying services (event bus, network service, etc.)
    */
   async close() {
+    this.collections.clear()
     await this.eventBus.stop()
     await this.child.close()
+    // @todo: Should we also 'close' the dispatcher?
     return
   }
 
@@ -223,8 +227,15 @@ export class Database {
     }
   }
 
-  private async onUpdate(...updates: Update<any>[]) {
-    console.log('onUpdate', updates)
+  private async onUpdate<T extends Entity>(...updates: Update<Op<T>>[]) {
+    for (const update of updates) {
+      // Event name: <collection>.<id>.<type>
+      const event: string[] = [update.collection, update.id]
+      if (update.type !== undefined) {
+        event.push(update.type.toString())
+      }
+      this.emitter.emit(event, update)
+    }
   }
 
   private async rehydrate() {

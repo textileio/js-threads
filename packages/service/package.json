@@ -29,17 +29,17 @@
     "multiaddr": "^7.2.1",
     "peer-id": "^0.13.9"
   },
-    "references": [
-      {
-        "path": "../core"
-      },
-      {
-        "path": "../encoding"
-      },
-      {
-        "path": "../service-client"
-      }
-    ],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../encoding"
+    },
+    {
+      "path": "../service-client"
+    }
+  ],
   "devDependencies": {
     "@types/datastore-core": "^0.7.0",
     "@types/interface-datastore": "^0.8.0",

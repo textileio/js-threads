@@ -16,8 +16,8 @@ import {
   marshalKey,
   Multiaddr,
 } from '@textile/threads-core'
-import * as pb from '@textile/threads-service-grpc/api_pb'
-import { API } from '@textile/threads-service-grpc/api_pb_service'
+import * as pb from '@textile/thread-net-grpc/api_pb'
+import { API } from '@textile/thread-net-grpc/api_pb_service'
 import { recordFromProto, recordToProto } from '@textile/threads-encoding'
 import { Config, BaseConfig } from './config'
 

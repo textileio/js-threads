@@ -2,40 +2,6 @@
 // Some hackery to get WebSocket in the global namespace on nodejs
 ;(global as any).WebSocket = require('isomorphic-ws')
 
-// Assumes docker-compose running based on:
-// version: "3"
-// services:
-//   threads1:
-//     image: textile/go-threads:latest
-//     environment:
-//       - THRDS_HOSTADDR=/ip4/0.0.0.0/tcp/4006
-//       - THRDS_SERVICEAPIADDR=/ip4/0.0.0.0/tcp/5006
-//       - THRDS_SERVICEAPIPROXYADDR=/ip4/0.0.0.0/tcp/5007
-//       - THRDS_APIADDR=/ip4/0.0.0.0/tcp/6006
-//       - THRDS_APIPROXYADDR=/ip4/0.0.0.0/tcp/6007
-//       - THRDS_DEBUG=true
-//     ports:
-//       - "4006:4006"
-//       - "127.0.0.1:5006:5006"
-//       - "127.0.0.1:5007:5007"
-//       - "127.0.0.1:6006:6006"
-//       - "127.0.0.1:6007:6007"
-//   threads2:
-//     image: textile/go-threads:latest
-//     environment:
-//       - THRDS_HOSTADDR=/ip4/0.0.0.0/tcp/4006
-//       - THRDS_SERVICEAPIADDR=/ip4/0.0.0.0/tcp/5006
-//       - THRDS_SERVICEAPIPROXYADDR=/ip4/0.0.0.0/tcp/5007
-//       - THRDS_APIADDR=/ip4/0.0.0.0/tcp/6006
-//       - THRDS_APIPROXYADDR=/ip4/0.0.0.0/tcp/6007
-//       - THRDS_DEBUG=true
-//     ports:
-//       - "4206:4006"
-//       - "127.0.0.1:5206:5006"
-//       - "127.0.0.1:5207:5007"
-//       - "127.0.0.1:6206:6006"
-//       - "127.0.0.1:6207:6007"
-
 import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
@@ -53,7 +19,8 @@ import { Client } from '@textile/threads-service-client'
 import { MemoryDatastore } from 'interface-datastore'
 import { Service } from '.'
 
-const proxyAddr = 'http://127.0.0.1:5007'
+const proxyAddr1 = 'http://127.0.0.1:6007'
+const proxyAddr2 = 'http://127.0.0.1:6207'
 const ed25519 = keys.supportedKeys.ed25519
 
 async function createThread(client: Service) {
@@ -74,7 +41,7 @@ function threadAddr(hostAddr: Multiaddr, hostID: PeerId, info: ThreadInfo) {
 describe('Service...', () => {
   let client: Service
   before(() => {
-    client = new Service(new MemoryDatastore(), new Client({ host: proxyAddr }))
+    client = new Service(new MemoryDatastore(), new Client({ host: proxyAddr1 }))
   })
   describe('Basic...', () => {
     it('should return a remote host peer id', async () => {
@@ -97,7 +64,7 @@ describe('Service...', () => {
       const info1 = await createThread(client)
       const hostAddr = new Multiaddr('/dns4/threads1/tcp/4006')
       const addr = threadAddr(hostAddr, hostID, info1)
-      const client2 = new Client({ host: 'http://127.0.0.1:5207' })
+      const client2 = new Client({ host: proxyAddr2 })
       const info2 = await client2.addThread(addr, { ...info1 })
       expect(info2.id.string()).to.equal(info1.id.string())
     })
@@ -127,7 +94,7 @@ describe('Service...', () => {
     })
 
     it('should add a replicator to a thread', async () => {
-      const client2 = new Client({ host: 'http://127.0.0.1:5207' })
+      const client2 = new Client({ host: proxyAddr2 })
       const hostID2 = await client2.getHostID()
       const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
 
@@ -195,7 +162,7 @@ describe('Service...', () => {
       let client2: Service
       let info: ThreadInfo
       before(async () => {
-        client2 = new Service(new MemoryDatastore(), new Client({ host: 'http://127.0.0.1:5207' }))
+        client2 = new Service(new MemoryDatastore(), new Client({ host: proxyAddr2 }))
         const hostID2 = await client2.getHostID()
         const hostAddr2 = new Multiaddr(`/dns4/threads2/tcp/4006`)
         const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))

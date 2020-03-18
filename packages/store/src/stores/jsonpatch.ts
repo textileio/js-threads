@@ -55,10 +55,7 @@ export class JsonPatchStore<T extends Entity> extends Store<T, Op<T>> {
         batch.delete(newKey)
       } else {
         const prev = await this.safeGet(newKey)
-        const merged =
-          prev === undefined
-            ? (patch as T)
-            : jsonpatch.applyPatch(prev, patch as Operation[]).newDocument
+        const merged = prev === undefined ? (patch as T) : jsonpatch.applyPatch(prev, patch as Operation[]).newDocument
         batch.put(newKey, merged)
       }
       this.emit('update', update({ key, value }))

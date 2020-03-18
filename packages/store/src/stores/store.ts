@@ -6,6 +6,8 @@ import { Reducer, Dispatcher, Event } from '../dispatcher'
 import { EncodingDatastore, Encoder, CborEncoder } from '../datastores/encoding'
 import { DomainDatastore } from '../datastores/domain'
 import { Lockable } from '../datastores/abstract/lockable'
+// eslint-disable-next-line import/no-cycle
+import { Codec } from '../codec'
 
 /**
  * Events for Store's EventEmitter
@@ -27,13 +29,28 @@ export interface Update<T = any> {
   event?: T
 }
 
+const asUpdate = <T = any>(event: Result<Event<T>>): Update<T> => {
+  const { value } = event
+  return {
+    id: value.id,
+    collection: value.collection,
+    event: value.patch,
+  }
+}
+
+export const safeGet = async <T = any>(store: Datastore<T>, key: Key) => {
+  try {
+    return await store.get(key)
+  } catch (err) {
+    if (err.code !== 'ERR_NOT_FOUND') {
+      throw err
+    }
+  }
+}
+
 export class ActionBatch<D = any, A = D> implements Batch<D> {
   private patches: Action<Event<A>>[] = []
-  constructor(
-    private store: Store<D, A>,
-    private onDelete: (key: Key) => Promise<A | undefined>,
-    private onPut: (key: Key, value: D) => Promise<A>,
-  ) {}
+  constructor(private store: Store<D, A>) {}
 
   delete(key: Key) {
     const deferred = async () => {
@@ -41,7 +58,7 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
         id: key.toString().slice(1),
         collection: this.store.prefix.toString().slice(1),
-        patch: await this.onDelete(key),
+        patch: await this.store.codec.onDelete(this.store, key),
       }
       return event
     }
@@ -54,7 +71,7 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
         timestamp: Buffer.from(lexInt.pack(Date.now())),
         id: key.toString().slice(1),
         collection: this.store.prefix.toString().slice(1),
-        patch: await this.onPut(key, value),
+        patch: await this.store.codec.onPut(this.store, key, value),
       }
       return event
     }
@@ -75,7 +92,8 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
   public child: Datastore<D>
   readonly semaphore: Semaphore
   constructor(
-    child: Datastore<Buffer> = new MemoryDatastore(),
+    child: Datastore<any>,
+    public codec: Codec<D, A>,
     public prefix: Key = new Key(''),
     public dispatcher: Dispatcher = new Dispatcher(child),
     public encoder: Encoder<D, Buffer> = CborEncoder,
@@ -115,16 +133,6 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
    */
   unlock(key: Key) {
     return this.semaphore.unlock(key)
-  }
-
-  async safeGet(key: Key) {
-    try {
-      return await this.child.get(key)
-    } catch (err) {
-      if (err.code !== 'ERR_NOT_FOUND') {
-        throw err
-      }
-    }
   }
 
   async dispatch(...actions: Action<Event<A>>[]) {
@@ -172,15 +180,13 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
     return this.child.query(query)
   }
 
-  // @todo: Factor this out into an eventcodec class/interface
   batch(): ActionBatch<D, A> {
-    return new ActionBatch(
-      this,
-      async _key => undefined,
-      async (_key, value) => (value as unknown) as A,
-    )
+    return new ActionBatch(this)
   }
 
-  // @todo: Factor this out into an eventcodec class/interface
-  abstract async reduce(...events: Result<Event<A>>[]): Promise<void>
+  async reduce(...events: Result<Event<A>>[]) {
+    const filtered = events.filter(({ key }) => key.isDecendantOf(this.prefix))
+    await this.codec.onReduce(this.child, ...filtered)
+    this.emit('update', ...filtered.map(asUpdate))
+  }
 }

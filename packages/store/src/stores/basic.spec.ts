@@ -25,7 +25,6 @@ describe('BasicStore', () => {
     const res = await store.get(k)
     expect(res).to.be.eql(Buffer.from('hello'))
   })
-
   it('basic', async () => {
     const mStore = new MemoryDatastore()
     const store = new BasicStore(mStore, new Key('test'), new Dispatcher(mStore))

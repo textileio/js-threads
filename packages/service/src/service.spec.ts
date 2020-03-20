@@ -175,7 +175,7 @@ describe('Service...', () => {
         client.createRecord(info.id, { foo: 'bar1' }).then(() => {
           client.createRecord(info.id, { foo: 'bar2' })
         })
-      }).timeout(7000)
+      }).timeout(10000)
     })
   })
 })

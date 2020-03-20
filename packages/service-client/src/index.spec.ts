@@ -6,7 +6,7 @@ import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
-import { ThreadID, Variant, ThreadInfo, Block, ThreadRecord, Multiaddr } from '@textile/threads-core'
+import { ThreadID, Variant, ThreadInfo, Block, ThreadRecord, Multiaddr, Key } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Client } from '.'
 
@@ -16,9 +16,8 @@ const ed25519 = keys.supportedKeys.ed25519
 
 async function createThread(client: Client) {
   const id = ThreadID.fromRandom(Variant.Raw, 32)
-  const replicatorKey = randomBytes(44)
-  const readKey = randomBytes(44)
-  const info = await client.createThread(id, { replicatorKey, readKey })
+  const threadKey = Key.fromRandom()
+  const info = await client.createThread(id, { threadKey })
   return info
 }
 
@@ -43,12 +42,10 @@ describe('Service Client...', () => {
 
     it('should create a remote thread', async () => {
       const id = ThreadID.fromRandom(Variant.Raw, 32)
-      const replicatorKey = randomBytes(44)
-      const readKey = randomBytes(44)
-      const info = await client.createThread(id, { replicatorKey, readKey })
+      const threadKey = Key.fromRandom()
+      const info = await client.createThread(id, { threadKey })
       expect(info.id.string()).to.equal(id.string())
-      expect(info.readKey).to.not.be.undefined
-      expect(info.replicatorKey).to.not.be.undefined
+      expect(info.key).to.not.be.undefined
     })
 
     it('should add a remote thread', async () => {
@@ -58,7 +55,7 @@ describe('Service Client...', () => {
       const addr = threadAddr(hostAddr, hostID, info1)
       const client2 = new Client({ host: proxyAddr2 })
       try {
-        const info2 = await client2.addThread(addr, { ...info1 })
+        const info2 = await client2.addThread(addr, { threadKey: info1.key })
         expect(info2.id.string()).to.equal(info1.id.string())
       } catch (err) {
         throw new Error(`unexpected error: ${err}`)
@@ -119,16 +116,16 @@ describe('Service Client...', () => {
     it('should be able to add a pre-formed record', async () => {
       // Create a thread, keeping read key and log private key on the client
       const id = ThreadID.fromRandom(Variant.Raw, 32)
-      const replicatorKey = randomBytes(44)
+      const threadKey = Key.fromRandom(false)
       const privKey = await ed25519.generateKeyPair()
       const logKey = privKey.public
-      const info = await client.createThread(id, { replicatorKey, logKey })
+      const info = await client.createThread(id, { threadKey, logKey })
 
       const body = { foo: 'bar', baz: Buffer.from('howdy') }
-      const readKey = randomBytes(44)
+      const readKey = randomBytes(32)
       const block = Block.encoder(body, 'dag-cbor')
       const event = await createEvent(block, readKey)
-      const record = await createRecord(event, privKey, replicatorKey, undefined)
+      const record = await createRecord(event, privKey, threadKey.service, undefined)
       const cid1 = await record.value.cid()
       const logID = await PeerId.createFromPubKey(privKey.public.bytes)
       await client.addRecord(info.id, logID, record)

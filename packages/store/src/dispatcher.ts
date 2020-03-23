@@ -1,10 +1,8 @@
 import log from 'loglevel'
 import { ulid } from 'ulid'
-import { decode } from 'cbor-sync'
-import { Datastore, Key, Result, MemoryDatastore, utils } from 'interface-datastore'
+import { Datastore, Key, Result, MemoryDatastore } from 'interface-datastore'
 import { RWLock } from 'async-rwlock'
-import { CborEncoder } from './datastores/encoding'
-import { DomainDatastore } from './datastores'
+import { DomainDatastore, CborEncoder } from './datastores'
 
 const logger = log.getLogger('store:dispatcher')
 
@@ -14,9 +12,6 @@ const logger = log.getLogger('store:dispatcher')
 export interface Reducer<T extends Event> {
   reduce(...events: Result<T>[]): Promise<void>
 }
-
-export type EventDispatcher<A> = (...actions: Result<Event<A>>[]) => Promise<void>
-
 /**
  * Event is a local or remote event.
  */
@@ -35,13 +30,13 @@ export interface Event<T = any> {
  */
 export class Dispatcher extends RWLock {
   public reducers: Set<Reducer<any>> = new Set()
-  public child: Datastore<Buffer>
+  public child: Datastore
 
   /**
    * Dispatcher creates a new dispatcher.
-   * @param store The optional event 'log' to persist events. If undefined this is treated as a stateless dispatcher.
+   * @param child The optional event 'log' to persist events. If undefined this is treated as a stateless dispatcher.
    */
-  constructor(child?: Datastore<Buffer>) {
+  constructor(child?: Datastore) {
     super()
     this.child = new DomainDatastore(child || new MemoryDatastore(), new Key('dispatcher'))
   }
@@ -50,19 +45,9 @@ export class Dispatcher extends RWLock {
    * Register takes a reducer to be invoked with each dispatched event.
    * @param reducer A reducer for processing dispatched events.
    */
-  async register<T extends Event>(reducer: Reducer<T>) {
-    await this.writeLock()
+  register<T extends Event>(reducer: Reducer<T>) {
     this.reducers.add(reducer)
-    this.unlock()
     logger.debug(`registered reducers: ${this.reducers.size}`)
-  }
-
-  replay(prefix?: string) {
-    const mapper = ({ key, value }: Result<Buffer>) => {
-      const result: Result<any> = { key: new Key(key.type()), value: decode(value) }
-      return result
-    }
-    return utils.map(this.child?.query({ prefix }) || [], mapper)
   }
 
   /**
@@ -86,5 +71,6 @@ export class Dispatcher extends RWLock {
       this.unlock()
     }
   }
+
   // @todo: Should we have a close/stop method/behavior?
 }

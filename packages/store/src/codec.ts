@@ -1,7 +1,5 @@
-import { Key, Datastore, Result, Batch } from 'interface-datastore'
+import { Key, Datastore, Result } from 'interface-datastore'
 import { Event } from './dispatcher'
-// eslint-disable-next-line import/no-cycle
-import { Store } from './stores/store'
 
 /**
  * Codec interface describes the methods/function required to implement a custom store.

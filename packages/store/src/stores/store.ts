@@ -1,11 +1,15 @@
-import { Datastore, Key, Result, Batch, Query, MemoryDatastore } from 'interface-datastore'
+import { Datastore, Key, Result, Batch, Query } from 'interface-datastore'
 import lexInt from 'lexicographic-integer'
 import { EventEmitter } from 'tsee'
-import { Semaphore } from '../datastores/abstract/lockable'
 import { Reducer, Dispatcher, Event } from '../dispatcher'
-import { EncodingDatastore, Encoder, CborEncoder } from '../datastores/encoding'
-import { DomainDatastore } from '../datastores/domain'
-import { Lockable } from '../datastores/abstract/lockable'
+import {
+  Lockable,
+  DomainDatastore,
+  Semaphore,
+  EncodingDatastore,
+  Encoder,
+  CborEncoder,
+} from '../datastores'
 // eslint-disable-next-line import/no-cycle
 import { Codec } from '../codec'
 
@@ -87,7 +91,7 @@ export class ActionBatch<D = any, A = D> implements Batch<D> {
   }
 }
 
-export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
+export class Store<D = any, A = D> extends EventEmitter<Events<A>>
   implements Lockable, Datastore<D>, Reducer<Event<A>> {
   public child: Datastore<D>
   readonly semaphore: Semaphore
@@ -96,7 +100,7 @@ export abstract class Store<D = any, A = D> extends EventEmitter<Events<A>>
     public codec: Codec<D, A>,
     public prefix: Key = new Key(''),
     public dispatcher: Dispatcher = new Dispatcher(child),
-    public encoder: Encoder<D, Buffer> = CborEncoder,
+    public encoder: Encoder<D> = CborEncoder,
   ) {
     super()
     this.child = new DomainDatastore(new EncodingDatastore(child, this.encoder), this.prefix)

@@ -23,9 +23,9 @@ describe('Dispatcher', () => {
   it('should add new (unique) reducers on registration', async () => {
     const d = new Dispatcher()
     const reducer = { reduce: (..._event: Result<TestEvent>[]) => Promise.resolve(undefined) }
-    await d.register(reducer)
+    d.register(reducer)
     expect(d.reducers).to.have.length(1)
-    await d.register(reducer)
+    d.register(reducer)
     expect(d.reducers).to.have.length(1)
   })
 
@@ -41,7 +41,7 @@ describe('Dispatcher', () => {
     }
     const t1 = Date.now()
     // Don't await...
-    d.dispatch({ key: new Key('one'), value })
+    d.dispatch({ key: new Key('one'), value }).then(() => console.log('done'))
     await d.dispatch({ key: new Key('two'), value })
     const t2 = Date.now()
     expect(t2 - t1 + 100).to.be.greaterThan(4000) // Adjust up to catch approx. timings
@@ -73,7 +73,7 @@ describe('Dispatcher', () => {
     const reducer = {
       reduce: (..._event: Result<TestEvent>[]) => Promise.reject(new Error('error')),
     }
-    await d.register(reducer)
+    d.register(reducer)
     try {
       await d.dispatch({ key: new Key('one'), value })
       throw new Error('should have thrown error on dispatch call')
@@ -81,22 +81,4 @@ describe('Dispatcher', () => {
       expect(err.toString()).to.equal(error.toString())
     }
   })
-
-  it('should not be able to register a new reducer while dispatching', async () => {
-    const d = new Dispatcher()
-    const slowReducer = (..._event: Result<TestEvent>[]) =>
-      new Promise<void>(r => setTimeout(r, 2000))
-    await d.register({ reduce: slowReducer })
-    const value: TestEvent = {
-      timestamp: Buffer.from('' + Date.now()),
-      id: 'null',
-      collection: 'null',
-    }
-    const t1 = Date.now()
-    // Don't await...
-    d.dispatch({ key: new Key('one'), value })
-    await d.register({ reduce: slowReducer })
-    const t2 = Date.now()
-    expect(t2 - t1).to.be.greaterThan(2000 - 10)
-  }).timeout(3000)
 })

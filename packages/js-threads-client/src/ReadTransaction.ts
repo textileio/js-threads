@@ -1,15 +1,15 @@
 import { grpc } from '@improbable-eng/grpc-web'
 import {
-  ModelHasRequest,
-  ModelFindRequest,
-  ModelFindByIDRequest,
+  HasRequest,
+  FindRequest,
+  FindByIDRequest,
   StartTransactionRequest,
   ReadTransactionRequest,
   ReadTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
 import { toBase64, fromBase64 } from 'b64-lite'
 import { Transaction } from './Transaction'
-import { Entity, EntityList } from './models'
+import { Instance, InstanceList } from './models'
 import { JSONQuery } from './models'
 import { Config } from './config'
 
@@ -20,18 +20,18 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
   constructor(
     protected readonly config: Config,
     protected readonly client: grpc.Client<ReadTransactionRequest, ReadTransactionReply>,
-    protected readonly storeID: string,
+    protected readonly DBID: string,
     protected readonly modelName: string,
   ) {
-    super(client, storeID, modelName)
+    super(client, DBID, modelName)
   }
   /**
    * start begins the transaction. All operations between start and end will be applied as a single transaction upon a call to end.
    */
   public async start() {
     const startReq = new StartTransactionRequest()
-    startReq.setStoreid(this.storeID)
-    startReq.setModelname(this.modelName)
+    startReq.setDbid(this.DBID)
+    startReq.setCollectionname(this.modelName)
     const req = new ReadTransactionRequest()
     req.setStarttransactionrequest(startReq)
     const metadata = this.config._wrapBrowserHeaders(new grpc.Metadata())
@@ -40,17 +40,17 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
   }
 
   /**
-   * has checks whether a given entity exists in the given store.
-   * @param entityIDs An array of entity ids to check for.
+   * has checks whether a given instance exists in the given store.
+   * @param IDs An array of instance ids to check for.
    */
-  public async has(entityIDs: string[]) {
+  public async has(IDs: string[]) {
     return new Promise<boolean>((resolve, reject) => {
-      const hasReq = new ModelHasRequest()
-      hasReq.setEntityidsList(entityIDs)
+      const hasReq = new HasRequest()
+      hasReq.setInstanceidsList(IDs)
       const req = new ReadTransactionRequest()
-      req.setModelhasrequest(hasReq)
+      req.setHasrequest(hasReq)
       this.client.onMessage((message: ReadTransactionReply) => {
-        const reply = message.getModelhasreply()
+        const reply = message.getHasreply()
         resolve(reply ? reply.toObject().exists == true : false)
       })
       this.setReject(reject)
@@ -59,22 +59,22 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
   }
 
   /**
-   * modelFind queries the store for entities matching the given query parameters. See Query for options.
+   * find queries the store for entities matching the given query parameters. See Query for options.
    * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
    */
-  public async modelFind<T = any>(query: JSONQuery) {
-    return new Promise<EntityList<T>>((resolve, reject) => {
-      const findReq = new ModelFindRequest()
+  public async find<T = any>(query: JSONQuery) {
+    return new Promise<InstanceList<T>>((resolve, reject) => {
+      const findReq = new FindRequest()
       findReq.setQueryjson(toBase64(JSON.stringify(query)))
       const req = new ReadTransactionRequest()
-      req.setModelfindrequest(findReq)
+      req.setFindrequest(findReq)
       this.client.onMessage((message: ReadTransactionReply) => {
-        const reply = message.getModelfindreply()
+        const reply = message.getFindreply()
         if (reply === undefined) {
           resolve()
         } else {
-          const ret: EntityList<T> = {
-            entitiesList: reply.toObject().entitiesList.map(entity => JSON.parse(fromBase64(entity as string))),
+          const ret: InstanceList<T> = {
+            instancesList: reply.toObject().instancesList.map(instance => JSON.parse(fromBase64(instance as string))),
           }
           resolve(ret)
         }
@@ -85,22 +85,22 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
   }
 
   /**
-   * modelFindByID queries the store for the id of an entity.
-   * @param entityID The id of the entity to search for.
+   * findByID queries the store for the id of an instance.
+   * @param ID The id of the instance to search for.
    */
-  public async modelFindByID<T = any>(entityID: string) {
-    return new Promise<Entity<T>>((resolve, reject) => {
-      const findReq = new ModelFindByIDRequest()
-      findReq.setEntityid(entityID)
+  public async findByID<T = any>(ID: string) {
+    return new Promise<Instance<T>>((resolve, reject) => {
+      const findReq = new FindByIDRequest()
+      findReq.setInstanceid(ID)
       const req = new ReadTransactionRequest()
-      req.setModelfindbyidrequest(findReq)
+      req.setFindbyidrequest(findReq)
       this.client.onMessage((message: ReadTransactionReply) => {
-        const reply = message.getModelfindbyidreply()
+        const reply = message.getFindbyidreply()
         if (reply === undefined) {
           resolve()
         } else {
-          const ret: Entity<T> = {
-            entity: JSON.parse(reply.toObject().entity as string),
+          const ret: Instance<T> = {
+            instance: JSON.parse(reply.toObject().instance as string),
           }
           resolve(ret)
         }

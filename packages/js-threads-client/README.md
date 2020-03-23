@@ -57,18 +57,18 @@ const client = new Client(api.threadsConfig)
 **create a store**
 
 ```js
-const store = await client.newStore()
-await client.registerSchema(store.id, 'Folder2P', schema)
+const store = await client.newDB()
+await client.newCollection(store.id, 'Folder2P', schema)
 ```
 
-**join a store by invite**
+**join a db by invite**
 
 ```js
-const store = await client.newStore()
-await client.registerSchema(store.id, 'Folder2P', schema)
+const db = await client.newDB()
+await client.newCollection(db.id, 'Folder2P', schema)
 try {
   const some = await client.startFromAddress(
-    store.id,
+    db.id,
     '/ip4/127.0.0.1/tcp/4006/p2p/12D3KooWS2QMPk53mi6xzjr6j87bB9NDfn6NnnQWFc31p86SwpBW/thread/bafktbzj3z4gc7x44dc7izjieurbboybszntx6vapj3umytpilvuqjva',
     'stAhc51y6tnTdDGxSzA9rrSgjudzenwF6YcMAKK5Dm2seEmQi55DfGXcxzco',
     'j6YMX423ugWRRTXsfeHCzRLgBTQ95H1u7r35MZ6mKYTN7rLgdRvq1Efb2PBL')
@@ -77,21 +77,21 @@ try {
 }
 ```
 
-**get all entries**
+**get all instances**
 
 ```js
-const found = await client.modelFind(this.finderID, 'Folder2P', {})
-console.debug('found:', found.entitiesList.length)
-this.folders = found.entitiesList.map((entity) => entity).map((obj) => {
+const found = await client.find(this.finderID, 'Folder2P', {})
+console.debug('found:', found.instancesList.length)
+this.folders = found.instancesList.map((instance) => instance).map((obj) => {
   return new YourModel(obj)
 })
 ```
 
-**add an entry**
+**add an instance**
 
 ```js
 // matches YourModel and schema
-const created = await client.modelCreate(this.finderID, 'Folder2', [{
+const created = await client.instanceCreate(this.finderID, 'Folder2', [{
   some: 'data',
   numbers: [1, 2, 3]
 }])

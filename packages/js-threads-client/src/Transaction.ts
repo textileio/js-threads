@@ -7,12 +7,12 @@ export class Transaction<TRequest extends grpc.ProtobufMessage, TResponse extend
   /**
    * Transaction creates a new transaction for the given store using the given model.
    * @param client The gRPC client to use for the transaction.
-   * @param storeID The id of the store on which to run the transaction.
+   * @param DBID The id of the store on which to run the transaction.
    * @param modelName The human-readable name for the model.
    */
   constructor(
     protected readonly client: grpc.Client<TRequest, TResponse>,
-    protected readonly storeID: string,
+    protected readonly DBID: string,
     protected readonly modelName: string,
   ) {}
 

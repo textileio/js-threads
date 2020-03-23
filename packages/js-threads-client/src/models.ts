@@ -1,15 +1,15 @@
 /**
- * Entity is a singular Model instance.
+ * Instance is a singular Model instance.
  */
-export interface Entity<T> {
-  entity: T
+export interface Instance<T> {
+  instance: T
 }
 
 /**
- * EntityList is an array of Entities.
+ * InstanceList is an array of Entities.
  */
-export interface EntityList<T> {
-  entitiesList: T[]
+export interface InstanceList<T> {
+  instancesList: T[]
 }
 
 /**

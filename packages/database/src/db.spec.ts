@@ -165,7 +165,8 @@ describe('Database', () => {
   describe('Persistence', () => {
     let datastore: Datastore
     const tmp = 'tmp.db'
-    before(async () => {
+    before(async function() {
+      if (isBrowser) return this.skip()
       datastore = new LevelDatastore(tmp)
       // Otherwise previous runs will create invalid ids
       await (datastore as any).db.clear()
@@ -178,7 +179,6 @@ describe('Database', () => {
     })
 
     it('should work with a persistent database and custom options', async function() {
-      if (isBrowser) return this.skip()
       const dispatcher = new Dispatcher(new DomainDatastore(datastore, new Key('dispatcher')))
       const service = new Service(new DomainDatastore(datastore, new Key('service')), new Client())
       const eventBus = new EventBus(new DomainDatastore(datastore, new Key('eventbus')), service)

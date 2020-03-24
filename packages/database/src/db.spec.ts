@@ -163,15 +163,7 @@ describe('Database', () => {
   })
 
   describe('Persistence', () => {
-    let datastore: Datastore
-    const tmp = 'tmp.db'
-    before(async function() {
-      if (isBrowser) return this.skip()
-      datastore = new LevelDatastore(tmp)
-      // Otherwise previous runs will create invalid ids
-      await (datastore as any).db.clear()
-    })
-
+    const tmp = 'database.db'
     after(() => {
       level.destroy(tmp, () => {
         return
@@ -179,6 +171,9 @@ describe('Database', () => {
     })
 
     it('should work with a persistent database and custom options', async function() {
+      if (isBrowser) return this.skip()
+      const datastore = new LevelDatastore(tmp)
+      if (datastore) await (datastore as any).db.clear()
       const dispatcher = new Dispatcher(new DomainDatastore(datastore, new Key('dispatcher')))
       const service = new Service(new DomainDatastore(datastore, new Key('service')), new Client())
       const eventBus = new EventBus(new DomainDatastore(datastore, new Key('eventbus')), service)

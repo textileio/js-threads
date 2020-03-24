@@ -404,8 +404,7 @@ export class Multiaddr {
     if (protos[0].code !== 4 && protos[0].code !== 41) {
       return false
     }
-    return !(protos[1].code !== 6 && protos[1].code !== 273);
-
+    return !(protos[1].code !== 6 && protos[1].code !== 273)
   }
 
   /**

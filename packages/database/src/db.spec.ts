@@ -6,6 +6,7 @@ import { expect } from 'chai'
 import { Multiaddr, ThreadID, Variant } from '@textile/threads-core'
 import LevelDatastore from 'datastore-level'
 import delay from 'delay'
+import { isBrowser } from 'browser-or-node'
 import { Datastore, Key } from 'interface-datastore'
 import { DomainDatastore, Dispatcher, Update, Op } from '@textile/threads-store'
 import { Service, Client } from '@textile/threads-service'
@@ -13,6 +14,8 @@ import { MemoryDatastore } from 'interface-datastore'
 import { Database } from './db'
 import { EventBus } from './eventbus'
 import { threadAddr } from './utils'
+
+const level = require('level')
 
 interface DummyEntity {
   ID: string
@@ -105,8 +108,9 @@ async function runListenersComplexUseCase(los: string[]) {
 }
 
 describe('Database', () => {
-  describe('end to end test', () => {
-    it.skip('should allow paired peers to exchange updates', async () => {
+  describe.skip('end to end test', () => {
+    it('should allow paired peers to exchange updates', async function () {
+      if (isBrowser) return this.skip()
       // @todo This test is probably too slow for CI, but should run just fine locally
       // Should probably just skip it (https://stackoverflow.com/a/48121978) in CI
       // Peer 1: Create db1, register a collection, create and update an instance.
@@ -132,8 +136,9 @@ describe('Database', () => {
       // have the same state of dummy.
       const info = await d1.service.getThread(id1)
       const datastore = new MemoryDatastore()
-      const client = new Client({ host: 'http://127.0.0.1:5207' })
+      const client = new Client({ host: 'http://127.0.0.1:6207' })
       const service = new Service(new DomainDatastore(datastore, new Key('service')), client)
+      const test = await service.getHostID()
       const d2 = await Database.fromAddress(addr, info.key, datastore, {
         service,
       })
@@ -157,15 +162,23 @@ describe('Database', () => {
     }).timeout(10000)
   })
 
-  describe('Database', () => {
+  describe('Persistence', () => {
     let datastore: Datastore
+    const tmp = 'tmp.db'
     before(async () => {
-      datastore = new LevelDatastore('tmp.db')
+      datastore = new LevelDatastore(tmp)
       // Otherwise previous runs will create invalid ids
       await (datastore as any).db.clear()
     })
 
-    it('should work with a persistent database and custom options', async () => {
+    after(() => {
+      level.destroy(tmp, () => {
+        return
+      })
+    })
+
+    it('should work with a persistent database and custom options', async function() {
+      if (isBrowser) return this.skip()
       const dispatcher = new Dispatcher(new DomainDatastore(datastore, new Key('dispatcher')))
       const service = new Service(new DomainDatastore(datastore, new Key('service')), new Client())
       const eventBus = new EventBus(new DomainDatastore(datastore, new Key('eventbus')), service)
@@ -187,7 +200,7 @@ describe('Database', () => {
     })
   })
 
-  describe('event emitter', () => {
+  describe('Events', () => {
     const assertEvents = (events: Update[], expected: Update[]) => {
       expect(events).to.have.length(expected.length)
       for (const i in events) {

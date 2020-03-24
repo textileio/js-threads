@@ -373,13 +373,15 @@ export class Queue<T = any> extends EventEmitter<Events<T>> {
 
   /**
    * This function will load from the database, 'size' number of records into queue array.
-   * @param size How many records to hydrate.
+   * @param limit How many records to hydrate.
    */
   private hydrateQueue(limit: number = this.batchSize) {
     logger.debug('HydrateQueue')
     return new Promise((resolve, reject) => {
       if (!this.isOpen) reject(notOpenError)
-      const mapper = ({ key, value }: Result) => ({ id: key.baseNamespace(), job: decode(value) })
+      const mapper = ({ key, value }: Result) => {
+        return { id: key.baseNamespace(), job: decode(value) }
+      }
       collect(map(mapper, this.store.query({ limit })))
         .then(jobs => {
           // Update our queue array

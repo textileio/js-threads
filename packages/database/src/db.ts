@@ -83,7 +83,7 @@ export class Database {
     const db = new Database(datastore, options)
     const info = await db.service.addThread(addr, { threadKey })
     await db.open(info.id)
-    db.service.pullThread(info.id) // Don't await
+    await db.service.pullThread(info.id)
     return db
   }
 
@@ -132,9 +132,9 @@ export class Database {
    * Open the database.
    * Opens the underlying datastore if not already open, and enables the dispatcher and
    * underlying services (event bus, network service, etc). If threadID is undefined, and the
-   * database was already boostraped on a thread, it will continue using that thread. In the
+   * database was already bootstrapped on a thread, it will continue using that thread. In the
    * opposite case, it will create a new thread. If threadID is provided, and the database was
-   * not bootstraped on an existing thread, it will attempt to use the provided threadID,
+   * not bootstrapped on an existing thread, it will attempt to use the provided threadID,
    * otherwise, a thread id mismatch error is thrown.
    */
   async open(threadID?: ThreadID) {

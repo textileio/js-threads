@@ -1,8 +1,11 @@
 import { expect } from 'chai'
 import { MemoryDatastore, Datastore, Key } from 'interface-datastore'
 import LevelDatastore from 'datastore-level'
+import { isBrowser } from 'browser-or-node'
 import sinon from 'sinon'
 import { Queue } from './queue'
+
+const level = require('level')
 
 describe('Queue', () => {
   describe('Constructor', () => {
@@ -77,35 +80,6 @@ describe('Queue', () => {
       })
     })
 
-    it.skip('should find first job in the in-memory queue', done => {
-      q.open().then(() => {
-        const promises = []
-        promises.push(q.push({}))
-        for (let i = 1; i <= 1000; ++i) {
-          const task = { sequence: i % 501 }
-          promises.push(q.push(task, `${i}`))
-        }
-
-        // Grab first job and throw away so in-memory queue is hydrated
-        q.on('next', () => {
-          q.stop()
-          q.done()
-          // Now let's check if all items are
-          for (let i = 1; i <= 500; ++i)
-            q.getFirstJobId({ sequence: i }).then(id => {
-              expect(id).to.equal(`${i}`)
-            })
-
-          q.close().then(() => done())
-        })
-
-        // Wait for all tasks to be pushed before calling hasJob method to search for it
-        Promise.all(promises).then(() => {
-          q.start()
-        })
-      })
-    })
-
     it('should find all matching jobs in the queue and in order', done => {
       q.open().then(() => {
         const promises = []
@@ -173,7 +147,7 @@ describe('Queue', () => {
     })
   })
 
-  describe.skip('Unopened DB', () => {
+  describe('Unopened DB', () => {
     const q = new Queue(new MemoryDatastore(), 2)
 
     it('should throw on calling start() before open is called', () => {
@@ -191,6 +165,7 @@ describe('Queue', () => {
 
   describe('Maintaining queue length count', () => {
     let store: Datastore
+    const tmp = 'queue.db'
 
     before(done => {
       store = new MemoryDatastore()
@@ -201,7 +176,14 @@ describe('Queue', () => {
       })
     })
 
-    it('should count existing jobs in db on open', done => {
+    after(() => {
+      level.destroy(tmp, () => {
+        return
+      })
+    })
+
+    it('should count existing jobs in db on open', function(done) {
+      if (isBrowser) return this.skip()
       const q = new Queue(store)
       q.open()
         .then(() => {
@@ -216,9 +198,9 @@ describe('Queue', () => {
         })
     })
 
-    it('should count jobs as pushed and completed', done => {
-      const tmpdb = 'tmp.db'
-      let q = new Queue(new LevelDatastore(tmpdb))
+    it('should count jobs as pushed and completed', function(done) {
+      if (isBrowser) return this.skip()
+      let q = new Queue(new LevelDatastore(tmp))
 
       // Count jobs
       let c = 0
@@ -236,7 +218,7 @@ describe('Queue', () => {
           return q.close()
         })
         .then(() => {
-          q = new Queue(new LevelDatastore(tmpdb))
+          q = new Queue(new LevelDatastore(tmp))
 
           return q.open()
         })

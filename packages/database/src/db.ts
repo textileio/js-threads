@@ -180,13 +180,14 @@ export class Database {
     if (this.threadID !== undefined) {
       const info = await this.service.getThread(this.threadID)
       const hostID = await this.service.getHostID()
+      // This is the only address we know about... and the port is wrong
       const hostAddr = Multiaddr.fromNodeAddress(parse(this.service.client.config.host), 'tcp')
       const pa = new Multiaddr(`/p2p/${hostID.toB58String()}`)
       const ta = new Multiaddr(`/thread/${info.id.string()}`)
       const full = hostAddr.encapsulate(pa.encapsulate(ta))
       return {
         dbKey: info.key,
-        addresses: [ 'blah' ]
+        addresses: [ full.toString() ]
       }
     }
   }
@@ -207,11 +208,12 @@ export class Database {
   private async onRecord(rec: ThreadRecord) {
     if (this.threadID?.equals(rec.threadID)) {
       const logInfo = await this.service.getOwnLog(this.threadID, false)
-      if (logInfo?.id.isEqual(rec.logID)) {
+      if (logInfo?.id.equals(rec.logID)) {
         return // Ignore our own events since DB already dispatches to DB reducers
       }
+      // @todo Should just cache this information, as its unlikely to change
       const info = await this.service.getThread(this.threadID)
-      const value: Event<any> | undefined = decodeRecord(rec, info)
+      const value: Event | undefined = decodeRecord(rec, info)
       if (value !== undefined) {
         const collection = this.collections.get(value.collection)
         if (collection !== undefined) {
@@ -222,11 +224,11 @@ export class Database {
     }
   }
 
-  private async onEvents(...events: Event<any>[]) {
+  private async onEvents(...events: Event[]) {
     const id = this.threadID?.bytes()
     if (id !== undefined) {
       for (const body of events) {
-        this.eventBus.push({ id, body })
+        await this.eventBus.push({ id, body })
       }
     }
   }

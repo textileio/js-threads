@@ -38,17 +38,14 @@ export class EventBus<T = any> extends EventEmitter<Events> {
       const threadID = ThreadID.fromBytes(id)
       try {
         await retry(async (_bail, _num) => {
-          // @todo: We could use bail here to bail if the service errors out with a headers closed error
+          // @todo: We could use bail here to bail if the service errors out with a 'headers closed error'
           // This would mean that the gRPC service isn't running, i.e., we are in 'offline' mode
-          const rec = await this.service.createRecord(threadID, body)
-          // const cid = await rec.record?.value.cid()
-          // const thread = rec.threadID.string()
-          // const log = rec.logID.toB58String()
-          // console.log(`put record ${cid} (thread=${thread}, log=${log})`)
+          await this.service.createRecord(threadID, body)
+          // @todo: Add debugging outputs here
           return this.queue.done()
         }, merge(retryOpts, opts))
       } catch (err) {
-        // Skip it for now, we've already tried 5 times!
+        // Skip it for now, we've already retried
         this.queue.done(true)
       }
     })
@@ -81,9 +78,9 @@ export class EventBus<T = any> extends EventEmitter<Events> {
 
   /**
    * Push an event onto to the queue
-   * @param job Object to be serialized and pushed to queue via JSON.stringify().
+   * @param event Object to be serialized and pushed to queue via JSON.stringify().
    */
   push(event: EventJob<T>) {
-    this.queue.push(event)
+    return this.queue.push(event)
   }
 }

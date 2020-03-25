@@ -5,12 +5,9 @@
 ;(global as any).WebSocket = require('isomorphic-ws')
 
 import { expect } from 'chai'
-import multibase from 'multibase'
-import { encode } from 'varint'
-import { randomBytes } from 'libp2p-crypto'
 import { ReadTransaction } from 'src/ReadTransaction'
 import { WriteTransaction } from 'src/WriteTransaction'
-import { Client } from '../index'
+import { Client, ThreadID } from '../index'
 import { JSONQuery, JSONOperation } from '../models'
 import { Where } from '../query'
 
@@ -60,8 +57,8 @@ const createPerson = (): Person => {
 }
 
 describe('Client', function() {
-  const bytes = Buffer.concat([Buffer.from(encode(0x01)), Buffer.from(encode(0x55)), randomBytes(32)])
-  const dbID = multibase.encode('base32', bytes).toString()
+  const threadId = ThreadID.fromRandom()
+  const dbID = threadId.stringOfBase('base32')
   let dbKey: string
   describe('.newDB', () => {
     it('response should succeed', async () => {

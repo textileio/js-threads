@@ -45,25 +45,44 @@
     (async function () {
 
       window.client = new threads.Client()
+      const appendText = (str) => {
+        var div = document.createElement('div');
+        div.innerHTML = str;
+        document.body.appendChild(div);
+        var br = document.createElement('br');
+        document.body.appendChild(br);
+        console.log(str)
+      }
+
       try {
+        // Create a new DB ID
+        const threadId = threads.ThreadID.fromRandom()
+        const DBID = threadId.stringOfBase('base32')
+
         // Create a new store
-        const res = await client.newDB()
-        const DBID = res.id
+        const res = await client.newDB(DBID)
 
         // Register a person schema
         await client.newCollection(DBID, 'Person', personSchema)
 
         // Create adam and eve
-        const people = await client.modelCreate(DBID, 'Person', [adam, eve])
+        const people = await client.create(DBID, 'Person', [adam, eve])
         const adamID = people.instancesList[0].ID
+        appendText(`New Person instance: "adam", ${adamID}`)
         const eveID = people.instancesList[1].ID
-        console.debug('adam:', adamID)
-        console.debug('eve:', eveID)
+        appendText(`New Person instance: "eve", ${eveID}`)
 
         // Subscribe to adam
         await client.listen(DBID, 'Person', adamID, ((reply) => {
-          console.debug(reply)
+          appendText(`Update to Instance: ${JSON.stringify(reply)}`)
         }))
+
+        // Make changes to existing instance
+        const adamInstance = people.instancesList[0]
+        adamInstance.age = adam.age + 1
+        adamInstance.firstName = "Doug"
+        await client.save(DBID, 'Person', [adamInstance])
+        
       }
       catch (err) {
         console.error(err)

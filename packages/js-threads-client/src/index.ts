@@ -28,6 +28,7 @@ import {
   GetDBInfoRequest,
   GetDBInfoReply,
 } from '@textile/threads-client-grpc/api_pb'
+import { ThreadID } from '@textile/threads-core'
 import { encode, decode } from 'bs58'
 import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
@@ -35,6 +36,7 @@ import { WriteTransaction } from './WriteTransaction'
 import { Config, BaseConfig } from './config'
 import { JSONQuery, Instance, InstanceList } from './models'
 
+export { ThreadID }
 export { BaseConfig, Config, Instance, InstanceList, JSONQuery }
 export { Query, Where } from './query'
 

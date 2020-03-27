@@ -7,9 +7,9 @@ import { Multiaddr, ThreadID, Variant } from '@textile/threads-core'
 import LevelDatastore from 'datastore-level'
 import delay from 'delay'
 import { isBrowser } from 'browser-or-node'
-import { Datastore, Key } from 'interface-datastore'
+import { Key } from 'interface-datastore'
 import { DomainDatastore, Dispatcher, Update, Op } from '@textile/threads-store'
-import { Service, Client } from '@textile/threads-service'
+import { Network, Client } from '@textile/threads-network'
 import { MemoryDatastore } from 'interface-datastore'
 import { Database } from './db'
 import { EventBus } from './eventbus'
@@ -128,19 +128,19 @@ describe('Database', () => {
       })
 
       // Boilerplate to generate peer1 thread-addr
-      const hostID = await d1.service.getHostID()
+      const hostID = await d1.network.getHostID()
       const hostAddr = new Multiaddr('/dns4/threads1/tcp/4006')
       const addr = threadAddr(hostAddr, hostID.toB58String(), id1.string())
 
       // Peer 2: Create a completely parallel db2, which will sync with the previous one and should
       // have the same state of dummy.
-      const info = await d1.service.getThread(id1)
+      const info = await d1.network.getThread(id1)
       const datastore = new MemoryDatastore()
       const client = new Client({ host: 'http://127.0.0.1:6207' })
-      const service = new Service(new DomainDatastore(datastore, new Key('service')), client)
-      const test = await service.getHostID()
+      const network = new Network(new DomainDatastore(datastore, new Key('network')), client)
+      const test = await network.getHostID()
       const d2 = await Database.fromAddress(addr, info.key, datastore, {
-        service,
+        network,
       })
       // Create parallel collection
       const Dummy2 = await d2.newCollectionFromObject<DummyEntity>('dummy', {
@@ -175,9 +175,9 @@ describe('Database', () => {
       const datastore = new LevelDatastore(tmp)
       if (datastore) await (datastore as any).db.clear()
       const dispatcher = new Dispatcher(new DomainDatastore(datastore, new Key('dispatcher')))
-      const service = new Service(new DomainDatastore(datastore, new Key('service')), new Client())
-      const eventBus = new EventBus(new DomainDatastore(datastore, new Key('eventbus')), service)
-      const db = new Database(datastore, { dispatcher, service, eventBus })
+      const network = new Network(new DomainDatastore(datastore, new Key('network')), new Client())
+      const eventBus = new EventBus(new DomainDatastore(datastore, new Key('eventbus')), network)
+      const db = new Database(datastore, { dispatcher, network, eventBus })
 
       const id = ThreadID.fromRandom(Variant.Raw, 32)
       await db.open(id)

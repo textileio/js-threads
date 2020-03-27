@@ -11,12 +11,7 @@ export interface Closer {
 /**
  * Network is the network interface for thread orchestration.
  */
-export type Network = API
-
-/**
- * API is the network interface for thread orchestration.
- */
-export interface API {
+export interface Network {
   /**
    * getHostID returns the network's (remote) host peer ID.
    */

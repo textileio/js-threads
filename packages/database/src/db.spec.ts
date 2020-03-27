@@ -17,7 +17,7 @@ import { threadAddr } from './utils'
 
 const level = require('level')
 
-interface DummyEntity {
+interface DummyInstance {
   ID: string
   name: string
   counter: number
@@ -32,13 +32,13 @@ interface DummyEntity {
  */
 async function runListenersComplexUseCase(los: string[]) {
   const db = new Database() // Use the defaults
-  const Collection1 = await db.newCollectionFromObject<DummyEntity>('Collection1', {
+  const Collection1 = await db.newCollectionFromObject<DummyInstance>('Collection1', {
     ID: '',
     name: '',
     counter: 0,
   })
 
-  const Collection2 = await db.newCollectionFromObject<DummyEntity>('Collection2', {
+  const Collection2 = await db.newCollectionFromObject<DummyInstance>('Collection2', {
     ID: '',
     name: '',
     counter: 0,
@@ -121,7 +121,7 @@ describe('Database', () => {
         throw new Error('should not be invalid thread id')
       }
       // Create a new collection
-      const Dummy1 = await d1.newCollectionFromObject<DummyEntity>('dummy', {
+      const Dummy1 = await d1.newCollectionFromObject<DummyInstance>('dummy', {
         ID: '',
         name: '',
         counter: 0,
@@ -143,7 +143,7 @@ describe('Database', () => {
         network,
       })
       // Create parallel collection
-      const Dummy2 = await d2.newCollectionFromObject<DummyEntity>('dummy', {
+      const Dummy2 = await d2.newCollectionFromObject<DummyInstance>('dummy', {
         ID: '',
         name: '',
         counter: 0,
@@ -182,7 +182,7 @@ describe('Database', () => {
       const id = ThreadID.fromRandom(Variant.Raw, 32)
       await db.open(id)
 
-      await db.newCollectionFromObject<DummyEntity>('dummy', {
+      await db.newCollectionFromObject<DummyInstance>('dummy', {
         ID: '',
         name: '',
         counter: 0,

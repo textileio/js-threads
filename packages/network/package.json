@@ -37,7 +37,7 @@
       "path": "../encoding"
     },
     {
-      "path": "../service-client"
+      "path": "../network-client"
     }
   ],
   "devDependencies": {

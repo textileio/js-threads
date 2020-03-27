@@ -8,7 +8,7 @@ import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
 import { ThreadID, Variant, ThreadInfo, Block, ThreadRecord, Multiaddr, Key } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
-import { Client } from '../../network-client'
+import { Client } from '@textile/threads-network-client'
 import { MemoryDatastore } from 'interface-datastore'
 import { Network } from '.'
 

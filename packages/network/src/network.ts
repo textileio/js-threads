@@ -15,7 +15,7 @@ import {
   ThreadRecord,
 } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
-import { Client } from '../../network-client'
+import { Client } from '@textile/threads-network-client'
 import { Datastore } from 'interface-datastore'
 import PeerId from 'peer-id'
 import { LogStore } from './store'

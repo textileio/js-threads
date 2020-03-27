@@ -98,7 +98,7 @@ export class Database {
    * @param name A name for the collection.
    * @param data A valid JSON object.
    */
-  newCollectionFromObject<T extends Entity>(name: string, data: T) {
+  newCollectionFromObject<T extends Instance>(name: string, data: T) {
     const schema = toJsonSchema(data) as JSONSchema
     return this.newCollection<T>(name, schema)
   }
@@ -108,7 +108,7 @@ export class Database {
    * @param name A name for the collection.
    * @param schema A valid JSON schema object.
    */
-  async newCollection<T extends Entity>(name: string, schema: JSONSchema) {
+  async newCollection<T extends Instance>(name: string, schema: JSONSchema) {
     if (!this.threadID?.defined()) {
       await this.open()
     }
@@ -233,7 +233,7 @@ export class Database {
     }
   }
 
-  private async onUpdate<T extends Entity>(...updates: Update<Op<T>>[]) {
+  private async onUpdate<T extends Instance>(...updates: Update<Op<T>>[]) {
     for (const update of updates) {
       // Event name: <collection>.<id>.<type>
       const event: string[] = [update.collection, update.id]

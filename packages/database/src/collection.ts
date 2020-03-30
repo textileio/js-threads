@@ -259,7 +259,7 @@ export class Collection<T extends Instance = any> extends ReadonlyCollection<T> 
   }
 
   /**
-   * Insert (multiple) new entities.
+   * Insert (multiple) new instances.
    * @note Insert is similar to save, except it will not allow saving/overwriting existing entities.
    * @param instances
    */

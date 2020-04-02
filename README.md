@@ -13,9 +13,15 @@
 
 > A protocol & event-sourced database for decentralized user-siloed data written in Typescript
 
-Join us on our [public Slack channel](https://slack.textile.io/) for news, discussions, and status updates.
-[Check out our blog](https://blog.textile.io) for the latest posts and announcements.
-[Check out the docs](https://textileio.github.io/js-threads) for technical details and documentation.
+## Using Threads
+
+To get started using Threads, check out the [docs site](https://docs.textile.io/) and [API documentation](https://textileio.github.io/js-threads).
+
+## Getting help
+
+The Textile/Threads developers/community are active on [Slack](https://slack.textile.io/) and [Twitter (@textileio)](https://twitter.com/textileio), join us there for news, discussions, questions, and status updates. Also, [check out our blog](https://blog.textile.io) for the latest posts and announcements.
+
+If you think you've found a bug in Threads, please file a Github issue. Take a look at our comprehensive [contributor guide](#contributing) for details on how to get started.
 
 ## Table of Contents
 
@@ -32,30 +38,29 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 
 Textile's Threads Protocol and Database provides an alternative architecture for data on the web. Threads aims to help power a new generation of web technologies by combining a novel use of event sourcing, Interplanetary Linked Data (IPLD), and access control to provide a distributed, scalable, and flexible database solution for decentralized applications. Threads is backed by a great deal of research and experience, and provides protocols for securely storing and sharing content-addressable data (on IPFS), with tooling to help standardize data creation and dissemination.
 
-The primary public API to Threads is the [Threads Database](./packages/database). The Database provides:
+The primary public API to Threads is the [Threads Database](./packages/database). The Database aims to provide:
 
 - [x] Document & [datastore compliant](https://github.com/ipfs/js-datastore-level) key-value store
 - [x] Familiar APIs (think [mongodb/mongoose](https://mongoosejs.com)!)
 - [x] [Offline](http://offlinefirst.org) and/or [local-first](https://www.inkandswitch.com/local-first.html) storage and remote/peer sync
 - [x] User/developer authentication & cloud support
-- [x] Multiple transport options (pubsub, direct p2p, IPNS, etc)
-- [x] Cryptographically-driven access control
+- [ ] Multiple transport options (pubsub, direct p2p, IPNS, etc)
+- [ ] Cryptographically-driven access control
 - [x] Encryption and IPLD encoding
 - [x] Configurable codecs (i.e., handling conflicts via [CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) etc)
+- [ ] Fast indexes and queries
+- [x] Multiple API entry points and levels (low- and high-level APIs)
+- [ ] Direct integration with common frameworks (e.g., React, Vue, Electron, etc)
 
-Plus more features on the way, including:
+Plus more features on the way!
 
-- [ ] Identity plugins (Ceramic, Fortmatic, etc)
-- [ ] Finer-grained access control
-- [ ] React + Vue plugins (for syncing app state)
-- [ ] Indexes for even faster queries
-- [ ] Options for handling large data-sources...
+Need something specific? Take a look at our [contributor guide](#contributing) for details on how to ask for features, or better yet, submit a PR :wink:
 
-Underlying the Threads Database are a number of ideas and technologies, which are outlined in detail in the [Threads whitepaper](https://github.com/textileio/papers). These components include a set of [core modules](./packages/core) for creating Thread identities and keys (and more!), as well as tooling for data [encryption and encoding](./packages/encoding), networking (with support for [local](./packages/network) and [remote](./packages/network-client) key management), and a local-first, event-sourced [storage layer](./packages/store).
+Underlying the Threads Database are a number of ideas and technologies, which are outlined in detail in the [Threads whitepaper](https://github.com/textileio/papers). These components are all housed within this [mono-repo](https://en.wikipedia.org/wiki/Monorepo), and include a set of [core modules](./packages/core) for creating Thread identities and keys (`@textile/threads-core`), as well as tooling for data [encryption and encoding](./packages/encoding) (`@textile/threads-encoding`), networking (with support for [local](./packages/network) (`@textile/threads-network`) and [remote](./packages/network-client) (`@textile/threads-network-client`) key management), and a local-first, event-sourced [storage layer](./packages/store) (`@textile/threads-store`).
 
 ### Details
 
-A Database is tied to a single Thread (with associated Thread ID). A Database is an Event Emitter (in the Nodejs sense), and Listeners can subscribe to Events using 'wildcard' syntax via the [EventEmitter2](https://github.com/EventEmitter2/EventEmitter2) library. For example, you can do something like (note the mongoose-like syntax):
+A Thread-based Database is tied to a single Thread (with associated Thread ID). A Database is an Event Emitter (in the Nodejs sense), and Listeners can subscribe to Events using 'wildcard' syntax via the [EventEmitter2](https://github.com/EventEmitter2/EventEmitter2) library. For example, you can do something like (note the mongoose-like syntax):
 
 ```typescript
 import { Database } from '@textile/threads-database'
@@ -75,9 +80,7 @@ const thing = new Collection1({ ID: 'id-i1', name: 'Textile1' })
 await thing.save()  
 ```
 
-To handle different data structures, a Database contains Collections, each of which are defined by a [json-schema.org](https://json-schema.org) schema. These schemas define the 'shape' of Collection Instances. Collections themselves are sub-classes of a Store from the `@textile/threads-store` package. Stores implement the [Datastore interface](https://github.com/ipfs/js-datastore-level), so they are also key-value stores. Stores are a [generic interface](https://www.typescriptlang.org/docs/handbook/generics.html), and Collections implement a Store that the [JSON Patch]()https://github.com/Starcounter-Jack/JSON-Patch spec by default. Being generic, Stores can be made to support other types (CRDT-driven documents for instance) in the future (some of which are already under active development).
-
-Stores are defined by a Codec and a Reducer. This is very similar to how something like Flux/Redux works, with a 'central' dispatcher and verious stores that fold new data into their existing structure. This is also very much an [Event Sourced/CQRS]() design pattern. In short, a Collection is a Store with a set of APIs to make it feel like a local database table. For example, there are Collection- and Instance-level APIs to work with data:
+To handle different data structures, a Database contains Collections, each of which are defined by a [json-schema.org](https://json-schema.org) schema. These schemas define the 'shape' of Collection Instances. Collections implement a Store with [JSON Patch](https://github.com/Starcounter-Jack/JSON-Patch) semantics by default, but will be made to support other types (CRDT-driven documents for instance) in the future (some of which are already under active development). Ultimately, a Collection is a Store with a set of APIs to make it feel like a *local database table*. For example, there are Collection- and Instance-level APIs to work with data:
 
 ```typescript
 const i1 = new Collection1({ ID: 'id-i1', name: 'Textile1' }) // This is not yet persisted
@@ -209,6 +212,8 @@ await d1.close()
 await d2.close()
 ```
 
+That's it! Two completely separate MongoDB style database instances, syncing encrypted and signed data across the network!
+
 ## Developing
 
 This mono-repo is made up of several sub-packages, all managed by [lerna](https://github.com/lerna/lerna). You shouldn't have to do anything special to get started, however, here are a few steps that will make it easier to develop new functionality locally.
@@ -235,6 +240,12 @@ Similarly, you can compile the Typescript-based sub-packages to Javascript all a
 npm run build
 ```
 
+This project also uses incremental Typescript builds, so to take advantage of that (rather than building from scratch each time) use `compile`. You should notice significant speed-ups in your build process:
+
+```shell script
+npm run compile
+```
+
 See the [lerna docs](https://github.com/lerna/lerna#what-can-lerna-do) for other things you can do to make working across multiple packages easier. 
 
 ## API
@@ -247,7 +258,7 @@ See [https://textileio.github.io/js-threads](https://textileio.github.io/js-thre
 
 ## Contributing
 
-See [the contributing file](./CONTRIBUTING.md); PRs gratefully accepted!
+PRs gratefully accepted! Please see [the contributing guide](./CONTRIBUTING.md) for details on getting started.
 
 Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 

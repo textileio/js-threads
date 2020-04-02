@@ -1,15 +1,14 @@
 # Textile's Threads Protocol & Database _(js-threads)_
 
-[![Textile](https://img.shields.io/badge/Made%20by-Textile-informational.svg)](https://textile.io)
-[![Chat on Slack](https://img.shields.io/badge/Slack-slack.textile.io-informational.svg)](https://slack.textile.io)
+[![Textile](https://img.shields.io/badge/made%20by-Textile-informational.svg)](https://textile.io)
+[![Slack](https://img.shields.io/badge/slack-slack.textile.io-informational.svg)](https://slack.textile.io)
 [![License](https://img.shields.io/github/license/textileio/js-threads.svg)](./LICENSE)
-[![package.json version](https://img.shields.io/github/package-json/v/textileio/js-threads.svg)](./package.json)
-[![npm (scoped)](https://img.shields.io/npm/v/@textile/threads.svg)](https://www.npmjs.com/package/@textile/threads)
 [![Release](https://img.shields.io/github/release/textileio/js-threads.svg)](https://github.com/textileio/js-threads/releases/latest)
+[![Readme](https://img.shields.io/badge/readme-OK-green.svg)](https://github.com/RichardLitt/standard-readme)
+[![Lerna](https://img.shields.io/badge/monorepo-lerna-cc00ff.svg)](https://lerna.js.org/)
+
 ![Tests](https://github.com/textileio/js-threads/workflows/Test/badge.svg)
 [![Docs](https://github.com/textileio/js-threads/workflows/Docs/badge.svg)](https://textileio.github.io/js-threads)
-[![Standard-readme compliant](https://img.shields.io/badge/Standard--Readme-OK-green.svg)](https://github.com/RichardLitt/standard-readme)
-[![Lerna](https://img.shields.io/badge/Maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
 
 > A protocol & event-sourced database for decentralized user-siloed data written in Typescript
 

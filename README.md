@@ -182,7 +182,8 @@ const Dummy1 = await d1.newCollectionFromObject<DummyEntity>('dummy', {
 const dbInfo = await d1.dbInfo()
 
 // Peer 2: Create a completely parallel db2, which will sync with the previous one and should
-// have the same state of dummy. This one will be manually 'built' from sub-components
+// have the same state of dummy. This one will be manually 'built' from sub-components,
+// just to show how it can be done!
 const info = await d1.service.getThread(id1)
 const datastore = new MemoryDatastore()
 const client = new Client({ host: 'http://127.0.0.1:6207' })
@@ -212,6 +213,10 @@ await d2.close()
 ```
 
 That's it! Two completely separate MongoDB style database instances, syncing encrypted and signed data across the network!
+
+## Authentication
+
+Textile also provides remote Threads APIs you can use when developing your app. See [`@textile/textile`](https://github.com/textileio/js-textile) (or [docs.textile.io](https://docs.textile.io)) for details on authenticating with these APIs, and how to set up your own local development peer.
 
 ## Developing
 

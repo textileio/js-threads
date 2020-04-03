@@ -1,4 +1,4 @@
-# Textile's Threads Protocol & Database _(js-threads)_
+# Textile's Threads protocol & database _(js-threads)_
 
 [![Textile](https://img.shields.io/badge/made%20by-Textile-informational.svg)](https://textile.io)
 [![Slack](https://img.shields.io/badge/slack-slack.textile.io-informational.svg)](https://slack.textile.io)

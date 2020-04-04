@@ -190,7 +190,7 @@ describe('Network Client...', () => {
         let count = 0
         const res = client2.subscribe(
           (rec?: ThreadRecord, err?: Error) => {
-            // expect(rec).to.not.be.undefined
+            expect(rec).to.not.be.undefined
             if (rec) count += 1
             if (err) throw new Error(`unexpected error: ${err.toString()}`)
             if (count >= 2) {

@@ -1,3 +1,4 @@
+import { PrivateKey, PublicKey } from 'libp2p-crypto'
 import { ThreadID } from './id'
 import { LogInfo } from './log'
 import { ThreadKey } from './key'
@@ -45,4 +46,40 @@ export interface ThreadInfo {
    * Symmetric encryption keys.
    */
   key?: ThreadKey
+}
+
+/**
+ * Identity represents an entity capable of signing a message.
+ * It is a subset of a libp2p-crypto private key, and must be capable of returning the associated public key for
+ * verification. In many cases, this will just be a private key, but callers can use any setup that suits their needs.
+ */
+export type Identity = Pick<PrivateKey, 'sign' | 'public'>
+
+/**
+ * ThreadToken is a concrete type for a JWT token string, which provides a claim to an identity.
+ * It is a base64 encoded string.
+ * @todo: We don't need to create or verify these on the client (yet).
+ */
+export type ThreadToken = string
+
+/**
+ * ThreadOptions stores options for creating / adding a thread.
+ */
+export interface ThreadOptions {
+  /**
+   * Token stores the thread token for authorizing a new Thread.
+   */
+  token?: ThreadToken
+}
+
+export interface NewThreadOptions extends ThreadOptions {
+  /**
+   * Set of symmetric encryption keys.Can be generated with Key.fromRandom().
+   */
+  threadKey?: ThreadKey
+  /**
+   * Asymmetric encryption key (pair). Can be either a public or private key. If a public key is specified, this
+   * limits the types of operations the receiving Thread network can perform.
+   */
+  logKey?: PublicKey | PrivateKey
 }

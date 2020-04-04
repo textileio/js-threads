@@ -4,7 +4,7 @@ import parse from 'url-parse'
 import { Network, Client } from '@textile/threads-network'
 import { EventEmitter2 } from 'eventemitter2'
 import { Dispatcher, Instance, DomainDatastore, Event, Update, Op } from '@textile/threads-store'
-import { Datastore, MemoryDatastore, Key } from 'interface-datastore'
+import { Datastore, Key } from 'interface-datastore'
 import { ThreadID, ThreadRecord, Multiaddr, ThreadInfo, ThreadKey } from '@textile/threads-core'
 import { EventBus } from './eventbus'
 import { Collection, JSONSchema, Config } from './collection'
@@ -88,7 +88,7 @@ export class Database extends EventEmitter2 {
     return db
   }
 
-  @Cache() // @todo: Specify cache duration?
+  @Cache({ duration: 1800000 })
   async ownLogInfo() {
     return this.threadID && this.network.getOwnLog(this.threadID, false)
   }
@@ -208,9 +208,7 @@ export class Database extends EventEmitter2 {
   async close() {
     this.collections.clear()
     await this.eventBus.stop()
-    await this.child.close()
-    // @todo: Should we also 'close' the dispatcher?
-    return
+    return this.child.close()
   }
 
   private async onRecord(rec: ThreadRecord) {
@@ -219,7 +217,7 @@ export class Database extends EventEmitter2 {
       if (logInfo?.id.equals(rec.logID)) {
         return // Ignore our own events since DB already dispatches to DB reducers
       }
-      // @todo Should just cache this information, as its unlikely to change
+      // @todo should just cache this information, as its unlikely to change
       const info = await this.network.getThread(this.threadID)
       const value: Event | undefined = decodeRecord(rec, info)
       if (value !== undefined) {

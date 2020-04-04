@@ -113,7 +113,7 @@ export class Client implements Network {
           const challenge = message.getChallenge()
           let sig: Buffer = Buffer.from('')
           try {
-            sig = await identity.sign(Buffer.from(challenge))
+            sig = await identity.sign(Buffer.from(challenge as string))
           } catch (err) {
             console.log(err)
           }

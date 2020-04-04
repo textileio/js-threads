@@ -1,4 +1,13 @@
 /**
+ * Filter parameters for db subscription
+ */
+export interface Filter {
+  collectionName?: string
+  instanceID?: string
+  actionTypes?: string[]
+}
+
+/**
  * Instance is a singular Model instance.
  */
 export interface Instance<T> {

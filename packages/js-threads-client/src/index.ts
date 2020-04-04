@@ -4,9 +4,7 @@ import { grpc } from '@improbable-eng/grpc-web'
 import { API } from '@textile/threads-client-grpc/api_pb_service'
 import {
   NewDBRequest,
-  NewDBReply,
   NewDBFromAddrRequest,
-  NewCollectionReply,
   NewCollectionRequest,
   CollectionConfig,
   CreateRequest,
@@ -34,7 +32,7 @@ import * as pack from '../package.json'
 import { ReadTransaction } from './ReadTransaction'
 import { WriteTransaction } from './WriteTransaction'
 import { Config, BaseConfig } from './config'
-import { JSONQuery, Instance, InstanceList } from './models'
+import { JSONQuery, Instance, InstanceList, Filter } from './models'
 
 export { ThreadID }
 export { BaseConfig, Config, Instance, JSONQuery }
@@ -291,28 +289,45 @@ export class Client {
    * listen opens a long-lived connection with a remote node, running the given callback on each new update to the given instance.
    * The return value is a `close` function, which cleanly closes the connection with the remote node.
    * @param dbID the ID of the database
+   * @param filters contains an array of Filters
    * @param collectionName The human-readable name of the model to use.
    * @param ID The id of the instance to monitor.
+   * @param actionTypes ALL, CREATE, DELETE, SAVE. Default ALL.
    * @param callback The callback to call on each update to the given instance.
    */
-  public listen<T = any>(
-    dbID: Buffer,
-    collectionName: string,
-    ID: string,
-    callback: (reply?: Instance<T>, err?: Error) => void,
-  ) {
+  public listen<T = any>(dbID: Buffer, filters: Filter[], callback: (reply?: Instance<T>, err?: Error) => void) {
     const req = new ListenRequest()
     req.setDbid(dbID)
-    if (collectionName && collectionName !== '') {
-      const filter = new ListenRequest.Filter()
-      filter.setCollectionname(collectionName)
-      req.addFilters(filter)
+    for (const filter of filters) {
+      const requestFilter = new ListenRequest.Filter()
+      if (filter.instanceID) {
+        requestFilter.setInstanceid(filter.instanceID)
+      } else if (filter.collectionName) {
+        requestFilter.setCollectionname(filter.collectionName)
+      }
+      if (filter.actionTypes) {
+        for (const at of filter.actionTypes) {
+          switch (at) {
+            case 'ALL': {
+              requestFilter.setAction(0)
+            }
+            case 'CREATE': {
+              requestFilter.setAction(1)
+            }
+            case 'SAVE': {
+              requestFilter.setAction(2)
+            }
+            case 'DELETE': {
+              requestFilter.setAction(3)
+            }
+          }
+        }
+      } else {
+        requestFilter.setAction(0)
+      }
+      req.addFilters(requestFilter)
     }
-    if (ID && ID !== '') {
-      const filter = new ListenRequest.Filter()
-      filter.setInstanceid(ID)
-      req.addFilters(filter)
-    }
+
     const res = grpc.invoke(API.Listen, {
       host: this.config.host,
       request: req,

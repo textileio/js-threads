@@ -7,7 +7,6 @@ import {
   ReadTransactionRequest,
   ReadTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
-import { toBase64, fromBase64 } from 'b64-lite'
 import { Transaction } from './Transaction'
 import { Instance, InstanceList } from './models'
 import { JSONQuery } from './models'
@@ -20,17 +19,17 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
   constructor(
     protected readonly config: Config,
     protected readonly client: grpc.Client<ReadTransactionRequest, ReadTransactionReply>,
-    protected readonly DBID: string,
+    protected readonly dbID: Buffer,
     protected readonly modelName: string,
   ) {
-    super(client, DBID, modelName)
+    super(client, dbID, modelName)
   }
   /**
    * start begins the transaction. All operations between start and end will be applied as a single transaction upon a call to end.
    */
   public async start() {
     const startReq = new StartTransactionRequest()
-    startReq.setDbid(this.DBID)
+    startReq.setDbid(this.dbID)
     startReq.setCollectionname(this.modelName)
     const req = new ReadTransactionRequest()
     req.setStarttransactionrequest(startReq)
@@ -65,7 +64,7 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
   public async find<T = any>(query: JSONQuery) {
     return new Promise<InstanceList<T>>((resolve, reject) => {
       const findReq = new FindRequest()
-      findReq.setQueryjson(toBase64(JSON.stringify(query)))
+      findReq.setQueryjson(Buffer.from(JSON.stringify(query)))
       const req = new ReadTransactionRequest()
       req.setFindrequest(findReq)
       this.client.onMessage((message: ReadTransactionReply) => {
@@ -74,7 +73,9 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
           resolve()
         } else {
           const ret: InstanceList<T> = {
-            instancesList: reply.toObject().instancesList.map(instance => JSON.parse(fromBase64(instance as string))),
+            instancesList: reply
+              .toObject()
+              .instancesList.map(instance => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
           }
           resolve(ret)
         }
@@ -100,7 +101,7 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
           resolve()
         } else {
           const ret: Instance<T> = {
-            instance: JSON.parse(reply.toObject().instance as string),
+            instance: JSON.parse(Buffer.from(reply.toObject().instance as string, 'base64').toString()),
           }
           resolve(ret)
         }

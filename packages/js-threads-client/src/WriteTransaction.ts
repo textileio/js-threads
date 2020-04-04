@@ -11,7 +11,6 @@ import {
   WriteTransactionRequest,
   WriteTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
-import { toBase64, fromBase64 } from 'b64-lite'
 import { Config } from './config'
 import { Instance, InstanceList, JSONQuery } from './models'
 import { Transaction } from './Transaction'
@@ -23,17 +22,17 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
   constructor(
     protected readonly config: Config,
     protected readonly client: grpc.Client<WriteTransactionRequest, WriteTransactionReply>,
-    protected readonly DBID: string,
+    protected readonly dbID: Buffer,
     protected readonly modelName: string,
   ) {
-    super(client, DBID, modelName)
+    super(client, dbID, modelName)
   }
   /**
    * start begins the transaction. All operations between start and end will be applied as a single transaction upon a call to end.
    */
   public async start() {
     const startReq = new StartTransactionRequest()
-    startReq.setDbid(this.DBID)
+    startReq.setDbid(this.dbID)
     startReq.setCollectionname(this.modelName)
     const req = new WriteTransactionRequest()
     req.setStarttransactionrequest(startReq)
@@ -46,14 +45,14 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
    * @param values An array of model instances as JSON/JS objects.
    */
   public async create<T = any>(values: any[]) {
-    return new Promise<InstanceList<T> | undefined>((resolve, reject) => {
+    return new Promise<Array<string> | undefined>((resolve, reject) => {
       const createReq = new CreateRequest()
       const list: any[] = []
       values.forEach(v => {
         v['ID'] = uuid.v4()
-        list.push(JSON.stringify(v))
+        list.push(Buffer.from(JSON.stringify(v)))
       })
-      createReq.setValuesList(list)
+      createReq.setInstancesList(list)
       const req = new WriteTransactionRequest()
       req.setCreaterequest(createReq)
       this.client.onMessage((message: WriteTransactionReply) => {
@@ -61,10 +60,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
         if (reply === undefined) {
           resolve()
         } else {
-          const ret: InstanceList<T> = {
-            instancesList: reply.toObject().instancesList.map(instance => JSON.parse(instance as string)),
-          }
-          resolve(ret)
+          resolve(reply.toObject().instanceidsList)
         }
       })
       super.setReject(reject)
@@ -84,9 +80,9 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
         if (!v.hasOwnProperty('ID')) {
           v['ID'] = '' // The server will add an ID if empty.
         }
-        list.push(JSON.stringify(v))
+        list.push(Buffer.from(JSON.stringify(v)))
       })
-      saveReq.setValuesList(list)
+      saveReq.setInstancesList(list)
       const req = new WriteTransactionRequest()
       req.setSaverequest(saveReq)
       this.client.onMessage((_message: WriteTransactionReply) => {
@@ -139,7 +135,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
   public async find<T = any>(query: JSONQuery) {
     return new Promise<InstanceList<T>>((resolve, reject) => {
       const findReq = new FindRequest()
-      findReq.setQueryjson(toBase64(JSON.stringify(query)))
+      findReq.setQueryjson(Buffer.from(JSON.stringify(query)))
       const req = new WriteTransactionRequest()
       req.setFindrequest(findReq)
       this.client.onMessage((message: WriteTransactionReply) => {
@@ -148,7 +144,9 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
           resolve()
         } else {
           const ret: InstanceList<T> = {
-            instancesList: reply.toObject().instancesList.map(instance => JSON.parse(fromBase64(instance as string))),
+            instancesList: reply
+              .toObject()
+              .instancesList.map(instance => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
           }
           resolve(ret)
         }
@@ -174,7 +172,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
           resolve()
         } else {
           const ret: Instance<T> = {
-            instance: JSON.parse(reply.toObject().instance as string),
+            instance: JSON.parse(Buffer.from(reply.toObject().instance as string, 'base64').toString()),
           }
           resolve(ret)
         }

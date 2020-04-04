@@ -37,7 +37,7 @@ import { Config, BaseConfig } from './config'
 import { JSONQuery, Instance, InstanceList } from './models'
 
 export { ThreadID }
-export { BaseConfig, Config, Instance, InstanceList, JSONQuery }
+export { BaseConfig, Config, Instance, JSONQuery }
 export { Query, Where } from './query'
 
 /**
@@ -74,10 +74,11 @@ export class Client {
 
   /**
    * newDB creates a new store on the remote node.
+   * @param dbID the ID of the database
    */
-  public async newDB(DBID: string) {
+  public async newDB(dbID: Buffer) {
     const req = new NewDBRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     await this.unary(API.NewDB, req)
     return
   }
@@ -85,16 +86,16 @@ export class Client {
   /**
    * newCollection registers a new model schema under the given name on the remote node.
    * The schema must be a valid json-schema.org schema, and can be a JSON string or Javascript object.
-   * @param DBID The id of the store with which to register the new model.
+   * @param dbID the ID of the database
    * @param name The human-readable name for the model.
    * @param schema The actual json-schema.org compatible schema object.
    */
-  public async newCollection(DBID: string, name: string, schema: any) {
+  public async newCollection(dbID: Buffer, name: string, schema: any) {
     const req = new NewCollectionRequest()
     const config = new CollectionConfig()
     config.setName(name)
-    config.setSchema(JSON.stringify(schema))
-    req.setDbid(DBID)
+    config.setSchema(Buffer.from(JSON.stringify(schema)))
+    req.setDbid(dbID)
     req.setConfig(config)
     await this.unary(API.NewCollection, req)
     return
@@ -106,7 +107,7 @@ export class Client {
    * alternative to start, which creates a local store. startFromAddress should also include the
    * read and follow keys, which should be Buffer, Uint8Array or base58-encoded strings.
    * See `getDBInfo` for a possible source of the address and keys.
-   * @param DBID The id of the store with which to register.
+   * @param dbID the ID of the database
    * @param address The address for the thread with which to connect.
    * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
    * @param DBKey The DBKey provided through an invite or from getDBInfo.
@@ -114,12 +115,12 @@ export class Client {
    */
   public async newDBFromAddr(
     address: string,
-    DBKey: string | Uint8Array,
+    key: string | Uint8Array,
     collections: Array<{ name: string; schema: any }>,
   ) {
     const req = new NewDBFromAddrRequest()
-    req.setDbaddr(address)
-    req.setDbkey(typeof DBKey === 'string' ? decode(DBKey) : DBKey)
+    req.setAddr(address)
+    req.setKey(typeof key === 'string' ? decode(key) : key)
     req.setCollectionsList(
       collections.map(c => {
         const config = new CollectionConfig()
@@ -128,23 +129,23 @@ export class Client {
         return config
       }),
     )
-    await this.unary(API.NewDBFromAddr, req)
-    return
+    return await this.unary(API.NewDBFromAddr, req)
   }
 
   /**
    * getDBInfo returns invite 'links' unseful for inviting other peers to join a given store/thread.
-   * @param DBID The id of the store for which to create the invite.
+   * @param dbID the ID of the database
    */
-  public async getDBInfo(DBID: string) {
+  public async getDBInfo(dbID: Buffer) {
     const req = new GetDBInfoRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     const res = (await this.unary(API.GetDBInfo, req)) as GetDBInfoReply.AsObject
     const invites: Array<{ address: string; key: string }> = []
-    for (const addr of res.addressesList) {
-      const dk = Buffer.from(res.dbkey as string, 'base64')
+    for (const addr of res.addrsList) {
+      const dk = Buffer.from(res.key as string, 'base64')
+      const address = typeof addr === 'string' ? addr : Buffer.from(addr).toString()
       invites.push({
-        address: addr,
+        address,
         key: encode(dk),
       })
     }
@@ -153,58 +154,55 @@ export class Client {
 
   /**
    * create creates a new model instance in the given store.
-   * @param DBID The id of the store in which create the new instance.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param values An array of model instances as JSON/JS objects.
    */
-  public async create<T = any>(DBID: string, collectionName: string, values: any[]) {
+  public async create<T = any>(dbID: Buffer, collectionName: string, values: any[]) {
     const req = new CreateRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     req.setCollectionname(collectionName)
     const list: any[] = []
     values.forEach(v => {
       v['ID'] = uuid.v4()
-      list.push(JSON.stringify(v))
+      list.push(Buffer.from(JSON.stringify(v)))
     })
-    req.setValuesList(list)
+    req.setInstancesList(list)
     const res = (await this.unary(API.Create, req)) as CreateReply.AsObject
-    const ret: InstanceList<T> = {
-      instancesList: res.instancesList.map(instance => JSON.parse(instance as string)),
-    }
-    return ret
+    return res.instanceidsList
   }
 
   /**
    * save saves changes to an existing model instance in the given store.
-   * @param DBID The id of the store in which the existing instance will be saved.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param values An array of model instances as JSON/JS objects. Each model instance must have a valid existing `ID` property.
    */
-  public async save(DBID: string, collectionName: string, values: any[]) {
+  public async save(dbID: Buffer, collectionName: string, values: any[]) {
     const req = new SaveRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     req.setCollectionname(collectionName)
     const list: any[] = []
     values.forEach(v => {
       if (!v.hasOwnProperty('ID')) {
         v['ID'] = '' // The server will add an ID if empty.
       }
-      list.push(JSON.stringify(v))
+      list.push(Buffer.from(JSON.stringify(v)))
     })
-    req.setValuesList(list)
+    req.setInstancesList(list)
     await this.unary(API.Save, req)
     return
   }
 
   /**
    * delete deletes an existing model instance from the given store.
-   * @param DBID The id of the store from which to remove the given instances.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param IDs An array of instance ids to delete.
    */
-  public async delete(DBID: string, collectionName: string, IDs: string[]) {
+  public async delete(dbID: Buffer, collectionName: string, IDs: string[]) {
     const req = new DeleteRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     req.setCollectionname(collectionName)
     req.setInstanceidsList(IDs)
     await this.unary(API.Delete, req)
@@ -213,13 +211,13 @@ export class Client {
 
   /**
    * has checks whether a given instance exists in the given store.
-   * @param DBID The id of the store in which to check inclusion.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param IDs An array of instance ids to check for.
    */
-  public async has(DBID: string, collectionName: string, IDs: string[]) {
+  public async has(dbID: Buffer, collectionName: string, IDs: string[]) {
     const req = new HasRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     req.setCollectionname(collectionName)
     req.setInstanceidsList(IDs)
     const res = (await this.unary(API.Has, req)) as HasReply.AsObject
@@ -228,13 +226,13 @@ export class Client {
 
   /**
    * find queries the store for entities matching the given query parameters. See Query for options.
-   * @param DBID The id of the store on which to perform the query.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
    */
-  public async find<T = any>(DBID: string, collectionName: string, query: JSONQuery) {
+  public async find<T = any>(dbID: Buffer, collectionName: string, query: JSONQuery) {
     const req = new FindRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     req.setCollectionname(collectionName)
     // @todo: Find a more isomorphic way to do this base64 round-trip
     req.setQueryjson(Buffer.from(JSON.stringify(query)).toString('base64'))
@@ -249,62 +247,62 @@ export class Client {
 
   /**
    * findByID queries the store for the id of an instance.
-   * @param DBID The id of the store on which to perform the query.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param ID The id of the instance to search for.
    */
-  public async findByID<T = any>(DBID: string, collectionName: string, ID: string) {
+  public async findByID<T = any>(dbID: Buffer, collectionName: string, ID: string) {
     const req = new FindByIDRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     req.setCollectionname(collectionName)
     req.setInstanceid(ID)
     const res = (await this.unary(API.FindByID, req)) as FindByIDReply.AsObject
     const ret: Instance<T> = {
-      instance: JSON.parse(res.instance as string),
+      instance: JSON.parse(Buffer.from(res.instance as string, 'base64').toString()),
     }
     return ret
   }
 
   /**
    * readTransaction creates a new read-only transaction object. See ReadTransaction for details.
-   * @param DBID The id of the store on which to perform the transaction.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    */
-  public readTransaction(DBID: string, collectionName: string): ReadTransaction {
+  public readTransaction(dbID: Buffer, collectionName: string): ReadTransaction {
     const client = grpc.client(API.ReadTransaction, {
       host: this.config.host,
     }) as grpc.Client<ReadTransactionRequest, ReadTransactionReply>
-    return new ReadTransaction(this.config, client, DBID, collectionName)
+    return new ReadTransaction(this.config, client, dbID, collectionName)
   }
 
   /**
    * writeTransaction creates a new writeable transaction object. See WriteTransaction for details.
-   * @param DBID The id of the store on which to perform the transaction.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    */
-  public writeTransaction(DBID: string, collectionName: string): WriteTransaction {
+  public writeTransaction(dbID: Buffer, collectionName: string): WriteTransaction {
     const client = grpc.client(API.WriteTransaction, {
       host: this.config.host,
     }) as grpc.Client<WriteTransactionRequest, WriteTransactionReply>
-    return new WriteTransaction(this.config, client, DBID, collectionName)
+    return new WriteTransaction(this.config, client, dbID, collectionName)
   }
 
   /**
    * listen opens a long-lived connection with a remote node, running the given callback on each new update to the given instance.
    * The return value is a `close` function, which cleanly closes the connection with the remote node.
-   * @param DBID The id of the store on which to open the connection.
+   * @param dbID the ID of the database
    * @param collectionName The human-readable name of the model to use.
    * @param ID The id of the instance to monitor.
    * @param callback The callback to call on each update to the given instance.
    */
   public listen<T = any>(
-    DBID: string,
+    dbID: Buffer,
     collectionName: string,
     ID: string,
     callback: (reply?: Instance<T>, err?: Error) => void,
   ) {
     const req = new ListenRequest()
-    req.setDbid(DBID)
+    req.setDbid(dbID)
     if (collectionName && collectionName !== '') {
       const filter = new ListenRequest.Filter()
       filter.setCollectionname(collectionName)

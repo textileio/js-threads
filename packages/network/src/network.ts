@@ -24,13 +24,15 @@ import { LogStore } from './store'
 
 const logger = log.getLogger('network')
 
+const ed25519 = keys.supportedKeys.ed25519
+
 /**
  * Network is the Network interface for Thread orchestration.
  */
 export class Network implements Interface {
   public store: LogStore
   readonly identity?: Identity
-  private token?: string
+  public token?: string
   /**
    * Create a new network Network.
    * @param store The store to use for caching keys and log information.
@@ -44,7 +46,6 @@ export class Network implements Interface {
 
   async getToken(identity: Identity | undefined = this.identity) {
     if (identity === undefined) throw new Error('Identity required.')
-    // @todo: Is this 'safe'/useful?
     this.token = await this.client.getToken(identity)
     return this.token
   }
@@ -170,6 +171,7 @@ export class Network implements Interface {
     const prev = logInfo.head
     // Use supplied identity if available, otherwise, default to log private key
     // Using log private key assumes the log owner is also the identity owner, which might not always be the case.
+    // In most cases, there _will_ be an available identity because it is required for `getToken`.
     const pubKey = this.identity?.public ?? logInfo.privKey.public
     const record = await createRecord(event, {
       privKey: logInfo.privKey,
@@ -234,7 +236,7 @@ export class Network implements Interface {
     let pubKey: PublicKey
     let privKey: PrivateKey | undefined
     if (!key) {
-      privKey = await keys.supportedKeys.ed25519.generateKeyPair()
+      privKey = await ed25519.generateKeyPair()
       pubKey = privKey.public
     } else if ((key as PrivateKey).public) {
       privKey = key as PrivateKey

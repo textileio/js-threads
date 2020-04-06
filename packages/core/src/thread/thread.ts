@@ -1,4 +1,4 @@
-import { PrivateKey, PublicKey } from 'libp2p-crypto'
+import { PrivateKey, PublicKey, keys } from 'libp2p-crypto'
 import { ThreadID } from './id'
 import { LogInfo } from './log'
 import { ThreadKey } from './key'
@@ -54,6 +54,13 @@ export interface ThreadInfo {
  * verification. In many cases, this will just be a private key, but callers can use any setup that suits their needs.
  */
 export type Identity = Pick<PrivateKey, 'sign' | 'public'>
+
+/**
+ * Create a random Ed25519 PrivateKey to be used as an Identity.
+ */
+export function randomIdentity() {
+  return keys.supportedKeys.ed25519.generateKeyPair()
+}
 
 /**
  * ThreadToken is a concrete type for a JWT token string, which provides a claim to an identity.

@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module @textile/threads-client/models
+ */
 import { grpc } from '@improbable-eng/grpc-web'
 import * as uuid from 'uuid'
 import {
@@ -12,7 +16,7 @@ import {
   WriteTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
 import { Config } from './config'
-import { Instance, InstanceList, JSONQuery } from './models'
+import { Instance, InstanceList, QueryJSON } from './query'
 import { Transaction } from './Transaction'
 
 /**
@@ -48,7 +52,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     return new Promise<Array<string> | undefined>((resolve, reject) => {
       const createReq = new CreateRequest()
       const list: any[] = []
-      values.forEach(v => {
+      values.forEach((v) => {
         v['ID'] = uuid.v4()
         list.push(Buffer.from(JSON.stringify(v)))
       })
@@ -76,7 +80,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     return new Promise<void>((resolve, reject) => {
       const saveReq = new SaveRequest()
       const list: any[] = []
-      values.forEach(v => {
+      values.forEach((v) => {
         if (!v.hasOwnProperty('ID')) {
           v['ID'] = '' // The server will add an ID if empty.
         }
@@ -130,9 +134,9 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
   }
   /**
    * find queries the store for entities matching the given query parameters. See Query for options.
-   * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
+   * @param query The object that describes the query. See Query for options. Alternatively, see QueryJSON for the basic interface.
    */
-  public async find<T = any>(query: JSONQuery) {
+  public async find<T = any>(query: QueryJSON) {
     return new Promise<InstanceList<T>>((resolve, reject) => {
       const findReq = new FindRequest()
       findReq.setQueryjson(Buffer.from(JSON.stringify(query)))
@@ -146,7 +150,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
           const ret: InstanceList<T> = {
             instancesList: reply
               .toObject()
-              .instancesList.map(instance => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
+              .instancesList.map((instance) => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
           }
           resolve(ret)
         }

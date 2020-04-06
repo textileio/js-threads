@@ -1,7 +1,12 @@
+/**
+ * @packageDocumentation
+ * @module @textile/threads-client
+ */
 import { grpc } from '@improbable-eng/grpc-web'
 
 /**
  * Transaction represents a bulk transaction on a store.
+ * @hidden
  */
 export class Transaction<TRequest extends grpc.ProtobufMessage, TResponse extends grpc.ProtobufMessage> {
   /**

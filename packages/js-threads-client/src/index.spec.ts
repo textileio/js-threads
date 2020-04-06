@@ -5,11 +5,8 @@
 ;(global as any).WebSocket = require('isomorphic-ws')
 
 import { expect } from 'chai'
-import { ReadTransaction } from 'src/ReadTransaction'
-import { WriteTransaction } from 'src/WriteTransaction'
-import { Client, ThreadID } from '../index'
-import { JSONQuery, JSONOperation } from '../models'
-import { Where } from '../query'
+import { Client, ThreadID } from './index'
+import { QueryJSON, ComparisonJSON, Where, ReadTransaction, WriteTransaction } from './models'
 
 const client = new Client()
 
@@ -56,7 +53,7 @@ const createPerson = (): Person => {
   }
 }
 
-describe('Client', function() {
+describe('Client', function () {
   const threadId = ThreadID.fromRandom()
   const dbID = threadId.bytes()
   let dbKey: string
@@ -134,11 +131,11 @@ describe('Client', function() {
       expect(entities.length).to.equal(1)
       const personID = entities[0]
 
-      const q: JSONQuery = {
+      const q: QueryJSON = {
         ands: [
           {
             fieldPath: 'firstName',
-            operation: JSONOperation.Eq,
+            operation: ComparisonJSON.Eq,
             value: { string: frank.firstName },
           },
         ],
@@ -259,7 +256,7 @@ describe('Client', function() {
       existingPersonID = entities.length ? entities[0] : ''
       person['ID'] = existingPersonID
     })
-    it('should stream responses.', done => {
+    it('should stream responses.', (done) => {
       const callback = (reply: any, err?: Error) => {
         if (err) {
           throw err
@@ -301,11 +298,7 @@ describe('Client', function() {
       await client.create<Person>(dbID, 'Person', people)
     })
     it('Should return a full list of entities matching the given query', async () => {
-      const q = new Where('age')
-        .ge(60)
-        .and('age')
-        .lt(66)
-        .or(new Where('age').eq(67))
+      const q = new Where('age').ge(60).and('age').lt(66).or(new Where('age').eq(67))
       const find = await client.find<Person>(dbID, 'Person', q)
       expect(find).to.not.be.undefined
       const found = find.instancesList

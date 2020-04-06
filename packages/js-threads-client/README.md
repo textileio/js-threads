@@ -15,9 +15,9 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 ## Table of Contents
 
 -   [Install](#install)
+-   [Docs](#docs)
 -   [Usage](#usage-in-typescript)
 -   [React Native](#react-native)
--   [Docs](#docs)
 -   [Contributing](#contributing)
 -   [Changelog](#changelog)
 -   [License](#license)
@@ -27,6 +27,10 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 ```
 npm install @textile/threads-client
 ```
+
+## Docs
+
+[Read the docs](https://textileio.github.io/js-threads-client/).
 
 ## Usage in Typescript
 
@@ -61,22 +65,6 @@ const store = await client.newDB()
 await client.newCollection(store.id, 'Folder2P', schema)
 ```
 
-**join a db by invite**
-
-```js
-const db = await client.newDB()
-await client.newCollection(db.id, 'Folder2P', schema)
-try {
-  const some = await client.startFromAddress(
-    db.id,
-    '/ip4/127.0.0.1/tcp/4006/p2p/12D3KooWS2QMPk53mi6xzjr6j87bB9NDfn6NnnQWFc31p86SwpBW/thread/bafktbzj3z4gc7x44dc7izjieurbboybszntx6vapj3umytpilvuqjva',
-    'stAhc51y6tnTdDGxSzA9rrSgjudzenwF6YcMAKK5Dm2seEmQi55DfGXcxzco',
-    'j6YMX423ugWRRTXsfeHCzRLgBTQ95H1u7r35MZ6mKYTN7rLgdRvq1Efb2PBL')
-} catch(err) {
-  console.log(err)
-}
-```
-
 **get all instances**
 
 ```js
@@ -96,7 +84,6 @@ const created = await client.instanceCreate(this.finderID, 'Folder2', [{
   numbers: [1, 2, 3]
 }])
 ```
-
 
 ## React Native
 
@@ -182,14 +169,6 @@ Ensure that the shim is still configured after any module updates. Inside `packa
     "postinstall": "rn-nodeify --install buffer --hack"
   }
 }
-```
-
-## Docs
-
-To build the (Markdown-based) documentation output to the `docs` folder, run:
-
-```
-npm run docs
 ```
 
 ## Contributing

@@ -6,9 +6,9 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test:node": "mocha --exit --require ts-node/register --require source-map-support/register --recursive src/__test__/**/*.test.ts",
+    "test:node": "mocha --exit --require ts-node/register --require source-map-support/register --recursive src/**/*.spec.ts",
     "test:node:coverage": "nyc npm run test",
-    "test:browser": "polendina --cleanup src/**/*.test.ts --webpack-config webpack.test.js",
+    "test:browser": "polendina --cleanup src/**/*.spec.ts --webpack-config webpack.test.js",
     "test": "npm run test:node && npm run test:browser",
     "lint": "eslint --fix --ext .mjs,.js,.jsx,.ts,.tsx src",
     "docs": "typedoc && touch ./docs/.nojekyll",
@@ -17,11 +17,7 @@
     "release": "npm version patch",
     "postversion": "git push --follow-tags",
     "browser": "webpack --mode production",
-    "serve": "webpack-dev-server --mode development --progress --color",
-    "report:history": "mkdir -p allure-report/history allure-results/history && cp -a allure-report/history allure-results/",
-    "report:clean": "rimraf allure-results",
-    "report:run": "allure generate allure-results/ --clean && allure open -p 8000",
-    "report": "npm run report:clean && npm run test:browser ; npm run report:run"
+    "serve": "webpack-dev-server --mode development --progress --color"
   },
   "nyc": {
     "extension": [
@@ -93,7 +89,8 @@
     "ts-mocha": "^7.0.0",
     "ts-node": "^8.2.0",
     "tsconfig-paths": "^3.8.0",
-    "typedoc": "^0.16.2",
+    "typedoc": "^0.15.3",
+    "typedoc-plugin-external-module-name": "^3.0.0",
     "typescript": "^3.7.2",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",

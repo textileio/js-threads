@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module @textile/threads-client/models
+ */
 import { grpc } from '@improbable-eng/grpc-web'
 import {
   HasRequest,
@@ -8,8 +12,7 @@ import {
   ReadTransactionReply,
 } from '@textile/threads-client-grpc/api_pb'
 import { Transaction } from './Transaction'
-import { Instance, InstanceList } from './models'
-import { JSONQuery } from './models'
+import { Instance, InstanceList, QueryJSON } from './query'
 import { Config } from './config'
 
 /**
@@ -59,9 +62,9 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
 
   /**
    * find queries the store for entities matching the given query parameters. See Query for options.
-   * @param query The object that describes the query. See Query for options. Alternatively, see JSONQuery for the basic interface.
+   * @param query The object that describes the query. See Query for options. Alternatively, see QueryJSON for the basic interface.
    */
-  public async find<T = any>(query: JSONQuery) {
+  public async find<T = any>(query: QueryJSON) {
     return new Promise<InstanceList<T>>((resolve, reject) => {
       const findReq = new FindRequest()
       findReq.setQueryjson(Buffer.from(JSON.stringify(query)))
@@ -75,7 +78,7 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
           const ret: InstanceList<T> = {
             instancesList: reply
               .toObject()
-              .instancesList.map(instance => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
+              .instancesList.map((instance) => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
           }
           resolve(ret)
         }

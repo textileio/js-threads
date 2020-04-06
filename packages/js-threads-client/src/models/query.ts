@@ -1,6 +1,92 @@
-import { JSONQuery, JSONSort, JSONCriterion, JSONOperation, JSONValue, Value } from './models'
+/**
+ * @packageDocumentation
+ * @module @textile/threads-client/models
+ */
+// import { QueryJSON, SortJSON, CriterionJSON, ComparisonJSON, ValueJSON, Value } from './models'
 
-const valueToJSONValue = (value: Value): JSONValue => {
+/**
+ * Filter parameters for db subscription
+ */
+export interface Filter {
+  /** The collection name */
+  collectionName?: string
+  /** The instance ID */
+  instanceID?: string
+  /** The action type: ALL (default), CREATE, SAVE, DELETE */
+  actionTypes?: string[]
+}
+
+/**
+ * Instance is a singular Model instance.
+ */
+export interface Instance<T> {
+  instance: T
+}
+
+/**
+ * InstanceList is an array of Entities.
+ */
+export interface InstanceList<T> {
+  instancesList: T[]
+}
+
+/**
+ * Value represents a valid JSON data type.
+ */
+export type Value = string | boolean | number
+
+/**
+ * JSONValue is used by the gRPC server to handle JSON data types.
+ */
+export interface ValueJSON {
+  string?: string
+  bool?: boolean
+  float?: number
+}
+
+/**
+ * JSONOperation defines the set of possible operations to be used in a Query.
+ */
+export enum ComparisonJSON {
+  Eq = 0,
+  Ne,
+  Gt,
+  Lt,
+  Ge,
+  Le,
+}
+
+/**
+ * CriterionJSON represents a single Query criteria.
+ */
+export interface CriterionJSON {
+  fieldPath?: string
+  operation?: ComparisonJSON
+  value?: ValueJSON
+  query?: QueryJSON
+}
+
+/**
+ * SortJSON describes how and what field on which to sort a query.
+ */
+export interface SortJSON {
+  fieldPath: string
+  desc: boolean
+}
+
+/**
+ * QueryJSON represents a single store Query.
+ */
+export interface QueryJSON {
+  ands?: CriterionJSON[]
+  ors?: QueryJSON[]
+  sort?: SortJSON
+}
+
+/**
+ * @hidden
+ */
+const valueToJSONValue = (value: Value): ValueJSON => {
   switch (typeof value) {
     case 'string':
       return { string: value }
@@ -16,11 +102,11 @@ const valueToJSONValue = (value: Value): JSONValue => {
 /**
  * Criterion is a partial condition that can specify comparison operator for a field.
  */
-export class Criterion implements JSONCriterion {
+export class Criterion implements CriterionJSON {
   constructor(
     public fieldPath: string,
-    public operation?: JSONOperation,
-    public value?: JSONValue,
+    public operation?: ComparisonJSON,
+    public value?: ValueJSON,
     public query?: Query,
   ) {}
 
@@ -29,7 +115,7 @@ export class Criterion implements JSONCriterion {
    * @param value The value to query against. Must be a valid JSON data type.
    */
   eq(value: Value): Query {
-    return this.create(JSONOperation.Eq, value)
+    return this.create(ComparisonJSON.Eq, value)
   }
 
   /**
@@ -37,7 +123,7 @@ export class Criterion implements JSONCriterion {
    * @param value The value to query against. Must be a valid JSON data type.
    */
   ne(value: Value): Query {
-    return this.create(JSONOperation.Ne, value)
+    return this.create(ComparisonJSON.Ne, value)
   }
 
   /**
@@ -45,28 +131,28 @@ export class Criterion implements JSONCriterion {
    * @param value The value to query against. Must be a valid JSON data type.
    */
   gt(value: Value): Query {
-    return this.create(JSONOperation.Ne, value)
+    return this.create(ComparisonJSON.Ne, value)
   }
 
   /** lt is a less operation against a field
    * @param value The value to query against. Must be a valid JSON data type.
    */
   lt(value: Value): Query {
-    return this.create(JSONOperation.Lt, value)
+    return this.create(ComparisonJSON.Lt, value)
   }
 
   /** ge is a greater or equal operator against a field
    * @param value The value to query against. Must be a valid JSON data type.
    */
   ge(value: Value): Query {
-    return this.create(JSONOperation.Ge, value)
+    return this.create(ComparisonJSON.Ge, value)
   }
 
   /** le is a less or equal operator against a field
    * @param value The value to query against. Must be a valid JSON data type.
    */
   le(value: Value): Query {
-    return this.create(JSONOperation.Le, value)
+    return this.create(ComparisonJSON.Le, value)
   }
 
   /**
@@ -74,7 +160,7 @@ export class Criterion implements JSONCriterion {
    * @param op
    * @param value
    */
-  private create(op: JSONOperation, value: Value): Query {
+  private create(op: ComparisonJSON, value: Value): Query {
     this.operation = op
     this.value = valueToJSONValue(value)
     if (this.query === undefined) {
@@ -88,7 +174,7 @@ export class Criterion implements JSONCriterion {
   /**
    * toJSON converts the Criterion to JSONCriterion, dropping circular references to internal Queries.
    */
-  toJSON(): JSONCriterion {
+  toJSON(): CriterionJSON {
     const { query, ...rest } = this
     return rest
   }
@@ -105,14 +191,14 @@ export { Where }
 /**
  * Query allows to build queries to be used to fetch data from a model.
  */
-export class Query implements JSONQuery {
+export class Query implements QueryJSON {
   /**
    * Query creates a new generic query object.
    * @param ands An array of top-level Criterions to be included in the query.
    * @param ors An array of internal queries.
    * @param sort An object describing how to sort the query.
    */
-  constructor(public ands: JSONCriterion[] = [], public ors: JSONQuery[] = [], public sort?: JSONSort) {}
+  constructor(public ands: CriterionJSON[] = [], public ors: QueryJSON[] = [], public sort?: SortJSON) {}
 
   /**
    * where starts to create a query condition for a field

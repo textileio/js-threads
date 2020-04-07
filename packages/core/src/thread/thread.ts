@@ -50,8 +50,9 @@ export interface ThreadInfo {
 
 /**
  * Identity represents an entity capable of signing a message.
- * It is a subset of a libp2p-crypto private key, and must be capable of returning the associated public key for
+ * This is a simple 'private key' interface that must be capable of returning the associated public key for
  * verification. In many cases, this will just be a private key, but callers can use any setup that suits their needs.
+ * The interface is currently modeled after libp2p-crypto PrivateKey.
  */
 export type Identity = Pick<PrivateKey, 'sign' | 'public'>
 

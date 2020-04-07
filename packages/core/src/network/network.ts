@@ -77,7 +77,7 @@ export interface Network {
   addReplicator(id: ThreadID, addr: Multiaddr, opts?: ThreadOptions): Promise<PeerId>
 
   /**
-   * createRecord with credentials and body.
+   * createRecord from body.
    * @param id The Thread ID.
    * @param body The body to add as content.
    * @param opts Thread options.

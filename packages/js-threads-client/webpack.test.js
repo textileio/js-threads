@@ -1,4 +1,5 @@
 module.exports = {
+  target: 'web',
   module: {
     rules: [
       {

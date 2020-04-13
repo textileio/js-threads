@@ -55,7 +55,7 @@ const createPerson = (): Person => {
 
 describe('Client', function () {
   const threadId = ThreadID.fromRandom()
-  const dbID = threadId.bytes()
+  const dbID = threadId.toBytes()
   let dbKey: string
   let dbAddr: string
   describe('.newDB', () => {
@@ -81,10 +81,14 @@ describe('Client', function () {
     })
   })
 
-  describe.skip('.newDBFromAddr', () => {
+  describe('.newDBFromAddr', () => {
     it('response should be defined and be an empty object', async () => {
-      const start = await client.newDBFromAddr(dbKey, dbAddr, [{ name: 'Person', schema: personSchema }])
-      expect(start).to.be.undefined
+      try {
+        await client.newDBFromAddr((dbAddr as unknown) as string, dbKey, [])
+      } catch (err) {
+        // Expect this db to already exist on this peer
+        expect(err.toString().endsWith('already exists')).to.be.true
+      }
     })
   })
   describe('.create', () => {
@@ -266,18 +270,18 @@ describe('Client', function () {
         expect(instance).to.have.property('age')
         expect(instance?.age).to.be.greaterThan(21)
         listener.events += 1
-        if (listener.events == 2) {
-          done()
-        }
         if (listener.events > 1 && listener.close) {
           listener.close()
+        }
+        if (listener.events == 2) {
+          done()
         }
       }
       listener.close = client.listen<Person>(
         dbID,
         [
           {
-            instanceID: existingPersonID,
+            instanceID: person.ID,
           },
         ],
         callback,
@@ -286,7 +290,7 @@ describe('Client', function () {
       client.save(dbID, 'Person', [person])
       person.age = 40
       client.save(dbID, 'Person', [person])
-    }).timeout(25000) // Make sure our test doesn't timeout
+    }).timeout(5000) // Make sure our test doesn't timeout
   })
   describe('Query', () => {
     before(async () => {

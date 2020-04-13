@@ -30,7 +30,8 @@ import {
   GetDBInfoRequest,
   GetDBInfoReply,
 } from '@textile/threads-client-grpc/api_pb'
-import { ThreadID } from '@textile/threads-core'
+import nextTick from 'next-tick'
+import { ThreadID, Multiaddr } from '@textile/threads-core'
 import { encode, decode } from 'bs58'
 import * as pack from '../package.json'
 import {
@@ -70,8 +71,7 @@ export class Client {
 
   /**
    * Client creates a new gRPC client instance.
-   * @param host The local/remote host url. Defaults to 'localhost:6007'.
-   * @param defaultTransport The default transport to use when making webgRPC calls. Defaults to WebSockets.
+   * @param config A set of configuration settings to control the client.
    */
   constructor(config: Config | BaseConfig = {}) {
     if (config instanceof Config) {
@@ -117,10 +117,9 @@ export class Client {
    * alternative to start, which creates a local store. newDBFromAddr should also include the
    * read and follow keys, which should be Buffer, Uint8Array or base58-encoded strings.
    * See `getDBInfo` for a possible source of the address and keys.
-   * @param dbID the ID of the database
    * @param address The address for the thread with which to connect.
    * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
-   * @param DBKey The DBKey provided through an invite or from getDBInfo.
+   * @param key The set of keys to use to connect to the database
    * @param collections An array of Name and JSON Schemas for collections in the DB.
    */
   public async newDBFromAddr(
@@ -129,7 +128,8 @@ export class Client {
     collections: Array<{ name: string; schema: any }>,
   ) {
     const req = new NewDBFromAddrRequest()
-    req.setAddr(address)
+    const addr = new Multiaddr(address).buffer
+    req.setAddr(addr)
     req.setKey(typeof key === 'string' ? decode(key) : key)
     req.setCollectionsList(
       collections.map((c) => {
@@ -153,7 +153,8 @@ export class Client {
     const invites: Array<{ address: string; key: string }> = []
     for (const addr of res.addrsList) {
       const dk = Buffer.from(res.key as string, 'base64')
-      const address = typeof addr === 'string' ? addr : Buffer.from(addr).toString()
+      const a = typeof addr === 'string' ? Buffer.from(addr, 'base64') : Buffer.from(addr)
+      const address = new Multiaddr(a).toString()
       invites.push({
         address,
         key: encode(dk),
@@ -320,12 +321,15 @@ export class Client {
             case 'ALL': {
               requestFilter.setAction(0)
             }
+            break
             case 'CREATE': {
               requestFilter.setAction(1)
             }
+            break
             case 'SAVE': {
               requestFilter.setAction(2)
             }
+            break
             case 'DELETE': {
               requestFilter.setAction(3)
             }
@@ -345,7 +349,7 @@ export class Client {
         const ret: Instance<T> = {
           instance: JSON.parse(Buffer.from(rec.getInstance_asU8()).toString()),
         }
-        callback(ret)
+        nextTick(() => callback(ret))
       },
       onEnd: (status: grpc.Code, message: string, _trailers: grpc.Metadata) => {
         if (status !== grpc.Code.OK) {

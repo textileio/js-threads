@@ -290,7 +290,7 @@ describe('Client', function () {
       client.save(dbID, 'Person', [person])
       person.age = 40
       client.save(dbID, 'Person', [person])
-    }).timeout(5000) // Make sure our test doesn't timeout
+    }).timeout(15000) // Make sure our test doesn't timeout
   })
   describe('Query', () => {
     before(async () => {

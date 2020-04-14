@@ -12,7 +12,6 @@
     "test": "npm run test:node && npm run test:browser",
     "lint": "eslint --fix --ext .mjs,.js,.jsx,.ts,.tsx src",
     "docs": "typedoc && touch ./docs/.nojekyll",
-    "precommit": "npm run lint && npm test",
     "preversion": "npm run docs; npm run precommit",
     "release": "npm version patch",
     "postversion": "git push --follow-tags",

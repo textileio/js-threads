@@ -1,8 +1,7 @@
 name: publish
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 jobs:
   publish:
     name: publish
@@ -34,8 +33,3 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
         run: |
           json -I -f package.json -e 'this.version=("${{ steps.latesttag.outputs.tag }}").replace("v", "")'
-          npm publish --access=public
-      - name: Release Notary Action
-        uses: commitsar-app/release-notary@v0.7.3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

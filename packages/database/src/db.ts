@@ -218,6 +218,7 @@ export class Database extends EventEmitter2 {
         try {
           info = await this.network.getThread(options.threadID)
         } catch (_err) {
+          // @todo: Catch key-based error. Its possible we have the wrong keys here
           info = await createThread(this.network, options.threadID)
         }
         await this.child.put(idKey, info.id.toBytes())

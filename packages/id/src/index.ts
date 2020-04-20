@@ -18,7 +18,7 @@ class ThreadID {
     const bytes = Buffer.concat([
       Buffer.from(encode(ThreadID.V1)),
       Buffer.from(encode(variant)),
-      randomBytes(new Uint8Array(size)),
+      randomBytes(Buffer.alloc(size)),
     ])
     return new ThreadID(bytes)
   }

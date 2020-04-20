@@ -1,5 +1,5 @@
 import { PrivateKey, PublicKey, keys } from 'libp2p-crypto'
-import { ThreadID } from './id'
+import { ThreadID } from '@textile/threads-id'
 import { LogInfo } from './log'
 import { ThreadKey } from './key'
 

@@ -3,13 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "resolveJsonModule": true,
-    "baseUrl": "./src",
-    "paths": {
-      "@consento/sync-randombytes": [
-        "./randombytes.d.ts"
-      ]
-    }
+    "resolveJsonModule": true
   },
   "exclude": [
     "node_modules",

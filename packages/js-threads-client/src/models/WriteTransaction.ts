@@ -3,7 +3,6 @@
  * @module @textile/threads-client/models
  */
 import { grpc } from '@improbable-eng/grpc-web'
-import * as uuid from 'uuid'
 import {
   CreateRequest,
   SaveRequest,
@@ -53,7 +52,6 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
       const createReq = new CreateRequest()
       const list: any[] = []
       values.forEach((v) => {
-        v['ID'] = uuid.v4()
         list.push(Buffer.from(JSON.stringify(v)))
       })
       createReq.setInstancesList(list)

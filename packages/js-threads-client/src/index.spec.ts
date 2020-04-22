@@ -5,8 +5,8 @@
 ;(global as any).WebSocket = require('isomorphic-ws')
 
 import { expect } from 'chai'
+import { Where, ReadTransaction, WriteTransaction } from './models'
 import { Client, ThreadID } from './index'
-import { QueryJSON, ComparisonJSON, Where, ReadTransaction, WriteTransaction } from './models'
 
 const client = new Client()
 
@@ -93,16 +93,16 @@ describe('Client', function () {
   })
   describe('.create', () => {
     it('response should contain a JSON parsable instancesList', async () => {
-      const entities = await client.create<Person>(dbID, 'Person', [createPerson()])
-      expect(entities.length).to.equal(1)
+      const instances = await client.create(dbID, 'Person', [createPerson()])
+      expect(instances.length).to.equal(1)
     })
   })
   describe('.save', () => {
     it('response should be defined and be an empty object', async () => {
       const person = createPerson()
-      const entities = await client.create<Person>(dbID, 'Person', [person])
-      expect(entities.length).to.equal(1)
-      person.ID = entities[0]
+      const instances = await client.create(dbID, 'Person', [person])
+      expect(instances.length).to.equal(1)
+      person.ID = instances[0]
       person!.age = 30
       const save = await client.save(dbID, 'Person', [person])
       expect(save).to.be.undefined
@@ -110,40 +110,31 @@ describe('Client', function () {
   })
   describe('.delete', () => {
     it('response should be defined and be an empty object', async () => {
-      const entities = await client.create<Person>(dbID, 'Person', [createPerson()])
-      expect(entities.length).to.equal(1)
-      const personID = entities[0]
+      const instances = await client.create(dbID, 'Person', [createPerson()])
+      expect(instances.length).to.equal(1)
+      const personID = instances[0]
       const deleted = await client.delete(dbID, 'Person', [personID])
       expect(deleted).to.be.undefined
     })
   })
   describe('.has', () => {
-    it('response be an object with property "exists" equal to true', async () => {
-      const entities = await client.create(dbID, 'Person', [createPerson()])
+    it('the created object should also return true for has', async () => {
+      const instances = await client.create(dbID, 'Person', [createPerson()])
       // Here we 'test' a different approach where we didn't use generics above to create the instance...
-      expect(entities.length).to.equal(1)
-      const personID = entities[0]
-      const has = await client.has(dbID, 'Person', [personID])
+      expect(instances.length).to.equal(1)
+      const has = await client.has(dbID, 'Person', instances)
       expect(has).to.be.true
     })
   })
   describe('.find', () => {
-    it('response should contain the same entity based on query', async () => {
+    it('response should contain the same instance based on query', async () => {
       const frank = createPerson()
       frank.firstName = 'Frank'
-      const entities = await client.create<Person>(dbID, 'Person', [frank])
-      expect(entities.length).to.equal(1)
-      const personID = entities[0]
+      const instances = await client.create(dbID, 'Person', [frank])
+      expect(instances.length).to.equal(1)
+      const personID = instances[0]
 
-      const q: QueryJSON = {
-        ands: [
-          {
-            fieldPath: 'firstName',
-            operation: ComparisonJSON.Eq,
-            value: { string: frank.firstName },
-          },
-        ],
-      }
+      const q = new Where('firstName').eq(frank.firstName)
       const find = await client.find<Person>(dbID, 'Person', q)
       expect(find).to.not.be.undefined
       const found = find.instancesList
@@ -159,8 +150,8 @@ describe('Client', function () {
   })
   describe('.findById', () => {
     it('response should contain a JSON parsable instance property', async () => {
-      const entities = await client.create(dbID, 'Person', [createPerson()])
-      const personID = entities.pop()!
+      const instances = await client.create(dbID, 'Person', [createPerson()])
+      const personID = instances.pop()!
       const find = await client.findByID<Person>(dbID, 'Person', personID)
       expect(find).to.not.be.undefined
       expect(find).to.haveOwnProperty('instance')
@@ -176,8 +167,8 @@ describe('Client', function () {
     let existingPersonID: string
     let transaction: ReadTransaction | undefined
     before(async () => {
-      const entities = await client.create<Person>(dbID, 'Person', [createPerson()])
-      existingPersonID = entities.pop()!
+      const instances = await client.create(dbID, 'Person', [createPerson()])
+      existingPersonID = instances.pop()!
       transaction = client.readTransaction(dbID, 'Person')
     })
     it('should start a transaction', async () => {
@@ -209,8 +200,8 @@ describe('Client', function () {
     let existingPersonID: string
     let transaction: WriteTransaction | undefined
     before(async () => {
-      const entities = await client.create(dbID, 'Person', [person])
-      existingPersonID = entities.length ? entities[0] : ''
+      const instances = await client.create(dbID, 'Person', [person])
+      existingPersonID = instances.length ? instances[0] : ''
       person['ID'] = existingPersonID
       transaction = client.writeTransaction(dbID, 'Person')
     })
@@ -256,7 +247,7 @@ describe('Client', function () {
     const person = createPerson()
     let existingPersonID: string
     before(async () => {
-      const entities = await client.create<Person>(dbID, 'Person', [person])
+      const entities = await client.create(dbID, 'Person', [person])
       existingPersonID = entities.length ? entities[0] : ''
       person['ID'] = existingPersonID
     })
@@ -299,7 +290,7 @@ describe('Client', function () {
         person.age = 60 + i
         return person
       })
-      await client.create<Person>(dbID, 'Person', people)
+      await client.create(dbID, 'Person', people)
     })
     it('Should return a full list of entities matching the given query', async () => {
       const q = new Where('age').ge(60).and('age').lt(66).or(new Where('age').eq(67))

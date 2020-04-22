@@ -3,7 +3,6 @@
  * @module @textile/threads-client
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import * as uuid from 'uuid'
 import { grpc } from '@improbable-eng/grpc-web'
 import { API } from '@textile/threads-client-grpc/api_pb_service'
 import {
@@ -31,7 +30,8 @@ import {
   GetDBInfoReply,
 } from '@textile/threads-client-grpc/api_pb'
 import nextTick from 'next-tick'
-import { ThreadID, Multiaddr } from '@textile/threads-core'
+import { Multiaddr } from '@textile/multiaddr'
+import { ThreadID } from '@textile/threads-id'
 import { encode, decode } from 'bs58'
 import * as pack from '../package.json'
 import {
@@ -169,13 +169,12 @@ export class Client {
    * @param collectionName The human-readable name of the model to use.
    * @param values An array of model instances as JSON/JS objects.
    */
-  public async create<T = any>(dbID: Buffer, collectionName: string, values: any[]) {
+  public async create(dbID: Buffer, collectionName: string, values: any[]) {
     const req = new CreateRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     const list: any[] = []
     values.forEach((v) => {
-      v['ID'] = uuid.v4()
       list.push(Buffer.from(JSON.stringify(v)))
     })
     req.setInstancesList(list)
@@ -320,18 +319,19 @@ export class Client {
           switch (at) {
             case 'ALL': {
               requestFilter.setAction(0)
+              break
             }
-            break
             case 'CREATE': {
               requestFilter.setAction(1)
+              break
             }
-            break
             case 'SAVE': {
               requestFilter.setAction(2)
+              break
             }
-            break
             case 'DELETE': {
               requestFilter.setAction(3)
+              break
             }
           }
         }

@@ -68,7 +68,7 @@
     "@types/sinon": "^9.0.0",
     "@types/to-json-schema": "^0.2.0",
     "@types/url-parse": "^1.4.3",
-    "@types/uuid": "^3.4.7",
+    "@types/uuid": "^7.0.3",
     "browser-or-node": "^1.2.1",
     "delay": "^4.3.0",
     "isomorphic-ws": "^4.0.1",

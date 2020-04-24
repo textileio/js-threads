@@ -36,7 +36,7 @@
   "devDependencies": {
     "@types/datastore-core": "^0.7.0",
     "@types/interface-datastore": "^0.8.0",
-    "@types/uuid": "^3.4.7",
+    "@types/uuid": "^7.0.3",
     "rimraf": "^3.0.0",
     "streaming-iterables": "^4.1.2",
     "typescript": "^3.7.2"

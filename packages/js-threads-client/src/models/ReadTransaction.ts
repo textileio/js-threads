@@ -36,7 +36,7 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
     startReq.setCollectionname(this.modelName)
     const req = new ReadTransactionRequest()
     req.setStarttransactionrequest(startReq)
-    const metadata = this.config._wrapBrowserHeaders(new grpc.Metadata())
+    const metadata = this.config.toJSON()
     this.client.start(metadata)
     this.client.send(req)
   }
@@ -53,7 +53,7 @@ export class ReadTransaction extends Transaction<ReadTransactionRequest, ReadTra
       req.setHasrequest(hasReq)
       this.client.onMessage((message: ReadTransactionReply) => {
         const reply = message.getHasreply()
-        resolve(reply ? reply.toObject().exists == true : false)
+        resolve(reply ? reply.toObject().exists : false)
       })
       this.setReject(reject)
       this.client.send(req)

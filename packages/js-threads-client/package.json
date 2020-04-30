@@ -64,6 +64,7 @@
     "ws": "^7.2.3"
   },
   "devDependencies": {
+    "@textile/threads-core": "^0.1.5-rc.0",
     "@types/bs58": "^4.0.1",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.1",

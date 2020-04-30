@@ -4,39 +4,17 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { grpc } from '@improbable-eng/grpc-web'
-import { API } from '@textile/threads-client-grpc/api_pb_service'
-import {
-  NewDBRequest,
-  NewDBFromAddrRequest,
-  NewCollectionRequest,
-  CollectionConfig,
-  CreateRequest,
-  CreateReply,
-  SaveRequest,
-  DeleteRequest,
-  HasRequest,
-  HasReply,
-  FindRequest,
-  FindReply,
-  FindByIDRequest,
-  FindByIDReply,
-  ReadTransactionRequest,
-  ReadTransactionReply,
-  WriteTransactionRequest,
-  WriteTransactionReply,
-  ListenRequest,
-  ListenReply,
-  GetDBInfoRequest,
-  GetDBInfoReply,
-} from '@textile/threads-client-grpc/api_pb'
+import { API, APIGetToken } from '@textile/threads-client-grpc/api_pb_service'
+import * as pb from '@textile/threads-client-grpc/api_pb'
 import nextTick from 'next-tick'
+import { Identity } from '@textile/threads-core'
 import { Multiaddr } from '@textile/multiaddr'
 import { ThreadID } from '@textile/threads-id'
 import { encode, decode } from 'bs58'
 import * as pack from '../package.json'
 import {
   Config,
-  BaseConfig,
+  defaultConfig,
   QueryJSON,
   Instance,
   InstanceList,
@@ -48,7 +26,7 @@ import {
 } from './models'
 
 export { ThreadID }
-export { BaseConfig, Config, Instance, QueryJSON }
+export { Config, Instance, QueryJSON, defaultConfig }
 export { Query, Where }
 
 /**
@@ -65,21 +43,49 @@ export class Client {
   }
 
   /**
-   * config is the (public) threads config.
-   */
-  public readonly config: Config
-
-  /**
    * Client creates a new gRPC client instance.
    * @param config A set of configuration settings to control the client.
    */
-  constructor(config: Config | BaseConfig = {}) {
-    if (config instanceof Config) {
-      this.config = config
-    } else {
-      this.config = new Config(config.host, config.transport)
-    }
-    grpc.setDefaultTransport(this.config.transport)
+  constructor(public config: Config = defaultConfig) {
+    grpc.setDefaultTransport(this.config.transport ?? grpc.WebsocketTransport())
+  }
+
+  async getToken(identity: Identity) {
+    const client = grpc.client<pb.GetTokenRequest, pb.GetTokenReply, APIGetToken>(API.GetToken, {
+      host: this.config.host ?? '',
+    })
+    return new Promise<string>((resolve, reject) => {
+      let token: string
+      client.onMessage(async (message: pb.GetTokenReply) => {
+        if (message.hasChallenge()) {
+          const challenge = message.getChallenge()
+          let sig: Buffer = Buffer.from('')
+          try {
+            sig = await identity.sign(Buffer.from(challenge as string))
+          } catch (err) {
+            reject(err)
+          }
+          const req = new pb.GetTokenRequest()
+          req.setSignature(sig)
+          client.send(req)
+        } else if (message.hasToken()) {
+          token = message.getToken()
+        }
+      })
+      client.onEnd((code) => {
+        client.close()
+        if (code === grpc.Code.OK) {
+          resolve(token)
+        } else {
+          reject(new Error(code.toString()))
+        }
+      })
+      const req = new pb.GetTokenRequest()
+      req.setKey(identity.public.toString())
+      client.start(this.config.toJSON())
+      client.send(req)
+      // client.finishSend()
+    })
   }
 
   /**
@@ -87,7 +93,7 @@ export class Client {
    * @param dbID the ID of the database
    */
   public async newDB(dbID: Buffer) {
-    const req = new NewDBRequest()
+    const req = new pb.NewDBRequest()
     req.setDbid(dbID)
     await this.unary(API.NewDB, req)
     return
@@ -101,8 +107,8 @@ export class Client {
    * @param schema The actual json-schema.org compatible schema object.
    */
   public async newCollection(dbID: Buffer, name: string, schema: any) {
-    const req = new NewCollectionRequest()
-    const config = new CollectionConfig()
+    const req = new pb.NewCollectionRequest()
+    const config = new pb.CollectionConfig()
     config.setName(name)
     config.setSchema(Buffer.from(JSON.stringify(schema)))
     req.setDbid(dbID)
@@ -127,13 +133,13 @@ export class Client {
     key: string | Uint8Array,
     collections: Array<{ name: string; schema: any }>,
   ) {
-    const req = new NewDBFromAddrRequest()
+    const req = new pb.NewDBFromAddrRequest()
     const addr = new Multiaddr(address).buffer
     req.setAddr(addr)
     req.setKey(typeof key === 'string' ? decode(key) : key)
     req.setCollectionsList(
       collections.map((c) => {
-        const config = new CollectionConfig()
+        const config = new pb.CollectionConfig()
         config.setName(c.name)
         config.setSchema(JSON.stringify(c.schema))
         return config
@@ -147,9 +153,9 @@ export class Client {
    * @param dbID the ID of the database
    */
   public async getDBInfo(dbID: Buffer) {
-    const req = new GetDBInfoRequest()
+    const req = new pb.GetDBInfoRequest()
     req.setDbid(dbID)
-    const res = (await this.unary(API.GetDBInfo, req)) as GetDBInfoReply.AsObject
+    const res = (await this.unary(API.GetDBInfo, req)) as pb.GetDBInfoReply.AsObject
     const invites: Array<{ address: string; key: string }> = []
     for (const addr of res.addrsList) {
       const dk = Buffer.from(res.key as string, 'base64')
@@ -170,7 +176,7 @@ export class Client {
    * @param values An array of model instances as JSON/JS objects.
    */
   public async create(dbID: Buffer, collectionName: string, values: any[]) {
-    const req = new CreateRequest()
+    const req = new pb.CreateRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     const list: any[] = []
@@ -178,7 +184,7 @@ export class Client {
       list.push(Buffer.from(JSON.stringify(v)))
     })
     req.setInstancesList(list)
-    const res = (await this.unary(API.Create, req)) as CreateReply.AsObject
+    const res = (await this.unary(API.Create, req)) as pb.CreateReply.AsObject
     return res.instanceidsList
   }
 
@@ -189,7 +195,7 @@ export class Client {
    * @param values An array of model instances as JSON/JS objects. Each model instance must have a valid existing `ID` property.
    */
   public async save(dbID: Buffer, collectionName: string, values: any[]) {
-    const req = new SaveRequest()
+    const req = new pb.SaveRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     const list: any[] = []
@@ -211,7 +217,7 @@ export class Client {
    * @param IDs An array of instance ids to delete.
    */
   public async delete(dbID: Buffer, collectionName: string, IDs: string[]) {
-    const req = new DeleteRequest()
+    const req = new pb.DeleteRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     req.setInstanceidsList(IDs)
@@ -226,11 +232,11 @@ export class Client {
    * @param IDs An array of instance ids to check for.
    */
   public async has(dbID: Buffer, collectionName: string, IDs: string[]) {
-    const req = new HasRequest()
+    const req = new pb.HasRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     req.setInstanceidsList(IDs)
-    const res = (await this.unary(API.Has, req)) as HasReply.AsObject
+    const res = (await this.unary(API.Has, req)) as pb.HasReply.AsObject
     return res.exists
   }
 
@@ -241,12 +247,12 @@ export class Client {
    * @param query The object that describes the query. User Query class or primitive QueryJSON type.
    */
   public async find<T = any>(dbID: Buffer, collectionName: string, query: QueryJSON) {
-    const req = new FindRequest()
+    const req = new pb.FindRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     // @todo: Find a more isomorphic way to do this base64 round-trip
     req.setQueryjson(Buffer.from(JSON.stringify(query)).toString('base64'))
-    const res = (await this.unary(API.Find, req)) as FindReply.AsObject
+    const res = (await this.unary(API.Find, req)) as pb.FindReply.AsObject
     const ret: InstanceList<T> = {
       instancesList: res.instancesList.map((instance) =>
         JSON.parse(Buffer.from(instance as string, 'base64').toString()),
@@ -262,11 +268,11 @@ export class Client {
    * @param ID The id of the instance to search for.
    */
   public async findByID<T = any>(dbID: Buffer, collectionName: string, ID: string) {
-    const req = new FindByIDRequest()
+    const req = new pb.FindByIDRequest()
     req.setDbid(dbID)
     req.setCollectionname(collectionName)
     req.setInstanceid(ID)
-    const res = (await this.unary(API.FindByID, req)) as FindByIDReply.AsObject
+    const res = (await this.unary(API.FindByID, req)) as pb.FindByIDReply.AsObject
     const ret: Instance<T> = {
       instance: JSON.parse(Buffer.from(res.instance as string, 'base64').toString()),
     }
@@ -280,8 +286,8 @@ export class Client {
    */
   public readTransaction(dbID: Buffer, collectionName: string): ReadTransaction {
     const client = grpc.client(API.ReadTransaction, {
-      host: this.config.host,
-    }) as grpc.Client<ReadTransactionRequest, ReadTransactionReply>
+      host: this.config.host ?? '',
+    }) as grpc.Client<pb.ReadTransactionRequest, pb.ReadTransactionReply>
     return new ReadTransaction(this.config, client, dbID, collectionName)
   }
 
@@ -292,8 +298,8 @@ export class Client {
    */
   public writeTransaction(dbID: Buffer, collectionName: string): WriteTransaction {
     const client = grpc.client(API.WriteTransaction, {
-      host: this.config.host,
-    }) as grpc.Client<WriteTransactionRequest, WriteTransactionReply>
+      host: this.config.host ?? '',
+    }) as grpc.Client<pb.WriteTransactionRequest, pb.WriteTransactionReply>
     return new WriteTransaction(this.config, client, dbID, collectionName)
   }
 
@@ -305,10 +311,10 @@ export class Client {
    * @param callback The callback to call on each update to the given instance.
    */
   public listen<T = any>(dbID: Buffer, filters: Filter[], callback: (reply?: Instance<T>, err?: Error) => void) {
-    const req = new ListenRequest()
+    const req = new pb.ListenRequest()
     req.setDbid(dbID)
     for (const filter of filters) {
-      const requestFilter = new ListenRequest.Filter()
+      const requestFilter = new pb.ListenRequest.Filter()
       if (filter.instanceID) {
         requestFilter.setInstanceid(filter.instanceID)
       } else if (filter.collectionName) {
@@ -318,19 +324,19 @@ export class Client {
         for (const at of filter.actionTypes) {
           switch (at) {
             case 'ALL': {
-              requestFilter.setAction(0)
+              requestFilter.setAction(pb.ListenRequest.Filter.Action.ALL)
               break
             }
             case 'CREATE': {
-              requestFilter.setAction(1)
+              requestFilter.setAction(pb.ListenRequest.Filter.Action.CREATE)
               break
             }
             case 'SAVE': {
-              requestFilter.setAction(2)
+              requestFilter.setAction(pb.ListenRequest.Filter.Action.SAVE)
               break
             }
             case 'DELETE': {
-              requestFilter.setAction(3)
+              requestFilter.setAction(pb.ListenRequest.Filter.Action.DELETE)
               break
             }
           }
@@ -342,10 +348,10 @@ export class Client {
     }
 
     const res = grpc.invoke(API.Listen, {
-      host: this.config.host,
+      host: this.config.host ?? '',
       request: req,
-      metadata: this.config._wrapMetadata(),
-      onMessage: (rec: ListenReply) => {
+      metadata: this.config.toJSON(),
+      onMessage: (rec: pb.ListenReply) => {
         const ret: Instance<T> = {
           instance: JSON.parse(Buffer.from(rec.getInstance_asU8()).toString()),
         }
@@ -353,9 +359,9 @@ export class Client {
       },
       onEnd: (status: grpc.Code, message: string, _trailers: grpc.Metadata) => {
         if (status !== grpc.Code.OK) {
-          return callback(undefined, new Error(message))
+          nextTick(() => callback(undefined, new Error(message)))
         }
-        callback()
+        nextTick(callback)
       },
     })
     return res.close.bind(res)
@@ -369,8 +375,8 @@ export class Client {
     return new Promise((resolve, reject) => {
       grpc.unary(methodDescriptor, {
         request: req,
-        host: this.config.host,
-        metadata: this.config._wrapMetadata(),
+        host: this.config.host ?? '',
+        metadata: this.config.toJSON(),
         onEnd: (res) => {
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {

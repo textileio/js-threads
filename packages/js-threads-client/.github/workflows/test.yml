@@ -15,7 +15,7 @@ jobs:
 
     services:
       threads:
-        image: textile/go-threads:0.1.14
+        image: textile/go-threads:latest
         env:
           THRDS_APIPROXYADDR: /ip4/0.0.0.0/tcp/6007
         ports:

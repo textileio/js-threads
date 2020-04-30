@@ -39,7 +39,7 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
     startReq.setCollectionname(this.modelName)
     const req = new WriteTransactionRequest()
     req.setStarttransactionrequest(startReq)
-    const metadata = this.config._wrapBrowserHeaders(new grpc.Metadata())
+    const metadata = this.config.toJSON()
     this.client.start(metadata)
     this.client.send(req)
   }

@@ -6,30 +6,25 @@
 import { grpc } from '@improbable-eng/grpc-web'
 
 /**
- * @hidden
+ * Configuration for Threads DB Client.
  */
-export interface BaseConfig {
+export interface Config {
   host?: string
   transport?: grpc.TransportFactory
+  debug?: boolean
+  toJSON(): Record<string, any>
+
+  [key: string]: any
 }
 
 /**
  * The default config required to connect to localhost Threads daemon
  */
-export class Config {
-  constructor(
-    /** The Threads daemon host path and port */
-    public host: string = 'http://127.0.0.1:6007',
-    /** Override the default API transport. For advanced usage only. */
-    public transport: grpc.TransportFactory = grpc.WebsocketTransport(),
-  ) {}
-
-  /** @internal */
-  _wrapMetadata(values?: { [key: string]: any }): { [key: string]: any } | undefined {
-    return values
-  }
-  /** @internal */
-  _wrapBrowserHeaders(values: grpc.Metadata): grpc.Metadata {
-    return values
-  }
+export const defaultConfig: Config = {
+  host: 'http://127.0.0.1:6007',
+  transport: grpc.WebsocketTransport(),
+  debug: false,
+  toJSON() {
+    return { ...this }
+  },
 }

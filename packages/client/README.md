@@ -1,26 +1,12 @@
-# js-threads-client
+# Threads Client _(threads-client)_
 
-[![Made by Textile](https://img.shields.io/badge/made%20by-Textile-informational.svg?style=popout-square)](https://textile.io)
-[![Chat on Slack](https://img.shields.io/badge/slack-slack.textile.io-informational.svg?style=popout-square)](https://slack.textile.io)
-[![Threads version](https://img.shields.io/badge/dynamic/json?style=popout-square&color=3527ff&label=Threads&prefix=v&query=%24.dependencies%5B%27%40textile%2Fthreads-client-grpc%27%5D.version&url=https%3A%2F%2Fraw.githubusercontent.com%2Ftextileio%2Fjs-threads-client%2Fmaster%2Fpackage-lock.json)](https://github.com/textileio/go-threads)
-[![GitHub license](https://img.shields.io/github/license/textileio/js-threads-client.svg?style=popout-square)](./LICENSE)
-[![Build status](https://img.shields.io/github/workflow/status/textileio/js-threads-client/lint_test/master.svg?style=popout-square)](https://github.com/textileio/js-threads-client/actions?query=branch%3Amaster)
+Server-side (remote) event sourced storage layer for Textile's Threads protocol & database
 
-> Textile's JS client for interacting with remote Threads
+[![Textile](https://img.shields.io/badge/made%20by-Textile-informational.svg)](https://textile.io)
+[![License](https://img.shields.io/github/license/textileio/js-threads.svg)](../../LICENSE)
+[![npm (scoped)](https://img.shields.io/npm/v/@textile/threads-store.svg)](https://www.npmjs.com/package/@textile/threads-store)
 
-Go to [the docs](https://docs.textile.io/) for more about Textile.
-
-Join us on our [public Slack channel](https://slack.textile.io/) for news, discussions, and status updates. [Check out our blog](https://medium.com/textileio) for the latest posts and announcements.
-
-## Table of Contents
-
--   [Install](#install)
--   [Docs](#docs)
--   [Usage](#usage-in-typescript)
--   [React Native](#react-native)
--   [Contributing](#contributing)
--   [Changelog](#changelog)
--   [License](#license)
+This sub-package is part of [`js-threads`](https://github.com/textileio/js-threads). See the [top-level documentation](https://textileio.github.io/js-threads) for details.
 
 ## Install
 
@@ -28,11 +14,7 @@ Join us on our [public Slack channel](https://slack.textile.io/) for news, discu
 npm install @textile/threads-client
 ```
 
-## Docs
-
-[Read the docs](https://textileio.github.io/js-threads-client/).
-
-## Usage in Typescript
+## Usage
 
 **create a threads client**
 
@@ -170,23 +152,3 @@ Ensure that the shim is still configured after any module updates. Inside `packa
   }
 }
 ```
-
-## Contributing
-
-This project is a work in progress. As such, there's a few things you can do right now to help out:
-
--   **Ask questions**! We'll try to help. Be sure to drop a note (on the above issue) if there is anything you'd like to work on and we'll update the issue to let others know. Also [get in touch](https://slack.textile.io) on Slack.
--   **Open issues**, [file issues](https://github.com/textileio/js-threads-client/issues), submit pull requests!
--   **Perform code reviews**. More eyes will help a) speed the project along b) ensure quality and c) reduce possible future bugs.
--   **Take a look at the code**. Contributions here that would be most helpful are **top-level comments** about how it should look based on your understanding. Again, the more eyes the better.
--   **Add tests**. There can never be enough tests.
-
-Before you get started, be sure to read our [contributors guide](./CONTRIBUTING.md) and our [contributor covenant code of conduct](./CODE_OF_CONDUCT.md).
-
-## Changelog
-
-[Changelog is published to Releases.](https://github.com/textileio/js-threads-client/releases)
-
-## License
-
-[MIT](LICENSE)

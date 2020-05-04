@@ -198,7 +198,11 @@ export class Query implements QueryJSON {
    * @param ors An array of internal queries.
    * @param sort An object describing how to sort the query.
    */
-  constructor(public ands: CriterionJSON[] = [], public ors: QueryJSON[] = [], public sort?: SortJSON) {}
+  constructor(
+    public ands: CriterionJSON[] = [],
+    public ors: QueryJSON[] = [],
+    public sort?: SortJSON,
+  ) {}
 
   /**
    * where starts to create a query condition for a field

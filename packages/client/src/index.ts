@@ -11,7 +11,6 @@ import { Identity } from '@textile/threads-core'
 import { Multiaddr } from '@textile/multiaddr'
 import { ThreadID } from '@textile/threads-id'
 import { encode, decode } from 'bs58'
-import * as pack from '../package.json'
 import {
   Config,
   defaultConfig,
@@ -35,13 +34,6 @@ export { Query, Where }
  *  It is a wrapper around Textile's 'DB' API, which is defined here: https://github.com/textileio/go-threads/blob/master/api/pb/api.proto.
  */
 export class Client {
-  /**
-   * version is the release version.
-   */
-  public static version(): string {
-    return pack.version
-  }
-
   /**
    * Client creates a new gRPC client instance.
    * @param config A set of configuration settings to control the client.
@@ -310,7 +302,11 @@ export class Client {
    * @param filters contains an array of Filters
    * @param callback The callback to call on each update to the given instance.
    */
-  public listen<T = any>(dbID: Buffer, filters: Filter[], callback: (reply?: Instance<T>, err?: Error) => void) {
+  public listen<T = any>(
+    dbID: Buffer,
+    filters: Filter[],
+    callback: (reply?: Instance<T>, err?: Error) => void,
+  ) {
     const req = new pb.ListenRequest()
     req.setDbid(dbID)
     for (const filter of filters) {

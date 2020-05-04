@@ -8,7 +8,10 @@ import { grpc } from '@improbable-eng/grpc-web'
  * Transaction represents a bulk transaction on a store.
  * @hidden
  */
-export class Transaction<TRequest extends grpc.ProtobufMessage, TResponse extends grpc.ProtobufMessage> {
+export class Transaction<
+  TRequest extends grpc.ProtobufMessage,
+  TResponse extends grpc.ProtobufMessage
+> {
   /**
    * Transaction creates a new transaction for the given store using the given model.
    * @param client The gRPC client to use for the transaction.

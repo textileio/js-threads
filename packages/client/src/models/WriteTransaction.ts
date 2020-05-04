@@ -148,7 +148,9 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
           const ret: InstanceList<T> = {
             instancesList: reply
               .toObject()
-              .instancesList.map((instance) => JSON.parse(Buffer.from(instance as string, 'base64').toString())),
+              .instancesList.map((instance) =>
+                JSON.parse(Buffer.from(instance as string, 'base64').toString()),
+              ),
           }
           resolve(ret)
         }
@@ -174,7 +176,9 @@ export class WriteTransaction extends Transaction<WriteTransactionRequest, Write
           resolve()
         } else {
           const ret: Instance<T> = {
-            instance: JSON.parse(Buffer.from(reply.toObject().instance as string, 'base64').toString()),
+            instance: JSON.parse(
+              Buffer.from(reply.toObject().instance as string, 'base64').toString(),
+            ),
           }
           resolve(ret)
         }

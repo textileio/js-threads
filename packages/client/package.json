@@ -32,9 +32,9 @@
   ],
   "dependencies": {
     "@improbable-eng/grpc-web": "^0.12.0",
-    "@textile/multiaddr": "0.0.2",
-    "@textile/threads-client-grpc": "^0.1.14",
-    "@textile/threads-id": "0.0.1",
+    "@textile/multiaddr": "^0.0.3",
+    "@textile/threads-client-grpc": "^0.1.16",
+    "@textile/threads-id": "^0.0.3",
     "@types/google-protobuf": "^3.7.2",
     "bs58": "^4.0.1",
     "cids": "^0.8.0",

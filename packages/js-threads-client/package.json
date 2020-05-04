@@ -57,7 +57,7 @@
     "@textile/threads-id": "0.0.1",
     "@types/google-protobuf": "^3.7.2",
     "bs58": "^4.0.1",
-    "cids": "^0.7.3",
+    "cids": "^0.8.0",
     "google-protobuf": "^3.10.0",
     "isomorphic-ws": "^4.0.1",
     "next-tick": "^1.1.0",

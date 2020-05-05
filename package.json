@@ -5,10 +5,10 @@
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
-    "pretest": "npm run bootstrap && npm run lint",
     "bootstrap": "lerna bootstrap",
     "compile": "lerna run compile",
     "build": "lerna run build",
+    "build:node": "lerna run build:node --stream",
     "build:browser": "lerna run build:browser --stream",
     "lint": "eslint --fix --ext .js,.ts packages/*/src/**/*",
     "test": "npm run test:node && npm run test:browser",

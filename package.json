@@ -9,6 +9,7 @@
     "bootstrap": "lerna bootstrap",
     "compile": "lerna run compile",
     "build": "lerna run build",
+    "build:browser": "lerna run build:browser --stream",
     "lint": "eslint --fix --ext .js,.ts packages/*/src/**/*",
     "test": "npm run test:node && npm run test:browser",
     "test:node": "TS_NODE_FILES=true mocha --exit",

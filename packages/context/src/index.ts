@@ -1,5 +1,7 @@
 import { grpc } from '@improbable-eng/grpc-web'
 import { ThreadID } from '@textile/threads-id'
+import { HMAC } from 'fast-sha256'
+import multibase from 'multibase'
 
 type HostString =
   | 'https://api.textile.io:3447'
@@ -7,6 +9,25 @@ type HostString =
   | 'http://127.0.0.1:3007'
   | string
 export const defaultHost: HostString = 'https://api.textile.io:3447'
+
+type KeyInfo = {
+  key: string
+  secret: string
+  // ACCOUNT, USER
+  type: 0 | 1
+}
+
+export const createAPISig = async (
+  secret: string,
+  date: Date = new Date(Date.now() + 1000 * 60),
+) => {
+  const sec = multibase.decode(secret)
+  const msg = (date ?? new Date()).toISOString()
+  const hash = new HMAC(sec)
+  const mac = hash.update(Buffer.from(msg)).digest()
+  const sig = multibase.encode('base32', Buffer.from(mac)).toString()
+  return { sig, msg }
+}
 
 export interface ContextKeys {
   /**
@@ -141,7 +162,7 @@ export class Context {
   withAPIKey(value?: string) {
     if (value === undefined) return this
     this._context['x-textile-api-key'] = value
-    return
+    return this
   }
 
   withAPISig(value?: { sig: string; msg: string }) {
@@ -170,5 +191,11 @@ export class Context {
     const ctx = new Context()
     ctx._context = json
     return ctx
+  }
+
+  async withUserKey(key?: KeyInfo) {
+    if (key === undefined) return this
+    const sig = await createAPISig(key.secret) // Defaults to 1 minute from now
+    return this.withAPIKey(key.key).withAPISig(sig)
   }
 }

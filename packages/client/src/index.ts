@@ -53,6 +53,9 @@ export class Client {
    * Obtain a token for interacting with the remote network API.
    * @param identity The generic identity to use for signing and validation.
    * @param ctx Context object containing web-gRPC headers and settings.
+   * @note If an identity is not provided, a random PKI identity is used. This might not be what you want!
+   * It is not easy/possible to migrate identities after the fact. Please supply an identity argument if
+   * you wish to persist/retrieve user data later.
    */
   async getToken(identity?: Identity, ctx?: Context) {
     const client = grpc.client<pb.GetTokenRequest, pb.GetTokenReply, APIGetToken>(API.GetToken, {
@@ -103,11 +106,12 @@ export class Client {
    * @param ctx Context object containing web-gRPC headers and settings.
    */
   public async newDB(dbID?: ThreadID, ctx?: Context) {
-    const id = dbID ?? ThreadID.fromRandom()
+    // If we have an id, use it, otherwise, check the context, otherwise, create a new random one
+    const id = dbID ?? ThreadID.fromBytes(ctx?.get('x-textile-thread')) ?? ThreadID.fromRandom()
     const req = new pb.NewDBRequest()
     req.setDbid(id.toBytes())
     await this.unary(API.NewDB, req)
-    this.context.withThread(id)
+    this.context.withThread && this.context.withThread(id)
     return id
   }
 

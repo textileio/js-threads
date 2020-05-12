@@ -55,24 +55,7 @@ export interface ThreadInfo {
   addrs?: Set<Multiaddr>
 }
 
-/**
- * ThreadToken is a concrete type for a JWT token string, which provides a claim to an identity.
- * It is a base64 encoded string.
- * @todo: We don't need to create or verify these on the client (yet).
- */
-export type ThreadToken = string
-
-/**
- * ThreadOptions stores options for creating / adding a thread.
- */
-export interface ThreadOptions {
-  /**
-   * Token stores the thread token for authorizing a new Thread.
-   */
-  token?: ThreadToken
-}
-
-export interface NewThreadOptions extends ThreadOptions {
+export interface NewThreadOptions {
   /**
    * Set of symmetric encryption keys.Can be generated with Key.fromRandom().
    */

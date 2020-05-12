@@ -14,7 +14,6 @@ import {
   ThreadRecord,
   Multiaddr,
   ThreadKey,
-  ThreadToken,
   Libp2pCryptoIdentity,
 } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
@@ -69,8 +68,8 @@ describe('Network...', () => {
       const client2 = new Client({ host: proxyAddr2 })
       // Create temporary identity
       const identity = await Libp2pCryptoIdentity.fromRandom()
-      const token2 = await client2.getToken(identity)
-      const info2 = await client2.addThread(addr, { threadKey: info1.key, token: token2 })
+      await client2.getToken(identity)
+      const info2 = await client2.addThread(addr, { threadKey: info1.key })
       expect(info2.id.toString()).to.equal(info1.id.toString())
     })
 
@@ -179,7 +178,7 @@ describe('Network...', () => {
     describe('subscribe', () => {
       let client2: Network
       let info: ThreadInfo
-      let token2: ThreadToken
+      let token2: string
 
       before(async () => {
         client2 = new Network(new MemoryDatastore(), new Client({ host: proxyAddr2 }))
@@ -193,7 +192,7 @@ describe('Network...', () => {
         token2 = await client2.getToken(identity)
       })
 
-      it('should handle updates and close cleanly', done => {
+      it('should handle updates and close cleanly', (done) => {
         let rcount = 0
         const res = client2.subscribe(
           (rec?: ThreadRecord, err?: Error) => {
@@ -206,7 +205,6 @@ describe('Network...', () => {
             }
           },
           [info.id],
-          { token: token2 },
         )
         client.createRecord(info.id, { foo: 'bar1' }).then(() => {
           client.createRecord(info.id, { foo: 'bar2' })

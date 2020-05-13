@@ -196,11 +196,12 @@ export class Context {
     transport: grpc.TransportFactory = grpc.WebsocketTransport(),
     debug = false,
   ) {
+    const newContext = { ...json }
+    newContext['host'] = host
+    newContext['transport'] = transport
+    newContext['debug'] = debug
     const ctx = new Context()
-    ctx._context = json
-    ctx._context['host'] = host
-    ctx._context['transport'] = transport
-    ctx._context['debug'] = debug
+    ctx._context = newContext
     return ctx
   }
 

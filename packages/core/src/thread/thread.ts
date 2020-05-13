@@ -1,9 +1,9 @@
 import { PrivateKey, PublicKey, keys } from 'libp2p-crypto'
 import { ThreadID } from '@textile/threads-id'
 import multibase from 'multibase'
+import { Multiaddr } from '@textile/multiaddr'
 import { LogInfo } from './log'
 import { ThreadKey } from './key'
-import { Multiaddr } from '@textile/multiaddr'
 
 // Thread protocol version
 const version = '0.0.1'

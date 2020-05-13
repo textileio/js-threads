@@ -17,6 +17,7 @@ import {
   Libp2pCryptoIdentity,
 } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
+import { Context } from '@textile/context'
 import { Client } from '@textile/threads-network-client'
 import { MemoryDatastore } from 'interface-datastore'
 import { Network } from '.'
@@ -41,7 +42,7 @@ describe('Network...', () => {
   let client: Network
   before(async () => {
     const identity = await Libp2pCryptoIdentity.fromRandom()
-    client = new Network(new MemoryDatastore(), new Client({ host: proxyAddr1 }), identity)
+    client = new Network(new MemoryDatastore(), new Client(new Context(proxyAddr1)))
     const token = await client.getToken(identity)
     expect(token).to.not.be.undefined
   })

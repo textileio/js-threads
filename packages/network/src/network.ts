@@ -31,23 +31,30 @@ const ed25519 = keys.supportedKeys.ed25519
  */
 export class Network implements Interface {
   public store: LogStore
-  readonly identity?: Identity
-  public token?: string
   /**
    * Create a new network Network.
    * @param store The store to use for caching keys and log information.
    * @param client A client connected to a remote network peer.
-   * @param identity Identity represents an entity with a public key capable of signing a message
+   * @param identity Identity represents an entity with a public key capable of signing a message.
+   * @note If an identity is not provided, the a random PKI identity is used. This might not be what you want!
+   * It is not easy/possible to migrate identities after the fact. Please supply an identity argument if
+   * you wish to persist/retrieve user data later.
    */
-  constructor(store: LogStore | Datastore, readonly client: Client, identity?: Identity) {
-    this.identity = identity
+  constructor(store: LogStore | Datastore, readonly client: Client, public identity?: Identity) {
     this.store = store instanceof LogStore ? store : LogStore.fromDatastore(store)
   }
 
-  async getToken(identity: Identity | undefined = this.identity) {
+  /**
+   * Obtain a token for interacting with the remote network API. Will attempt to return a cached token if available.
+   * @param identity The generic identity to use for signing and validation. Will default to the  identity specified
+   * at construction if available, otherwise a new Identity is required here.
+   */
+  async getToken(identity: Identity | undefined = this.identity): Promise<string> {
+    const existing: string | undefined = this.client.context.get('authorization')
+    if (existing !== undefined) return existing
     if (identity === undefined) throw new Error('Identity required.')
-    this.token = await this.client.getToken(identity)
-    return this.token
+    this.identity = identity
+    return this.client.getToken(identity)
   }
 
   /**

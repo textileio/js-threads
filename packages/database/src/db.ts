@@ -113,13 +113,8 @@ export class Database extends EventEmitter2 {
     options: InitOptions = {},
   ) {
     const db = new Database(datastore, options)
-    if (!db.network.token) {
-      // If we didn't supply an identity upon init, try to create a random one now.
-      if (!db.network.identity) {
-        db.network.identity = await Libp2pCryptoIdentity.fromRandom()
-      }
-      await db.network.getToken(db.network.identity)
-    }
+    // Grab token,if our client already has a token, we'll just pull the cached value here.
+    await db.network.getToken(db.network.identity ?? (await Libp2pCryptoIdentity.fromRandom()))
     const info = await db.network.addThread(addr, { threadKey })
     await db.open({ ...options, threadID: info.id })
     return db
@@ -177,12 +172,8 @@ export class Database extends EventEmitter2 {
    * @param options A set of options to configure the setup and usage of the underlying database.
    */
   async open(options: StartOptions = {}) {
-    if (!this.network.token) {
-      // If we didn't supply an identity upon init, try to create a random one now.
-      await this.network.getToken(
-        this.network.identity ?? (await Libp2pCryptoIdentity.fromRandom()),
-      )
-    }
+    // If we didn't supply an identity upon init, try to create a random one now.
+    await this.network.getToken(this.network.identity ?? (await Libp2pCryptoIdentity.fromRandom()))
     await this.child.open()
     const idKey = metaKey.child(new Key('threadid'))
     const hasExisting = await this.child.has(idKey)

@@ -2,6 +2,7 @@
 // 'Hack' to get WebSocket in the global namespace on nodejs
 ;(global as any).WebSocket = require('isomorphic-ws')
 
+import path from 'path'
 import { expect } from 'chai'
 import { Multiaddr, ThreadID } from '@textile/threads-core'
 import LevelDatastore from 'datastore-level'
@@ -11,7 +12,7 @@ import { Key } from 'interface-datastore'
 import { DomainDatastore, Dispatcher, Update, Op } from '@textile/threads-store'
 import { Network, Client } from '@textile/threads-network'
 import { MemoryDatastore } from 'interface-datastore'
-import { Database } from './db'
+import { Database, mismatchError } from './db'
 import { EventBus } from './eventbus'
 import { threadAddr } from './utils'
 
@@ -50,7 +51,7 @@ async function runListenersComplexUseCase(los: string[]) {
   // listener's "stream".
   const i1 = new Collection1({ _id: 'id-i1', name: 'Textile1' })
   await i1.save()
-  await delay(1000)
+  await delay(500)
 
   const events: Update[] = []
   // @todo: Should we wrap this in a 'listen' method instead?
@@ -110,7 +111,7 @@ async function runListenersComplexUseCase(los: string[]) {
 }
 
 describe('Database', () => {
-  describe.skip('end to end test', () => {
+  describe('end to end test', () => {
     it('should allow paired peers to exchange updates', async function () {
       if (isBrowser) return this.skip()
       // @todo This test is probably too slow for CI, but should run just fine locally
@@ -166,7 +167,7 @@ describe('Database', () => {
   })
 
   describe('Persistence', () => {
-    const tmp = './test.db'
+    const tmp = path.join(__dirname, './test.db')
     after(() => {
       level.destroy(tmp, () => {
         return
@@ -314,7 +315,14 @@ describe('Database', () => {
       assertEvents(actions, expected)
     })
   })
+
   describe('Basic', () => {
+    const tmp = path.join(__dirname, './test.db')
+    after(() => {
+      level.destroy(tmp, (_err: Error) => {
+        return
+      })
+    })
     it('should return valid addrs and keys for sharing', async () => {
       const store = new MemoryDatastore()
       const db = new Database(store)
@@ -323,6 +331,32 @@ describe('Database', () => {
       const info = await db.getInfo()
       expect(info?.addrs?.size).to.be.greaterThan(1)
       expect(info?.key).to.not.be.undefined
+      await db.close()
+    })
+
+    it('should automatically open if not yet "opened"', async function () {
+      if (isBrowser) return this.skip()
+      const child = new LevelDatastore(tmp)
+      const db = new Database(child)
+      const Col = await db.newCollectionFromObject('blah', { _id: '' })
+      expect(Col).to.not.be.undefined
+      await db.close()
+    })
+
+    it('should throw if our database and thread id do not match', async function () {
+      const store = new MemoryDatastore()
+      let db = new Database(store)
+      await db.open({ threadID: ThreadID.fromRandom() })
+      await db.close()
+      // Now 'reopen' the database
+      db = new Database(store)
+      try {
+        await db.open({ threadID: ThreadID.fromRandom() })
+        throw new Error('should have throw')
+      } catch (err) {
+        expect(err).to.equal(mismatchError)
+      }
+      await db.close()
     })
   })
 })

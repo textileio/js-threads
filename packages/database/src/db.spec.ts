@@ -119,7 +119,8 @@ describe('Database', () => {
       // Peer 1: Create db1, register a collection, create and update an instance.
       // @note: No identity is supplied, so a random Ed25519 private key is used by default
       const d1 = new Database(new MemoryDatastore())
-      await d1.open()
+      const ident1 = await Database.randomIdentity()
+      await d1.start(ident1)
       const id1 = d1.threadID
       if (id1 === undefined) {
         throw new Error('should not be invalid thread id')
@@ -133,6 +134,7 @@ describe('Database', () => {
 
       // Boilerplate to generate peer1 thread-addr
       const hostID = await d1.network.getHostID()
+      // const addrs = await d1.getInfo() // Normally we'd use this, but we're in Docker...
       const hostAddr = new Multiaddr('/dns4/threads1/tcp/4006')
       const addr = threadAddr(hostAddr, hostID.toB58String(), id1.toString())
 
@@ -142,10 +144,9 @@ describe('Database', () => {
       const datastore = new MemoryDatastore()
       const client = new Client({ host: 'http://127.0.0.1:6207' })
       const network = new Network(new DomainDatastore(datastore, new Key('network')), client)
-      // @note: No identity is supplied, so a random Ed25519 private key is used by default
-      const d2 = await Database.fromAddress(addr, datastore, info.key, {
-        network,
-      })
+      const d2 = new Database(datastore, { network })
+      const ident2 = await Database.randomIdentity()
+      await d2.startFromAddress(ident2, addr, info.key)
       // Create parallel collection
       const Dummy2 = await d2.newCollectionFromObject<DummyInstance>('dummy', {
         _id: '',
@@ -157,13 +158,13 @@ describe('Database', () => {
       dummy1.counter += 42
       await dummy1.save()
 
-      await delay(6000)
+      await delay(2000)
       const dummy2 = await Dummy2.findById(dummy1._id)
       expect(dummy2.name).to.equal(dummy1.name)
       expect(dummy2.counter).to.equal(dummy1.counter)
       await d1.close()
       await d2.close()
-    }).timeout(10000)
+    }).timeout(5000)
   })
 
   describe('Persistence', () => {
@@ -184,7 +185,7 @@ describe('Database', () => {
       const db = new Database(datastore, { dispatcher, network, eventBus })
 
       const id = ThreadID.fromRandom(ThreadID.Variant.Raw, 32)
-      await db.open({ threadID: id })
+      await db.start(await Database.randomIdentity(), { threadID: id })
 
       await db.newCollectionFromObject<DummyInstance>('dummy', {
         _id: '',
@@ -193,7 +194,7 @@ describe('Database', () => {
       })
       // Re-do again to re-use id. If something wasn't closed correctly, would fail
       await db.close() // Closes eventBus and datastore
-      await db.open({ threadID: id })
+      await db.start(await Database.randomIdentity(), { threadID: id })
       expect(db.collections.size).to.equal(1)
       await db.close()
     })
@@ -327,7 +328,7 @@ describe('Database', () => {
       const store = new MemoryDatastore()
       const db = new Database(store)
       const threadID = ThreadID.fromRandom()
-      await db.open({ threadID })
+      await db.start(await Database.randomIdentity(), { threadID })
       const info = await db.getInfo()
       expect(info?.addrs?.size).to.be.greaterThan(1)
       expect(info?.key).to.not.be.undefined
@@ -346,12 +347,13 @@ describe('Database', () => {
     it('should throw if our database and thread id do not match', async function () {
       const store = new MemoryDatastore()
       let db = new Database(store)
-      await db.open({ threadID: ThreadID.fromRandom() })
+      const ident = await Database.randomIdentity()
+      await db.start(ident, { threadID: ThreadID.fromRandom() })
       await db.close()
       // Now 'reopen' the database
       db = new Database(store)
       try {
-        await db.open({ threadID: ThreadID.fromRandom() })
+        await db.start(ident, { threadID: ThreadID.fromRandom() })
         throw new Error('should have throw')
       } catch (err) {
         expect(err).to.equal(mismatchError)

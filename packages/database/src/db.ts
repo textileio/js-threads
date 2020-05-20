@@ -24,9 +24,10 @@ const schemaKey = metaKey.child(new Key('schema'))
 const duplicateCollection = new Error('Duplicate collection')
 
 export const mismatchError = new Error(
-  `Input ThreadID does not match database ThreadID.
-  Consider creating new database or use a matching ThreadID.
-  Leave ThreadID blank to use default.`,
+  'Input ThreadID does not match existing database ThreadID. Consider creating new database or use a matching ThreadID.',
+)
+export const missingIdentity = new Error(
+  'Identity required. You may use Database.randomIdentity() to generate a new one, but see caveats in docs.',
 )
 
 /**
@@ -60,13 +61,6 @@ export interface StartOptions {
    * An array of Collection Config objects to use when initializing the Database
    */
   collections?: Config[]
-  /**
-   * An optional identity to use for creating records in the database. If an identity is not
-   * provided, a random PKI identity is used. This might not be what you want!
-   * It is not easy/possible to migrate identities after the fact. Please supply an identity
-   * argument if you wish to persist/retrieve user data later.
-   */
-  identity?: Identity
   /**
    * The ID of the Thread to use for this database. If specified for a new database,
    * a Thread with the given ID will be used to orchestrate the database. If accessing an existing
@@ -125,29 +119,6 @@ export class Database extends EventEmitter2 implements DatabaseSettings {
       new EventBus(new DomainDatastore(this.child, new Key('eventbus')), this.network)
   }
 
-  /**
-   * fromAddress creates a new database from a thread hosted by another peer.
-   * Unlike the Database constructor, this will auto-start the database and begin pulling from the underlying Thread.
-   * @param addr The address for the thread with which to connect.
-   * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
-   * @param datastore The primary datastore or a name for a datastore.
-   * @param threadKey Set of symmetric keys.
-   * @param options A set of database options.
-   */
-  static async fromAddress(
-    addr: Multiaddr,
-    datastore: Datastore<any> | string,
-    threadKey?: ThreadKey,
-    options: Partial<DatabaseSettings> & StartOptions = {},
-  ) {
-    const db = new Database(datastore, options)
-    // Grab token,if our client already has a token, we'll just pull the cached value here.
-    await db.network.getToken(db.network.identity ?? (await Libp2pCryptoIdentity.fromRandom()))
-    const info = await db.network.addThread(addr, { threadKey })
-    await db.open({ ...options, threadID: info.id })
-    return db
-  }
-
   @Cache({ duration: 1800000 })
   async ownLogInfo(): Promise<LogInfo | undefined> {
     return this.threadID && this.network.getOwnLog(this.threadID, false)
@@ -170,9 +141,6 @@ export class Database extends EventEmitter2 implements DatabaseSettings {
    * @param schema A valid JSON schema object.
    */
   async newCollection<T extends Instance>(name: string, schema: JSONSchema) {
-    if (!this.threadID?.isDefined()) {
-      await this.open()
-    }
     if (this.collections.has(name)) {
       throw duplicateCollection
     }
@@ -190,16 +158,61 @@ export class Database extends EventEmitter2 implements DatabaseSettings {
   }
 
   /**
+   * Open (and sync) a remote database.
+   * Opens the underlying datastore if not already open, and enables the dispatcher and
+   * underlying services (event bus, network network, etc). This method will also begin pulling
+   * from the underlying remote Thread. Only one of `start` or `startFromAddress` should be used.
+   * @param identity An identity to use for creating records in the database. A random identity
+   * can be created with `Database.randomIdentity()`, however, it is not easy/possible to migrate
+   * identities after the fact. Please store or otherwise persist any identity information
+   * if you wish to retrieve user data later, or use an external identity provider.
+   * @param addr The address for the thread with which to connect.
+   * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
+   * @param threadKey Set of symmetric keys.
+   * @param opts A set of options to configure the setup and usage of the underlying database.
+   */
+  async startFromAddress(
+    identity: Identity,
+    addr: Multiaddr,
+    threadKey?: ThreadKey,
+    opts: StartOptions = {},
+  ) {
+    if (identity === undefined) {
+      throw missingIdentity
+    }
+    await this.network.getToken(identity)
+    await this.child.open()
+    const idKey = metaKey.child(new Key('threadid'))
+    const hasExisting = await this.child.has(idKey)
+    if (hasExisting) {
+      throw mismatchError
+    }
+    const info = await this.network.addThread(addr, { threadKey })
+    await this.child.put(idKey, info.id.toBytes())
+    this.threadID = info.id
+    for (const { name, schema } of (opts.collections || []).values()) {
+      await this.newCollection(name, schema)
+    }
+    await this.eventBus.start(this.threadID)
+    this.eventBus.on('record', this.onRecord.bind(this))
+    if (this.threadID) this.network.pullThread(this.threadID) // Don't await
+  }
+
+  /**
    * Open the database.
    * Opens the underlying datastore if not already open, and enables the dispatcher and
    * underlying services (event bus, network network, etc).
+   * @param identity An identity to use for creating records in the database. A random identity
+   * can be created with `Database.randomIdentity()`, however, it is not easy/possible to migrate
+   * identities after the fact. Please store or otherwise persist any identity information
+   * if you wish to retrieve user data later, or use an external identity provider.
    * @param opts A set of options to configure the setup and usage of the underlying database.
    */
-  async open(opts: StartOptions = {}) {
-    // If no identity here, try to use network layer, if not create new random one.
-    await this.network.getToken(
-      opts.identity ?? this.network.identity ?? (await Libp2pCryptoIdentity.fromRandom()),
-    )
+  async start(identity: Identity, opts: StartOptions = {}) {
+    if (identity === undefined) {
+      throw missingIdentity
+    }
+    await this.network.getToken(identity)
     await this.child.open()
     const idKey = metaKey.child(new Key('threadid'))
     const hasExisting = await this.child.has(idKey)
@@ -308,5 +321,12 @@ export class Database extends EventEmitter2 implements DatabaseSettings {
     for await (const { key, value } of it) {
       await this.newCollection(key.name(), cbor.decode(value) as JSONSchema)
     }
+  }
+
+  /**
+   * Create a random user identity.
+   */
+  static async randomIdentity() {
+    return Libp2pCryptoIdentity.fromRandom()
   }
 }

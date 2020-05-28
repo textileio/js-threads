@@ -52,8 +52,8 @@ export class Client {
    * Assumes all default gRPC setttings. For custimization options, use a context object directly.
    * @param auth The user auth object.
    */
-  static withUserAuth(auth: UserAuth, host = defaultHost) {
-    const context = Context.fromUserAuth(auth, host)
+  static withUserAuth(auth: UserAuth, host = defaultHost, debug = false) {
+    const context = Context.fromUserAuth(auth, host, debug)
     return new Client(context)
   }
 

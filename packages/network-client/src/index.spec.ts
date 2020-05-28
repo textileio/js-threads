@@ -2,7 +2,7 @@
 // Some hackery to get WebSocket in the global namespace on nodejs
 ;(global as any).WebSocket = require('isomorphic-ws')
 
-import { randomBytes, keys } from 'libp2p-crypto'
+import { randomBytes, keys } from '@textile/threads-crypto'
 import { expect } from 'chai'
 import PeerId from 'peer-id'
 import {
@@ -145,7 +145,7 @@ describe('Network Client...', () => {
         pubKey: identity.public,
       })
       const cid1 = await record.value.cid()
-      const logID = await PeerId.createFromPubKey(logPk.bytes)
+      const logID = await PeerId.createFromPubKey(Buffer.from(logPk.bytes))
       await client.addRecord(info.id, logID, record)
       const record2 = await client.getRecord(info.id, cid1)
       if (!record2) {

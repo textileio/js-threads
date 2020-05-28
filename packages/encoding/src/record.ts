@@ -59,13 +59,13 @@ export async function createRecord(
   logger.debug('creating record')
   const block = await data.value.cid()
   let payload = block.buffer
-  const pubKey = config.pubKey.bytes
+  const pubKey = Buffer.from(config.pubKey.bytes)
   if (config.prev && CID.isCID(config.prev)) {
     payload = Buffer.concat([payload, config.prev.buffer])
   } else {
     payload = pubKey
   }
-  const sig = await config.privKey.sign(payload)
+  const sig = Buffer.from(await config.privKey.sign(payload))
   const obj: RecordNode = {
     block,
     sig,

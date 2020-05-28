@@ -1,6 +1,6 @@
 import * as ed25519 from './ed25519'
 import { decodePublicKey, KeyType, decodePrivateKey } from './protos'
-import { PrivateKey } from './interfaces'
+import { PrivateKey, PublicKey } from './interfaces'
 
 /**
  * Exposes an interface to various cryptographic key generation routines.
@@ -48,7 +48,7 @@ export const unmarshalPublicKey = (buf: Uint8Array) => {
  * @param key public key.
  * @param type key type. Currently only ED25519 is supported.
  */
-export const marshalPublicKey = (key: PrivateKey, type: 'ED25519') => {
+export const marshalPublicKey = (key: PublicKey, type = 'ED25519') => {
   if (type !== 'ED25519') throw keyTypeError
   return key.bytes
 }
@@ -72,7 +72,7 @@ export const unmarshalPrivateKey = (buf: Uint8Array) => {
 }
 
 // Converts a private key object into a protobuf serialized private key
-export const marshalPrivateKey = (key: PrivateKey, type: 'ED25519') => {
+export const marshalPrivateKey = (key: PrivateKey, type = 'ED25519') => {
   if (type !== 'ED25519') throw keyTypeError
   return key.bytes
 }

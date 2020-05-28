@@ -1,5 +1,5 @@
 import CID from 'cids'
-import { PublicKey, PrivateKey } from 'libp2p-crypto'
+import { PublicKey, PrivateKey } from '@textile/threads-crypto'
 import PeerId from 'peer-id'
 import { Multiaddr } from '@textile/multiaddr'
 

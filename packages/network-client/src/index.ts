@@ -117,7 +117,7 @@ export class Client implements Network {
   async getToken(identity: Identity, ctx?: ContextInterface) {
     return this.getTokenChallenge(
       identity.public.toString(),
-      async (challenge: Buffer) => {
+      async (challenge: Uint8Array) => {
         return identity.sign(challenge)
       },
       ctx,
@@ -138,7 +138,7 @@ export class Client implements Network {
    */
   async getTokenChallenge(
     publicKey: string,
-    callback: (challenge: Buffer) => Buffer | Promise<Buffer>,
+    callback: (challenge: Uint8Array) => Uint8Array | Promise<Uint8Array>,
     ctx?: ContextInterface,
   ) {
     const client = grpc.client<pb.GetTokenRequest, pb.GetTokenReply, APIGetToken>(API.GetToken, {
@@ -150,7 +150,7 @@ export class Client implements Network {
       let token = ''
       client.onMessage(async (message: pb.GetTokenReply) => {
         if (message.hasChallenge()) {
-          const challenge = Buffer.from(message.getChallenge() as string)
+          const challenge = message.getChallenge_asU8()
           const signature = await callback(challenge)
           const req = new pb.GetTokenRequest()
           req.setSignature(signature)
@@ -185,8 +185,7 @@ export class Client implements Network {
     logger.debug('making get host ID request')
     const req = new pb.GetHostIDRequest()
     const res: pb.GetHostIDReply = await this.unary(API.GetHostID, req, ctx)
-    const peerID = res.getPeerid() as string
-    return PeerId.createFromBytes(Buffer.from(peerID, 'base64'))
+    return PeerId.createFromBytes(Buffer.from(res.getPeerid_asU8()))
   }
 
   /**
@@ -275,9 +274,7 @@ export class Client implements Network {
     req.setThreadid(id.toBytes())
     req.setAddr(addr.buffer)
     const res: pb.AddReplicatorReply = await this.unary(API.AddReplicator, req, ctx)
-    const peerID = res.getPeerid() as string
-    const rawId = Buffer.from(peerID, 'base64')
-    return PeerId.createFromBytes(rawId)
+    return PeerId.createFromBytes(Buffer.from(res.getPeerid_asU8()))
   }
 
   /**
@@ -360,9 +357,8 @@ export class Client implements Network {
         return cb(undefined, err)
       }
       const proto = reply.toObject()
-      const id = ThreadID.fromBytes(Buffer.from(proto.threadid as string, 'base64'))
-      const rawID = Buffer.from(proto.logid as string, 'base64')
-      const logID = PeerId.createFromBytes(rawID)
+      const id = ThreadID.fromBytes(Buffer.from(reply.getThreadid_asU8()))
+      const logID = PeerId.createFromBytes(Buffer.from(reply.getLogid_asU8()))
       if (!keys.has(id)) {
         const info = await this.getThread(id, ctx)
         keys.set(id, info.key?.service)

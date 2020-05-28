@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { randomBytes, keys } from 'libp2p-crypto'
+import { randomBytes, keys } from '@textile/threads-crypto'
 import { Block, EventHeader, RecordNode } from '@textile/threads-core'
 import { defaultOptions, decodeBlock } from './coding'
 import { createEvent } from './event'
@@ -29,7 +29,7 @@ describe('Encoding...', () => {
 
   describe('Record...', () => {
     it('should encode and encrypt a log record', async () => {
-      const privKey = await keys.generateKeyPair('Ed25519', 256)
+      const privKey = await keys.generateKeyPair('Ed25519', 32)
       const body = Block.encoder(raw, defaultOptions.codec)
       const event = await createEvent(body, readKey)
       // We just use the public key from the private key here for testing

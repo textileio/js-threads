@@ -1,4 +1,4 @@
-import { keys, PrivateKey, PublicKey, randomBytes } from 'libp2p-crypto'
+import { keys, PrivateKey, PublicKey, randomBytes } from '@textile/threads-crypto'
 import CID from 'cids'
 import log from 'loglevel'
 import {
@@ -82,7 +82,7 @@ export class Network implements Interface {
     }
     const info: ThreadInfo = await this.client.createThread(id, newOpts)
     // Now we want to store or create read key
-    info.key = new ThreadKey(threadKey.service, threadKey.read || randomBytes(32))
+    info.key = new ThreadKey(threadKey.service, Buffer.from(threadKey.read || randomBytes(32)))
     logger.debug('caching thread + log information')
     await this.store.addThread(info)
     await this.store.addLog(id, logInfo)
@@ -233,7 +233,7 @@ export class Network implements Interface {
       pubKey = key as PublicKey
     }
     const info: LogInfo = {
-      id: await PeerId.createFromPubKey(pubKey.bytes),
+      id: await PeerId.createFromPubKey(Buffer.from(pubKey.bytes)),
       privKey,
       pubKey,
     }

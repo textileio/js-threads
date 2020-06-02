@@ -1,14 +1,15 @@
 import CID from 'cids'
 import { PublicKey, PrivateKey } from '@textile/threads-crypto'
-import PeerId from 'peer-id'
 import { Multiaddr } from '@textile/multiaddr'
+import PeerId from 'peer-id'
 
-/**
- * LogID is a simple alias to PeerId for representing logs.
- */
 export type LogID = PeerId
+/**
+ * LogID represents a simplified PeerID used for tracking thread logs.
+ * It is a minimal implementation of PeerID useful mostly for marshaling and unmarshaling.
+ */
 // export class LogID {
-//   constructor() {}
+//   constructor(readonly private?: PrivateKey, readonly public?: PublicKey) {}
 //   static fromPrivKey(key: PrivateKey): LogID
 //   static fromPubKey(key: PublicKey): LogID
 //   static fromString(encoded: string) b58 default

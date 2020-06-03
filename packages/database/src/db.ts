@@ -97,6 +97,11 @@ export class Database implements DatabaseSettings {
 
   /**
    * The event emitter that can be used by subscribers to follow database updates.
+   * Event names are structured as <collection>.<id>.<type>, and they support 'wildcard'
+   * matching, so `emitter.many(['foo', '*', Op.Type.Delete], callback)` will match all
+   * delete operations on the 'foo' collection. Similarly, `emitter.on('foo.**', callback)` will
+   * match all event types on the 'foo' collection. To observe a given instance, try
+   * `emitter.on('foo.${instance._id}', callback)`. See EventEmitter2 docs for further details.
    */
   public emitter: EventEmitter2 = new EventEmitter2({ wildcard: true })
 

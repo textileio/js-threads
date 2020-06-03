@@ -56,7 +56,7 @@ async function runListenersComplexUseCase(los: string[]) {
   const events: Update[] = []
   // @todo: Should we wrap this in a 'listen' method instead?
   for (const name of los) {
-    db.on(name, (update: any) => {
+    db.emitter.on(name, (update: any) => {
       events.push(update)
     })
   }
@@ -95,7 +95,7 @@ async function runListenersComplexUseCase(los: string[]) {
   // Collection2 delete i2
   await Collection1.delete(i2._id)
 
-  db.removeAllListeners()
+  db.emitter.removeAllListeners()
   await db.close()
   // Expected generated actions:
   // Collection1 Save i1
@@ -115,10 +115,7 @@ describe('Database', () => {
     it('should allow paired peers to exchange updates', async function () {
       if (isBrowser) return this.skip() // Don't run in browser
       if (process.env.CI) return this.skip() // Don't run in CI (too slow)
-      // @todo This test is probably too slow for CI, but should run just fine locally
-      // Should probably just skip it (https://stackoverflow.com/a/48121978) in CI
       // Peer 1: Create db1, register a collection, create and update an instance.
-      // @note: No identity is supplied, so a random Ed25519 private key is used by default
       const d1 = new Database(new MemoryDatastore())
       const ident1 = await Database.randomIdentity()
       await d1.start(ident1)

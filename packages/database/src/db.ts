@@ -191,6 +191,7 @@ export class Database implements DatabaseSettings {
     if (hasExisting) {
       throw mismatchError
     }
+    // @todo: When adding a new thread, use identity for log key...
     const info = await this.network.addThread(addr, { threadKey })
     await this.child.put(idKey, info.id.toBytes())
     this.threadID = info.id
@@ -225,6 +226,7 @@ export class Database implements DatabaseSettings {
       if (hasExisting) {
         this.threadID = ThreadID.fromBytes(await this.child.get(idKey))
       } else {
+        // @todo: When creating a new thread, use identity for log key...
         const info = await createThread(this.network)
         await this.child.put(idKey, info.id.toBytes())
         this.threadID = info.id

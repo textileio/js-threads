@@ -152,17 +152,27 @@ describe('Database', () => {
         counter: 0,
       })
 
-      const dummy1 = new Dummy1({ name: 'Textile', counter: 0 })
+      const dummy1 = new Dummy1({ name: 'Textile1', counter: 0 })
       dummy1.counter += 42
       await dummy1.save()
 
-      await delay(2000)
+      await delay(1000)
       const dummy2 = await Dummy2.findById(dummy1._id)
       expect(dummy2.name).to.equal(dummy1.name)
       expect(dummy2.counter).to.equal(dummy1.counter)
+
+      // Now the other way around
+      dummy2.counter = 13
+      await Dummy2.save(dummy2)
+
+      await delay(1000)
+      const dummy3 = await Dummy1.findById(dummy2._id)
+      expect(dummy3.name).to.equal(dummy2.name)
+      expect(dummy3.counter).to.equal(dummy2.counter)
+
       await d1.close()
       await d2.close()
-    }).timeout(5000)
+    }).timeout(6000)
   })
 
   describe('Persistence', () => {

@@ -1,8 +1,9 @@
 import toJsonSchema from 'to-json-schema'
 import cbor from 'cbor-sync'
-import { Network, Client } from '@textile/threads-network'
+import { Network, Client, LogStore } from '@textile/threads-network'
 import { EventEmitter2 } from 'eventemitter2'
 import { Dispatcher, Instance, DomainDatastore, Event, Update, Op } from '@textile/threads-store'
+import { ContextInterface, Context, UserScope, defaultHost } from '@textile/context'
 import { Datastore, Key } from 'interface-datastore'
 import {
   ThreadID,
@@ -117,6 +118,18 @@ export class Database extends EventEmitter2 implements DatabaseSettings {
     this.eventBus =
       options.eventBus ??
       new EventBus(new DomainDatastore(this.child, new Key('eventbus')), this.network)
+  }
+
+  /**
+   * Create a new gRPC client instance from a supplied user auth object.
+   * Assumes all default gRPC setttings. For custimization options, use a context object directly.
+   * @param scope The user auth object.
+   */
+  static withScope(scope: UserScope, store: Datastore, host = defaultHost, debug = false) {
+    const context = Context.fromScope(scope, host, debug)
+    const client = new Client(context)
+    const network = new Network(store, client)
+    return new Database(store, { network })
   }
 
   @Cache({ duration: 1800000 })

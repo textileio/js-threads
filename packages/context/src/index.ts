@@ -33,7 +33,7 @@ export type KeyInfo = {
 /**
  * Type describing the minimal requirements for a user group auth session.
  */
-export type UserAuth = {
+export type UserScope = {
   /**
    * The public component of the user group key.
    */
@@ -242,15 +242,15 @@ export class Context implements ContextInterface {
     this._context['debug'] = debug
   }
 
-  static fromUserAuth(
-    auth: UserAuth,
+  static fromScope(
+    scope: UserScope,
     host: HostString = defaultHost,
     debug = false,
     transport: grpc.TransportFactory = grpc.WebsocketTransport(),
   ) {
     const ctx = new Context(host, debug, transport)
-    const { key, token, ...sig } = auth
-    return ctx.withAPIKey(auth.key).withAPISig(sig).withToken(token)
+    const { key, token, ...sig } = scope
+    return ctx.withAPIKey(scope.key).withAPISig(sig).withToken(token)
   }
 
   get host() {

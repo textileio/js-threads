@@ -25,9 +25,9 @@ describe('Context', () => {
     validJson = context.toJSON()
     expect(validJson).to.haveOwnProperty('x-textile-api-sig-msg', validMsg)
   })
-  it('should not throw when creating fromUserAuth', async () => {
+  it('should not throw when creating fromScope', async () => {
     const msg = new Date(Date.now() + 1000 * 60).toUTCString()
-    const context = Context.fromUserAuth({
+    const context = Context.fromScope({
       sig: 'fake',
       msg,
       token: 'fake',

@@ -10,7 +10,7 @@ import { Identity, Libp2pCryptoIdentity } from '@textile/threads-core'
 import { Multiaddr } from '@textile/multiaddr'
 import { ThreadID } from '@textile/threads-id'
 import toJsonSchema from 'to-json-schema'
-import { ContextInterface, Context, UserAuth, defaultHost } from '@textile/context'
+import { ContextInterface, Context, UserScope, defaultHost } from '@textile/context'
 import { encode, decode } from 'bs58'
 import {
   QueryJSON,
@@ -57,10 +57,10 @@ export class Client {
   /**
    * Create a new gRPC client instance from a supplied user auth object.
    * Assumes all default gRPC setttings. For custimization options, use a context object directly.
-   * @param auth The user auth object.
+   * @param scope The user auth object.
    */
-  static withUserAuth(auth: UserAuth, host = defaultHost, debug = false) {
-    const context = Context.fromUserAuth(auth, host, debug)
+  static withScope(scope: UserScope, host = defaultHost, debug = false) {
+    const context = Context.fromScope(scope, host, debug)
     return new Client(context)
   }
 

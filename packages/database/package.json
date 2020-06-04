@@ -13,6 +13,9 @@
   "license": "MIT",
   "references": [
     {
+      "path": "../context"
+    },
+    {
       "path": "../core"
     },
     {
@@ -34,9 +37,10 @@
     "build:browser": "webpack --mode production --config ../../webpack.config.js",
     "compile": "tsc -b tsconfig.json",
     "clean": "rimraf ./dist ./tsconfig.tsbuildinfo",
-    "test:browser": "npx polendina --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js"
+    "test:browser": "npx polendina --timeout 60 src/**/common.spec.ts --webpack-config ../../webpack.test.js"
   },
   "dependencies": {
+    "@textile/context": "^0.4.1",
     "@textile/threads-core": "^0.1.13",
     "@textile/threads-encoding": "^0.1.13",
     "@textile/threads-network": "^0.3.6",

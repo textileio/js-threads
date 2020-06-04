@@ -2,11 +2,9 @@
 // Some hackery to get WebSocket in the global namespace on nodejs
 ;(global as any).WebSocket = require('isomorphic-ws')
 
-import { randomBytes } from 'libp2p-crypto'
 import { expect } from 'chai'
 import nextTick from 'next-tick'
-import PeerId from 'peer-id'
-import { keys } from 'libp2p-crypto'
+import { randomBytes, keys } from '@textile/threads-crypto'
 import {
   ThreadID,
   ThreadInfo,
@@ -15,6 +13,7 @@ import {
   Multiaddr,
   ThreadKey,
   Libp2pCryptoIdentity,
+  LogID,
 } from '@textile/threads-core'
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Context } from '@textile/context'
@@ -32,8 +31,8 @@ async function createThread(client: Network) {
   return client.createThread(id, { threadKey })
 }
 
-function threadAddr(hostAddr: Multiaddr, hostID: PeerId, info: ThreadInfo) {
-  const pa = new Multiaddr(`/p2p/${hostID.toB58String()}`)
+function threadAddr(hostAddr: Multiaddr, hostID: string, info: ThreadInfo) {
+  const pa = new Multiaddr(`/p2p/${hostID}`)
   const ta = new Multiaddr(`/thread/${info.id.toString()}`)
   return hostAddr.encapsulate(pa.encapsulate(ta)) as any
 }
@@ -49,7 +48,7 @@ describe('Network...', () => {
   describe('Basic...', () => {
     it('should return a remote host peer id', async () => {
       const id = await client.getHostID()
-      expect(PeerId.isPeerId(id)).to.be.true
+      expect(id.length).to.be.greaterThan(41)
     })
 
     it('should create a remote thread', async () => {
@@ -116,7 +115,7 @@ describe('Network...', () => {
       const peerAddr = hostAddr2.encapsulate(new Multiaddr(`/p2p/${hostID2}`))
 
       const pid = await client.addReplicator(info1.id, peerAddr)
-      expect(pid.toB58String()).to.equal(hostID2.toB58String())
+      expect(pid).to.equal(hostID2)
     })
 
     it('should create a new record', async () => {
@@ -152,7 +151,7 @@ describe('Network...', () => {
         pubKey: logKey,
       })
       const cid1 = await record.value.cid()
-      const logID = await PeerId.createFromPubKey(privKey.public.bytes)
+      const logID = await LogID.fromPublicKey(privKey.public)
       await client.addRecord(info.id, logID, record)
       const record2 = await client.getRecord(info.id, cid1)
       if (!record2) {

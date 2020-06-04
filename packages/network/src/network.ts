@@ -19,7 +19,6 @@ import {
 import { createEvent, createRecord } from '@textile/threads-encoding'
 import { Client } from '@textile/threads-network-client'
 import { Datastore } from 'interface-datastore'
-import PeerId from 'peer-id'
 import { LogStore } from './store'
 
 const logger = log.getLogger('network')
@@ -60,7 +59,7 @@ export class Network implements Interface {
   /**
    * getHostID returns the network's (remote) host peer ID.
    */
-  async getHostID(): Promise<PeerId> {
+  async getHostID(): Promise<string> {
     return this.client.getHostID()
   }
 
@@ -149,7 +148,7 @@ export class Network implements Interface {
    * @param id The Thread ID.
    * @param addr The multiaddress of the replicator peer.
    */
-  async addReplicator(id: ThreadID, addr: Multiaddr): Promise<PeerId> {
+  async addReplicator(id: ThreadID, addr: Multiaddr): Promise<string> {
     return this.client.addReplicator(id, addr)
   }
 
@@ -233,7 +232,7 @@ export class Network implements Interface {
       pubKey = key as PublicKey
     }
     const info: LogInfo = {
-      id: await PeerId.createFromPubKey(Buffer.from(pubKey.bytes)),
+      id: await LogID.fromPublicKey(pubKey),
       privKey,
       pubKey,
     }

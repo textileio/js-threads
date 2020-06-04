@@ -2,7 +2,6 @@
 import { expect } from 'chai'
 import { MemoryDatastore } from 'interface-datastore'
 import { LogID, ThreadID } from '@textile/threads-core'
-import PeerId from 'peer-id'
 import { keys, PrivateKey } from '@textile/threads-crypto'
 import { KeyBook } from './keybook'
 
@@ -21,7 +20,7 @@ describe('KeyBook', () => {
     const privKey: PrivateKey = await keys.generateKeyPair('Ed25519')
     expect(privKey).to.not.be.undefined
 
-    log = await PeerId.createFromPrivKey(Buffer.from(privKey.bytes))
+    log = await LogID.fromPrivateKey(privKey)
 
     // No privkey exists yet
     const key = await kb.privKey(tid, log)
@@ -44,7 +43,7 @@ describe('KeyBook', () => {
     const privKey: PrivateKey = await keys.generateKeyPair('Ed25519')
     expect(privKey).to.not.be.undefined
 
-    log = await PeerId.createFromPubKey(Buffer.from(privKey.public.bytes))
+    log = await LogID.fromPublicKey(privKey.public)
 
     // No pubKey exists yet
     const key = await kb.pubKey(tid, log)
@@ -97,7 +96,7 @@ describe('KeyBook', () => {
 
   it('clear keys', async () => {
     const privKey: PrivateKey = await keys.generateKeyPair('Ed25519')
-    log = await PeerId.createFromPubKey(Buffer.from(privKey.public.bytes))
+    log = await LogID.fromPublicKey(privKey.public)
     await kb.addPubKey(tid, log, privKey.public)
 
     const keyBefore = await kb.pubKey(tid, log)

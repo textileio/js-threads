@@ -1,7 +1,7 @@
 import CID from 'cids'
-import PeerId from 'peer-id'
 import { ThreadID } from '@textile/threads-id'
 import { Block } from '../ipld'
+import { LogID } from '../thread'
 import { Event } from './event'
 
 /**
@@ -60,5 +60,5 @@ export interface ThreadRecord {
   /**
    * To Log to which this record belongs.
    */
-  logID: PeerId
+  logID: LogID
 }

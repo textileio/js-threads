@@ -1,11 +1,11 @@
 import { grpc } from '@improbable-eng/grpc-web'
 import CID from 'cids'
-import PeerId from 'peer-id'
 import { keys } from 'libp2p-crypto'
 import log from 'loglevel'
 import {
   ThreadID,
   LogID,
+  PeerId,
   ThreadInfo,
   NewThreadOptions,
   LogInfo,
@@ -37,7 +37,7 @@ function getThreadKeys(opts: NewThreadOptions) {
 function threadRecordFromProto(proto: pb.NewRecordReply.AsObject, key: ThreadKey) {
   const threadID = ThreadID.fromBytes(Buffer.from(proto.threadid as string, 'base64'))
   const rawID = Buffer.from(proto.logid as string, 'base64')
-  const logID = PeerId.createFromBytes(rawID)
+  const logID = LogID.fromBytes(rawID)
   const record = proto.record && recordFromProto(proto.record, key.service)
   const info: ThreadRecord = {
     record,
@@ -54,10 +54,9 @@ async function threadInfoFromProto(proto: pb.ThreadInfoReply.AsObject): Promise<
   const logs: Set<LogInfo> = new Set()
   for (const log of proto.logsList) {
     const rawId = Buffer.from(log.id as string, 'base64')
-    const pid = PeerId.createFromBytes(rawId)
-    // @todo: Currently it looks like private key unmarshaling isn't compatible between Go and JS?
-    // const pkBytes = Buffer.from(log.privkey as string)
-    // const privKey = await keys.unmarshalPrivateKey(pkBytes)
+    const pid = LogID.fromBytes(rawId)
+    const pkBytes = Buffer.from(log.privkey as string)
+    const privKey = await keys.unmarshalPrivateKey(pkBytes)
     const logInfo: LogInfo = {
       id: pid,
       addrs: new Set(
@@ -65,7 +64,7 @@ async function threadInfoFromProto(proto: pb.ThreadInfoReply.AsObject): Promise<
       ),
       head: log.head ? new CID(Buffer.from(log.head as string, 'base64')) : undefined,
       pubKey: keys.unmarshalPublicKey(Buffer.from(log.pubkey as string, 'base64')),
-      // privKey,
+      privKey,
     }
     logs.add(logInfo)
   }
@@ -185,7 +184,7 @@ export class Client implements Network {
     logger.debug('making get host ID request')
     const req = new pb.GetHostIDRequest()
     const res: pb.GetHostIDReply = await this.unary(API.GetHostID, req, ctx)
-    return PeerId.createFromBytes(Buffer.from(res.getPeerid_asU8()))
+    return PeerId.BytesToString(res.getPeerid_asU8())
   }
 
   /**
@@ -274,7 +273,7 @@ export class Client implements Network {
     req.setThreadid(id.toBytes())
     req.setAddr(addr.buffer)
     const res: pb.AddReplicatorReply = await this.unary(API.AddReplicator, req, ctx)
-    return PeerId.createFromBytes(Buffer.from(res.getPeerid_asU8()))
+    return PeerId.BytesToString(res.getPeerid_asU8())
   }
 
   /**
@@ -358,7 +357,7 @@ export class Client implements Network {
       }
       const proto = reply.toObject()
       const id = ThreadID.fromBytes(Buffer.from(reply.getThreadid_asU8()))
-      const logID = PeerId.createFromBytes(Buffer.from(reply.getLogid_asU8()))
+      const logID = LogID.fromBytes(Buffer.from(reply.getLogid_asU8()))
       if (!keys.has(id)) {
         const info = await this.getThread(id, ctx)
         keys.set(id, info.key?.service)

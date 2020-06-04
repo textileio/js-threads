@@ -2,7 +2,6 @@ import { Datastore, Key } from 'interface-datastore'
 import { NamespaceDatastore } from 'datastore-core'
 import { Closer, ThreadID, LogID } from '@textile/threads-core'
 import { keys, PrivateKey, PublicKey } from '@textile/threads-crypto'
-import PeerId from 'peer-id'
 
 /**
  * Public and private keys are stored under the following db key pattern:
@@ -45,10 +44,10 @@ export class KeyBook implements Closer {
    * @param pubKey The public key from a symmetric key pair.
    */
   async addPubKey(id: ThreadID, log: LogID, pubKey: PublicKey) {
-    const key = Buffer.from(pubKey.bytes)
-    if (!log.equals(await PeerId.createFromPubKey(key))) {
+    if (!log.equals(await LogID.fromPublicKey(pubKey))) {
       throw new Error('Public Key Mismatch')
     }
+    const key = Buffer.from(pubKey.bytes)
     return this.datastore.put(getKey(id, log, 'pub'), key)
   }
 
@@ -73,11 +72,11 @@ export class KeyBook implements Closer {
    * @param privKey The private key from a symmetric key pair.
    */
   async addPrivKey(id: ThreadID, log: LogID, privKey: PrivateKey) {
-    const key = Buffer.from(privKey.bytes)
-    const check = await PeerId.createFromPrivKey(key)
+    const check = await LogID.fromPrivateKey(privKey)
     if (!log.equals(check)) {
       throw new Error('Private Key Mismatch')
     }
+    const key = Buffer.from(privKey.bytes)
     return this.datastore.put(getKey(id, log, 'priv'), key)
   }
 
@@ -141,7 +140,7 @@ export class KeyBook implements Closer {
     const q = { keysOnly: true, prefix: id.toString() }
     for await (const { key } of this.datastore.query(q)) {
       if (['priv', 'pub'].includes(key.name())) {
-        const log = PeerId.createFromB58String(key.type())
+        const log = LogID.fromB58String(key.type())
         logs.add(log)
       }
     }

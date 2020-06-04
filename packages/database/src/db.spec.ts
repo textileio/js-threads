@@ -202,6 +202,123 @@ describe('Database', () => {
     })
   })
 
+  describe('Events', () => {
+    const assertEvents = (events: Update[], expected: Update[]) => {
+      expect(events).to.have.length(expected.length)
+      for (const i in events) {
+        expect(events[i]).to.deep.include(expected[i])
+      }
+    }
+
+    it('should listen to all db events', async () => {
+      const actions = await runListenersComplexUseCase(['**'])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Create, id: 'id-i2' },
+        { collection: 'Collection2', type: Op.Type.Create, id: 'id-j1' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i2' },
+        { collection: 'Collection2', type: Op.Type.Save, id: 'id-j1' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i1' },
+        { collection: 'Collection2', type: Op.Type.Delete, id: 'id-j1' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i2' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to events on collection 1 only', async () => {
+      const actions = await runListenersComplexUseCase(['Collection1.**'])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Create, id: 'id-i2' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i2' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i2' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to events on collection 2 only', async () => {
+      const actions = await runListenersComplexUseCase(['Collection2.**'])
+      const expected: Update[] = [
+        { collection: 'Collection2', type: Op.Type.Create, id: 'id-j1' },
+        { collection: 'Collection2', type: Op.Type.Save, id: 'id-j1' },
+        { collection: 'Collection2', type: Op.Type.Delete, id: 'id-j1' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to any create events', async () => {
+      const actions = await runListenersComplexUseCase([`**.${Op.Type.Create}`])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Create, id: 'id-i2' },
+        { collection: 'Collection2', type: Op.Type.Create, id: 'id-j1' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to any save events', async () => {
+      const actions = await runListenersComplexUseCase([`**.${Op.Type.Save}`])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i2' },
+        { collection: 'Collection2', type: Op.Type.Save, id: 'id-j1' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to any delete events', async () => {
+      const actions = await runListenersComplexUseCase([`**.${Op.Type.Delete}`])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i1' },
+        { collection: 'Collection2', type: Op.Type.Delete, id: 'id-j1' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i2' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to any collection1 events or delete events on collection2', async () => {
+      const actions = await runListenersComplexUseCase([
+        'Collection1.**',
+        `Collection2.*.${Op.Type.Delete}`,
+      ])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Create, id: 'id-i2' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i1' },
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i2' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i1' },
+        { collection: 'Collection2', type: Op.Type.Delete, id: 'id-j1' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i2' },
+      ]
+      assertEvents(actions, expected)
+    })
+
+    it('should not listen to any events for non-existant collections', async () => {
+      const actions = await runListenersComplexUseCase(['Collection3.**'])
+      const expected: Update[] = []
+      assertEvents(actions, expected)
+    })
+
+    it('should listen to various complex mixed event types', async () => {
+      const actions = await runListenersComplexUseCase([
+        `Collection2.*.${Op.Type.Save}`,
+        `Collection1.id-i2.${Op.Type.Save}`,
+        `Collection1.id-i1.${Op.Type.Delete}`,
+        `Collection2.id-j1.${Op.Type.Delete}`,
+      ])
+      const expected: Update[] = [
+        { collection: 'Collection1', type: Op.Type.Save, id: 'id-i2' },
+        { collection: 'Collection2', type: Op.Type.Save, id: 'id-j1' },
+        { collection: 'Collection1', type: Op.Type.Delete, id: 'id-i1' },
+        { collection: 'Collection2', type: Op.Type.Delete, id: 'id-j1' },
+      ]
+      assertEvents(actions, expected)
+    })
+  })
+
   describe('Basic', () => {
     const tmp = path.join(__dirname, './test.db')
     after(() => {
@@ -209,33 +326,6 @@ describe('Database', () => {
         return
       })
     })
-
-    it('start a functional db using withUserAuth', async () => {
-      const store = new MemoryDatastore()
-
-      // We'll just use a dummy auth here. Hub auth should be tested in @textile/hub
-      const auth: UserAuth = {
-        key: '',
-        sig: '',
-        msg: '',
-        token: '',
-      }
-      const db = Database.withUserAuth(auth, store, {}, 'http://localhost:6007')
-      const threadID = ThreadID.fromRandom()
-      await db.start(await Database.randomIdentity(), { threadID })
-
-      await db.newCollectionFromObject<DummyInstance>('dummy', {
-        _id: '',
-        name: '',
-        counter: 0,
-      })
-
-      const info = await db.getInfo()
-      expect(info?.addrs?.size).to.be.greaterThan(1)
-      expect(info?.key).to.not.be.undefined
-      await db.close()
-    })
-
     it('should return valid addrs and keys for sharing', async () => {
       const store = new MemoryDatastore()
       const db = new Database(store)
@@ -270,6 +360,32 @@ describe('Database', () => {
       } catch (err) {
         expect(err).to.equal(mismatchError)
       }
+      await db.close()
+    })
+
+    it('start a functional db using withUserAuth', async () => {
+      const store = new MemoryDatastore()
+
+      // We'll just use a dummy auth here. Hub auth should be tested in @textile/hub
+      const auth: UserAuth = {
+        key: '',
+        sig: '',
+        msg: '',
+        token: '',
+      }
+      const db = Database.withUserAuth(auth, store, {}, 'http://localhost:6007')
+      const threadID = ThreadID.fromRandom()
+      await db.start(await Database.randomIdentity(), { threadID })
+
+      await db.newCollectionFromObject<DummyInstance>('dummy', {
+        _id: '',
+        name: '',
+        counter: 0,
+      })
+
+      const info = await db.getInfo()
+      expect(info?.addrs?.size).to.be.greaterThan(1)
+      expect(info?.key).to.not.be.undefined
       await db.close()
     })
   })

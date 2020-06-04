@@ -368,10 +368,9 @@ describe('Database', () => {
 
       // We'll just use a dummy auth here. Hub auth should be tested in @textile/hub
       const auth: UserAuth = {
-        key: '<test>',
-        sig: '<test>',
+        key: '',
+        sig: '',
         msg: new Date(Date.now() + 1000 * 60).toUTCString(),
-        token: '<test>',
       }
       const db = Database.withUserAuth(auth, store, {}, 'http://localhost:6007')
       const threadID = ThreadID.fromRandom()

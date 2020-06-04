@@ -66,7 +66,7 @@ export class Client {
 
   /**
    * Create a new gRPC client instance from a supplied key and secret
-   * @param key The KeyInfo object containing {key: string, secret: string, type: 0}. 0 === Account Key, 1 === User Group Key
+   * @param key The KeyInfo object containing {key: string, secret: string, type: 0}. 0 === User Group Key, 1 === Account Key
    */
   static async withUserKey(key: KeyInfo, host = defaultHost, debug = false) {
     const context = new Context(host, debug)

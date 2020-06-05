@@ -1,4 +1,3 @@
-import { threadId } from 'worker_threads'
 import { grpc } from '@improbable-eng/grpc-web'
 import CID from 'cids'
 import { keys } from '@textile/threads-crypto'
@@ -370,6 +369,7 @@ export class Client implements Network {
       }
     }
     client.onMessage((message: pb.NewRecordReply) => {
+      console.log(Date.now())
       if (message.hasRecord()) {
         const threadID = ThreadID.fromBytes(message.getThreadid_asU8())
         const logID = LogID.fromBytes(message.getLogid_asU8())
@@ -386,6 +386,7 @@ export class Client implements Network {
       }
     })
     client.onEnd((code: grpc.Code, message: string, _trailers: grpc.Metadata) => {
+      console.log(Date.now())
       client.close()
       if (code !== grpc.Code.OK) {
         cb(undefined, new Error(message))

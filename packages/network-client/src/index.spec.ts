@@ -37,12 +37,11 @@ function threadAddr(hostAddr: Multiaddr, hostID: string, info: ThreadInfo) {
 
 describe('Network Client...', () => {
   let client: Client
-  let token: string
   let identity: Identity
   before(async () => {
     client = new Client(new Context(proxyAddr1))
     identity = await Libp2pCryptoIdentity.fromRandom()
-    token = await client.getToken(identity)
+    await client.getToken(identity)
   })
   describe('Basic...', () => {
     it('should return a remote host peer id', async () => {
@@ -187,22 +186,26 @@ describe('Network Client...', () => {
 
       it('should handle updates and close cleanly', (done) => {
         let count = 0
+        let timeOne = 0
         const res = client2.subscribe(
           (rec?: ThreadRecord, err?: Error) => {
             expect(rec).to.not.be.undefined
             if (rec) count += 1
             if (err) throw new Error(`unexpected error: ${err.toString()}`)
             if (count >= 2) {
+              console.log(Date.now() - timeOne)
               res.close()
               done()
             }
           },
           [info.id],
         )
+        timeOne = Date.now()
         client.createRecord(info.id, { foo: 'bar1' }).then(() => {
           client.createRecord(info.id, { foo: 'bar2' })
         })
-      }).timeout(7000)
+        console.log('done')
+      }).timeout(3000)
     })
   })
 })

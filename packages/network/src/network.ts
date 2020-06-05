@@ -116,6 +116,7 @@ export class Network implements Interface {
    * @param id The Thread ID.
    */
   async getThread(id: ThreadID) {
+    console.log('getThread')
     const info = await this.client.getThread(id)
     // Merge local thread info with remote thread info
     const local = await this.store.threadInfo(id)
@@ -161,7 +162,7 @@ export class Network implements Interface {
     const block = Block.encoder(body, 'dag-cbor')
     const info = await this.getThread(id)
     // Get (or create a new set of) log keys
-    const logInfo = await this.getOwnLog(id, true)
+    const logInfo = await this.getOwnLog(info, true)
     if (info.key === undefined) throw new Error('Missing key info.')
     if (info.key.read === undefined) throw new Error('Missing network key.')
     const event = await createEvent(block, info.key.read)
@@ -245,13 +246,12 @@ export class Network implements Interface {
    * @param id
    * @param create
    */
-  async getOwnLog(id: ThreadID, create?: true): Promise<LogInfo>
-  async getOwnLog(id: ThreadID, create?: false): Promise<LogInfo | undefined>
-  async getOwnLog(id: ThreadID, create?: boolean): Promise<LogInfo | undefined> {
-    const info = await this.getThread(id)
+  async getOwnLog(info: ThreadInfo, create?: true): Promise<LogInfo>
+  async getOwnLog(info: ThreadInfo, create?: false): Promise<LogInfo | undefined>
+  async getOwnLog(info: ThreadInfo, create?: boolean): Promise<LogInfo | undefined> {
     const logs = info.logs || new Set()
     for (const log of logs.values()) {
-      const local = await this.store.logInfo(id, log.id)
+      const local = await this.store.logInfo(info.id, log.id)
       const merged = { ...log, ...local }
       if (merged.privKey) return merged
     }

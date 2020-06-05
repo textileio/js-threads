@@ -1,3 +1,4 @@
+import { threadId } from 'worker_threads'
 import { grpc } from '@improbable-eng/grpc-web'
 import CID from 'cids'
 import { keys } from '@textile/threads-crypto'
@@ -21,7 +22,7 @@ import {
 } from '@textile/threads-core'
 import { ContextInterface, Context } from '@textile/context'
 import * as pb from '@textile/threads-net-grpc/threadsnet_pb'
-import { API, APIGetToken } from '@textile/threads-net-grpc/threadsnet_pb_service'
+import { API, APIGetToken, APISubscribe } from '@textile/threads-net-grpc/threadsnet_pb_service'
 import { recordFromProto, recordToProto } from '@textile/threads-encoding'
 import nextTick from 'next-tick'
 
@@ -313,8 +314,7 @@ export class Client implements Network {
     record.setHeadernode(prec.headernode)
     record.setRecordnode(prec.recordnode)
     req.setRecord(record)
-    await this.unary(API.AddRecord, req, ctx)
-    return
+    return this.unary(API.AddRecord, req, ctx).then(() => undefined)
   }
 
   /**
@@ -349,48 +349,54 @@ export class Client implements Network {
   ): grpc.Request {
     logger.debug('making subscribe request')
     const ids = threads.map((thread) => thread.toBytes())
-    const request = new pb.SubscribeRequest()
-    request.setThreadidsList(ids)
-    const keys = new Map<ThreadID, Uint8Array | undefined>() // replicator key cache
-    const callback = async (reply?: pb.NewRecordReply, err?: Error) => {
-      if (!reply) {
-        return cb(undefined, err)
-      }
-      const proto = reply.toObject()
-      const id = ThreadID.fromBytes(Buffer.from(reply.getThreadid_asU8()))
-      const logID = LogID.fromBytes(Buffer.from(reply.getLogid_asU8()))
-      if (!keys.has(id)) {
-        const info = await this.getThread(id, ctx)
-        keys.set(id, info.key?.service)
-      }
-      const keyiv = keys.get(id)
-      if (!keyiv) return cb(undefined, new Error('Missing key'))
-      const record = proto.record && recordFromProto(proto.record, keyiv)
-      return cb(
-        {
-          record,
-          threadID: id,
-          logID,
-        },
-        err,
-      )
-    }
-    const creds = this.context.withContext(ctx)
-    const metadata = JSON.parse(JSON.stringify(creds))
-    return grpc.invoke(API.Subscribe, {
-      host: this.serviceHost,
-      transport: this.rpcOptions.transport,
-      debug: this.rpcOptions.debug,
-      metadata,
-      request,
-      onMessage: (rec: pb.NewRecordReply) => nextTick(() => callback(rec)),
-      onEnd: (status: grpc.Code, message: string, _trailers: grpc.Metadata) => {
-        if (status !== grpc.Code.OK) {
-          return nextTick(() => callback(undefined, new Error(message)))
-        }
-        return nextTick(() => callback())
+    const req = new pb.SubscribeRequest()
+    req.setThreadidsList(ids)
+    const keys: Map<ThreadID, Uint8Array | undefined> = new Map() // service key cache
+    const client = grpc.client<pb.SubscribeRequest, pb.NewRecordReply, APISubscribe>(
+      API.Subscribe,
+      {
+        host: this.serviceHost,
+        transport: this.rpcOptions.transport,
+        debug: this.rpcOptions.debug,
       },
+    )
+    const get = (threadID: ThreadID, logID: LogID, message: pb.NewRecordReply) => {
+      const keyiv = keys.get(threadID)
+      if (!keyiv) return cb(undefined, new Error('Missing service key'))
+      const rec = message.getRecord()
+      if (rec !== undefined) {
+        const record = recordFromProto(rec.toObject(), keyiv)
+        return cb({ record, threadID, logID })
+      }
+    }
+    client.onMessage((message: pb.NewRecordReply) => {
+      if (message.hasRecord()) {
+        const threadID = ThreadID.fromBytes(message.getThreadid_asU8())
+        const logID = LogID.fromBytes(message.getLogid_asU8())
+        if (!keys.has(threadID)) {
+          this.getThread(threadID, ctx).then((info) => {
+            keys.set(threadID, info.key?.service)
+            get(threadID, logID, message)
+          })
+        } else {
+          get(threadID, logID, message)
+        }
+      } else {
+        return cb(undefined, new Error('Missing record'))
+      }
     })
+    client.onEnd((code: grpc.Code, message: string, _trailers: grpc.Metadata) => {
+      client.close()
+      if (code !== grpc.Code.OK) {
+        cb(undefined, new Error(message))
+      } else {
+        cb()
+      }
+    })
+    const metadata = { ...this.context.toJSON(), ...ctx?.toJSON() }
+    client.start(metadata)
+    client.send(req)
+    return { close: () => client.finishSend() }
   }
 
   private unary<

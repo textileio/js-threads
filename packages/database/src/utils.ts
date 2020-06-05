@@ -8,7 +8,7 @@ import {
 } from '@textile/threads-core'
 import { Network } from '@textile/threads-network'
 import { decodeBlock } from '@textile/threads-encoding'
-import { keys, PublicKey, PrivateKey } from 'libp2p-crypto'
+import { keys, PrivateKey, PublicKey } from '@textile/threads-crypto'
 
 const ed25519 = keys.supportedKeys.ed25519
 

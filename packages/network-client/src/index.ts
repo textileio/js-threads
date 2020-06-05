@@ -1,6 +1,6 @@
 import { grpc } from '@improbable-eng/grpc-web'
 import CID from 'cids'
-import { keys } from 'libp2p-crypto'
+import { keys } from '@textile/threads-crypto'
 import log from 'loglevel'
 import {
   ThreadID,
@@ -19,7 +19,7 @@ import {
   Identity,
   Libp2pCryptoIdentity,
 } from '@textile/threads-core'
-import { ContextInterface, ContextKeys, Context } from '@textile/context'
+import { ContextInterface, Context } from '@textile/context'
 import * as pb from '@textile/threads-net-grpc/threadsnet_pb'
 import { API, APIGetToken } from '@textile/threads-net-grpc/threadsnet_pb_service'
 import { recordFromProto, recordToProto } from '@textile/threads-encoding'
@@ -55,8 +55,6 @@ async function threadInfoFromProto(proto: pb.ThreadInfoReply.AsObject): Promise<
   for (const log of proto.logsList) {
     const rawId = Buffer.from(log.id as string, 'base64')
     const pid = LogID.fromBytes(rawId)
-    const pkBytes = Buffer.from(log.privkey as string)
-    const privKey = await keys.unmarshalPrivateKey(pkBytes)
     const logInfo: LogInfo = {
       id: pid,
       addrs: new Set(
@@ -64,7 +62,10 @@ async function threadInfoFromProto(proto: pb.ThreadInfoReply.AsObject): Promise<
       ),
       head: log.head ? new CID(Buffer.from(log.head as string, 'base64')) : undefined,
       pubKey: keys.unmarshalPublicKey(Buffer.from(log.pubkey as string, 'base64')),
-      privKey,
+    }
+    if (log.privkey) {
+      const pkBytes = Buffer.from(log.privkey as string, 'base64')
+      logInfo.privKey = await keys.unmarshalPrivateKey(pkBytes)
     }
     logs.add(logInfo)
   }

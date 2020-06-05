@@ -37,6 +37,9 @@
   "references": [
     {
       "path": "../core"
+    },
+    {
+      "path": "../crypto"
     }
   ],
   "devDependencies": {

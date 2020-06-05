@@ -67,7 +67,7 @@ export class Ed25519PrivateKey implements PrivateKey {
     const full = new Uint8Array(this.privateKey.byteLength + this.publicKey.byteLength * 2)
     full.set(this.privateKey)
     full.set(this.publicKey, this.privateKey.byteLength)
-    // To match the output of libp2p-crypto, we also append redundant public key bytes
+    // @note To match the output of libp2p-crypto, we also append redundant public key bytes
     full.set(this.publicKey, this.privateKey.byteLength + this.publicKey.byteLength)
     return full
   }

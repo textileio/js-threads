@@ -4,13 +4,8 @@ import { PrivateKey, PublicKey } from './interfaces'
 
 /**
  * Exposes an interface to various cryptographic key generation routines.
- * Currently the 'RSA' and 'ed25519' types are supported, although ed25519 keys
- * support only signing and verification of messages. For encryption / decryption
- * support, RSA keys should be used.
- * Installing the libp2p-crypto-secp256k1 module adds support for the 'secp256k1'
- * type, which supports ECDSA signatures using the secp256k1 elliptic curve
- * popularized by Bitcoin. This module is not installed by default, and should be
- * explicitly depended on if your project requires secp256k1 support.
+ * Currently the 'ed25519' types are supported, although ed25519 keys
+ * support only signing and verification of messages.
  */
 
 export const keyTypeError = new Error('Unsupported key type.')

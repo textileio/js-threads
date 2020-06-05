@@ -49,6 +49,9 @@
     },
     {
       "path": "../context"
+    },
+    {
+      "path": "../crypto"
     }
   ],
   "devDependencies": {

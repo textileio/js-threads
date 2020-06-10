@@ -1,9 +1,21 @@
+/**
+ * Common types/methods for Textile security including authentication and authorization.
+ *
+ * All methods here should be imported directly from the @textile/hub library.
+ *
+ * @packageDocumentation
+ */
 import { HMAC } from 'fast-sha256'
 import multibase from 'multibase'
 
 /**
  * UserAuth is a type describing the minimal requirements create a session from a user group key. Generate with {@link createUserAuth}.
  * @public
+ * @example
+ * Import
+ * ```
+ * import {UserAuth} from '@textile/hub';
+ * ```
  * @param {string} key - API key. Can be embedded/shared within an app.
  * @param {string} sig - The signature of the authentication message.
  * @param {string} msg - The authentication message.
@@ -19,6 +31,11 @@ export type UserAuth = {
 /**
  * KeyInfo is a type that contains the API Secret. It should never be shared in insecure environments.
  * @public
+ * @example
+ * Import
+ * ```
+ * import {KeyInfo} from '@textile/hub';
+ * ```
  * @param {string} key - API key. Can be embedded/shared within an app.
  * @param {string} secret - User group/account secret. Should not be embedded/shared publicly.
  * @param {number} type - Key type. 0 of ACCOUNT or 1 of USER
@@ -54,6 +71,11 @@ export type APISig = {
  *
  * This function should NOT be used client-side, as it requires a key secret.
  * @public
+ * @example
+ * Import
+ * ```
+ * import {createAPISig} from '@textile/hub';
+ * ```
  * @param {string} secret - The key secret to generate the signature. See KeyInfo for details.
  * @param {Date} date - An optional future Date to use as signature message. Once `date` has passed, this
  * authorization signature and message will expire. Defaults to one minute from `Date.now`.
@@ -74,7 +96,7 @@ export const createAPISig = async (
  * Generate a UserAuth containing API key, signature, and message.
  *
  * The gRPC APIs will throw (or return an authorization error) if the message date has passed.
- * This function should NOT be used client-side, as it requires a key secret. The result does 
+ * This function should NOT be used client-side, as it requires a key secret. The result does
  * not contain the secret and therefor CAN be used client side.
  * @public
  * @example

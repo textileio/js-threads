@@ -1,7 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web'
-import { UserAuth, KeyInfo, expirationError } from '@textile/security'
-import { HMAC } from 'fast-sha256'
-import multibase from 'multibase'
+import { createAPISig, createUserAuth, UserAuth, KeyInfo, expirationError } from '@textile/security'
 
 /**
  * The set of host strings used by any gPRC clients.
@@ -13,27 +11,6 @@ export type HostString =
   | string
 export const defaultHost: HostString = 'https://api.textile.io:3447'
 
-/**
- * Generate an authorization signature and message.
- * By default, this will use a Date one minute from `Date.now` as the message. Subsequent calls to
- * the gRPC APIs will throw (or return an authorization error) if the message date has passed.
- * @note This function is provided for app developers, but it should NOT be used client-side,
- * as it requires a key secret.
- * @param secret The key secret to generate the signature. See KeyInfo for details.
- * @param date An optinal future Date to use as signature message. Once `date` has passed, this
- * authorization signature and message will expire. Defaults to one minute from `Date.now`.
- */
-export const createAPISig = async (
-  secret: string,
-  date: Date = new Date(Date.now() + 1000 * 60),
-) => {
-  const sec = multibase.decode(secret)
-  const msg = (date ?? new Date()).toISOString()
-  const hash = new HMAC(sec)
-  const mac = hash.update(Buffer.from(msg)).digest()
-  const sig = multibase.encode('base32', Buffer.from(mac)).toString()
-  return { sig, msg }
-}
 
 /**
  * Interface describing the set of default context keys.

@@ -1,23 +1,10 @@
+import { HMAC } from 'fast-sha256'
+import multibase from 'multibase'
 /**
- * Type describing the required shape of input user group/account keys.
- */
-export type KeyInfo = {
-  /**
-   * API key. Can be embedded/shared within an app.
-   */
-  key: string
-  /**
-   * User group/account secret. Should not be embedded/shared publicly.
-   */
-  secret: string
-  /**
-   * Key type. One of ACCOUNT or USER
-   */
-  type: 0 | 1
-}
-
-/**
- * Type describing the minimal requirements for a user group auth session.
+ * UserAuth is a type describing the minimal requirements create a session from a user group key
+ * @public
+ * @remarks
+ * See createUserAuth
  */
 export type UserAuth = {
   /**
@@ -38,6 +25,91 @@ export type UserAuth = {
   token?: string
 }
 
+/**
+ * KeyInfo is a type that contains the API Secret. It should never be shared in insecure environments.
+ * @public
+ */
+export type KeyInfo = {
+  /**
+   * API key. Can be embedded/shared within an app.
+   */
+  key: string
+  /**
+   * User group/account secret. Should not be embedded/shared publicly.
+   */
+  secret: string
+  /**
+   * Key type. One of ACCOUNT or USER
+   */
+  type: 0 | 1
+}
+
+/**
+ * createAPISig generates an authorization signature and message only.
+ * @public
+ * By default, this will use a Date one minute from `Date.now` as the message. Subsequent calls to
+ * the gRPC APIs will throw (or return an authorization error) if the message date has passed.
+ * @remarks This function is provided for app developers, but it should NOT be used client-side,
+ * as it requires a key secret.
+ * @param {string} secret - The key secret to generate the signature. See KeyInfo for details.
+ * @param {Date} date - An optional future Date to use as signature message. Once `date` has passed, this
+ * authorization signature and message will expire. Defaults to one minute from `Date.now`.
+ */
+export const createAPISig = async (
+  secret: string,
+  date: Date = new Date(Date.now() + 1000 * 60),
+) => {
+  const sec = multibase.decode(secret)
+  const msg = (date ?? new Date()).toISOString()
+  const hash = new HMAC(sec)
+  const mac = hash.update(Buffer.from(msg)).digest()
+  const sig = multibase.encode('base32', Buffer.from(mac)).toString()
+  return { sig, msg }
+}
+
+/**
+ * Generate a UserAuth containing API key, signature, and message.
+ * @public
+ * @example
+ * Create a new UserAuth
+ * ```
+ * import {createAPISig, Client, KeyInfo, UserAuth} from '@textile/hub';
+ *
+ * // The first step is to create a basic session with your user group keys. See KeyInfo type.
+ * const keyInfo: KeyInfo = {
+ *   key: USER_API_KEY,
+ *   secret: USER_API_SECRET,
+ *   type: 0,
+ * }
+ * const db = await Client.withUserKey(keyInfo)
+ *
+ * // Create an expiration and create a signature. 60s or less is recommended.
+ * const expiration = new Date(Date.now() + 60 * seconds)
+ * const userAuth: UserAuth = await createUserAuth(USER_API_KEY, USER_API_SECRET, expiration)
+ * ```
+ * @remarks
+ * By default, this will use a Date one minute from `Date.now` as the message. Subsequent calls to
+ * the gRPC APIs will throw (or return an authorization error) if the message date has passed.
+ * This function is provided for app developers, but it should NOT be used client-side,
+ * as it requires a key secret. The result does not contain the secret and therefor CAN be used client side.
+ * @param {string} key - The API key secret to generate the signature. See KeyInfo for details.
+ * @param {string} secret - The API key secret to generate the signature. See KeyInfo for details.
+ * @param {Date} date - An optional future Date to use as signature message. Once `date` has passed, this
+ * authorization signature and message will expire. Defaults to one minute from `Date.now`.
+ */
+export const createUserAuth = async (
+  key: string,
+  secret: string,
+  date: Date = new Date(Date.now() + 1000 * 60),
+) => {
+  const partial = createAPISig(secret, date)
+  return { key, ...partial }
+}
+
+/**
+ * expirationError is an error your app will receive anytime your credentials have expired.
+ * @public
+ */
 export const expirationError = new Error(
-  'Context expired. Consider calling withUserKey or withAPISig to refresh.',
+  'Auth expired. Consider calling withUserKey or withAPISig to refresh.',
 )

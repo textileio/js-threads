@@ -4,7 +4,7 @@ import multibase from 'multibase'
  * UserAuth is a type describing the minimal requirements create a session from a user group key
  * @public
  * @remarks
- * See createUserAuth
+ * See {@link createUserAuth}
  */
 export type UserAuth = {
   /**
@@ -58,7 +58,7 @@ export type KeyInfo = {
 export const createAPISig = async (
   secret: string,
   date: Date = new Date(Date.now() + 1000 * 60),
-) => {
+): Promise<{sig: string, msg: string}> => {
   const sec = multibase.decode(secret)
   const msg = (date ?? new Date()).toISOString()
   const hash = new HMAC(sec)
@@ -95,15 +95,20 @@ export const createAPISig = async (
  * @param {string} key - The API key secret to generate the signature. See KeyInfo for details.
  * @param {string} secret - The API key secret to generate the signature. See KeyInfo for details.
  * @param {Date} date - An optional future Date to use as signature message. Once `date` has passed, this
- * authorization signature and message will expire. Defaults to one minute from `Date.now`.
+ * @param {string} token - An optional user API token.
  */
 export const createUserAuth = async (
   key: string,
   secret: string,
   date: Date = new Date(Date.now() + 1000 * 60),
-) => {
-  const partial = createAPISig(secret, date)
-  return { key, ...partial }
+  token?: string,
+): Promise<UserAuth> => {
+  const partial = await createAPISig(secret, date)
+  return {
+    ...partial,
+    key,
+    token,
+  }
 }
 
 /**

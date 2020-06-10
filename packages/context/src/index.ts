@@ -1,5 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web'
-import { createAPISig, createUserAuth, UserAuth, KeyInfo, expirationError } from '@textile/security'
+import { createAPISig, UserAuth, KeyInfo, expirationError } from '@textile/security'
 
 /**
  * The set of host strings used by any gPRC clients.
@@ -10,7 +10,6 @@ export type HostString =
   | 'http://127.0.0.1:3007'
   | string
 export const defaultHost: HostString = 'https://api.textile.io:3447'
-
 
 /**
  * Interface describing the set of default context keys.

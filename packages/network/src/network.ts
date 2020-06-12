@@ -116,7 +116,6 @@ export class Network implements Interface {
    * @param id The Thread ID.
    */
   async getThread(id: ThreadID) {
-    console.log('getThread')
     const info = await this.client.getThread(id)
     // Merge local thread info with remote thread info
     const local = await this.store.threadInfo(id)

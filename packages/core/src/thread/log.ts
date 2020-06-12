@@ -1,7 +1,7 @@
 import CID from 'cids'
 import { PublicKey, PrivateKey, multihash, keys } from '@textile/threads-crypto'
 import { Multiaddr } from '@textile/multiaddr'
-import multibase, { name as Name } from 'multibase'
+import multibase from 'multibase'
 
 function areEqual(a: Uint8Array, b: Uint8Array) {
   if (a.byteLength !== b.byteLength) return false
@@ -31,7 +31,7 @@ const computeLogId = async (privKey?: PrivateKey, pubKey?: PublicKey) => {
 export class LogID {
   constructor(
     readonly id: Uint8Array,
-    public privKey?: PrivateKey,
+    readonly privKey?: PrivateKey,
     readonly pubKey: PublicKey | undefined = privKey?.public,
   ) {
     if (!(id instanceof Uint8Array)) {
@@ -42,8 +42,8 @@ export class LogID {
     }
   }
 
-  static async fromRandom() {
-    const key = await keys.generateKeyPair('Ed25519')
+  static async fromRandom(bytesLength?: number) {
+    const key = await keys.generateKeyPair('Ed25519', bytesLength)
     return computeLogId(key)
   }
 

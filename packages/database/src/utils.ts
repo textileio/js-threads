@@ -12,14 +12,14 @@ import { keys, PrivateKey, PublicKey } from '@textile/threads-crypto'
 
 const ed25519 = keys.supportedKeys.ed25519
 
-export function decodeRecord<T = any>(rec: ThreadRecord, info: ThreadInfo) {
+export async function decodeRecord<T = any>(rec: ThreadRecord, info: ThreadInfo) {
   if (!info.key || !rec.record) return // Don't have the right keys!
   const event = rec.record.block
   if (info.key.read === undefined) return
-  const decodedHeader = decodeBlock<EventHeader>(event.header, info.key.read)
+  const decodedHeader = await decodeBlock<EventHeader>(event.header, info.key.read)
   const header = decodedHeader.decodeUnsafe()
   if (!header.key) return
-  const decodedBody = decodeBlock<T>(event.body, header.key)
+  const decodedBody = await decodeBlock<T>(event.body, header.key)
   return decodedBody.decode()
 }
 

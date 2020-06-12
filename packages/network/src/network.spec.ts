@@ -203,7 +203,6 @@ describe('Network...', () => {
             if (rec) count += 1
             if (err) throw new Error(`unexpected error: ${err.toString()}`)
             if (count >= 2) {
-              console.log(Date.now() - timeOne)
               res.close()
               done()
             }
@@ -212,7 +211,6 @@ describe('Network...', () => {
         )
         timeOne = Date.now()
         client.createRecord(info.id, { foo: 'bar1' }).then(() => {
-          console.log(Date.now() - timeOne)
           client.createRecord(info.id, { foo: 'bar2' })
         })
       }).timeout(10000)

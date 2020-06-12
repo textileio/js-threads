@@ -34,11 +34,11 @@ function getThreadKeys(opts: NewThreadOptions) {
   return threadKeys
 }
 
-function threadRecordFromProto(proto: pb.NewRecordReply.AsObject, key: ThreadKey) {
+async function threadRecordFromProto(proto: pb.NewRecordReply.AsObject, key: ThreadKey) {
   const threadID = ThreadID.fromBytes(Buffer.from(proto.threadid as string, 'base64'))
   const rawID = Buffer.from(proto.logid as string, 'base64')
   const logID = LogID.fromBytes(rawID)
-  const record = proto.record && recordFromProto(proto.record, key.service)
+  const record = proto.record && (await recordFromProto(proto.record, key.service))
   const info: ThreadRecord = {
     record,
     threadID,
@@ -291,7 +291,7 @@ export class Client implements Network {
     req.setThreadid(id.toBytes())
     req.setBody(block)
     const res: pb.NewRecordReply = await this.unary(API.CreateRecord, req, ctx)
-    return info.key && threadRecordFromProto(res.toObject(), info.key)
+    return info.key && (await threadRecordFromProto(res.toObject(), info.key))
   }
 
   /**
@@ -364,12 +364,12 @@ export class Client implements Network {
       if (!keyiv) return cb(undefined, new Error('Missing service key'))
       const rec = message.getRecord()
       if (rec !== undefined) {
-        const record = recordFromProto(rec.toObject(), keyiv)
-        return cb({ record, threadID, logID })
+        recordFromProto(rec.toObject(), keyiv).then((record) => {
+          return cb({ record, threadID, logID })
+        })
       }
     }
     client.onMessage((message: pb.NewRecordReply) => {
-      console.log(Date.now())
       if (message.hasRecord()) {
         const threadID = ThreadID.fromBytes(message.getThreadid_asU8())
         const logID = LogID.fromBytes(message.getLogid_asU8())
@@ -386,7 +386,6 @@ export class Client implements Network {
       }
     })
     client.onEnd((code: grpc.Code, message: string, _trailers: grpc.Metadata) => {
-      console.log(Date.now())
       client.close()
       if (code !== grpc.Code.OK) {
         cb(undefined, new Error(message))

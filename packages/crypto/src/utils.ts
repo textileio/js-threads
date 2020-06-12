@@ -22,7 +22,7 @@ export function sha256Multihash(bytes: Uint8Array) {
 }
 
 export function ensureKey(key: Uint8Array, length: number) {
-  if (!(key instanceof Uint8Array) || key.length !== length)
-    throw new Error(`Key must be a Uint8Array (or Buffer) of length ${length}`)
+  if (!(key instanceof Uint8Array) || key.length < length)
+    throw new Error(`Key must be a Uint8Array (or Buffer) of length >= ${length}`)
   return key
 }

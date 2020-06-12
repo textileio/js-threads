@@ -186,26 +186,22 @@ describe('Network Client...', () => {
 
       it('should handle updates and close cleanly', (done) => {
         let count = 0
-        let timeOne = 0
         const res = client2.subscribe(
           (rec?: ThreadRecord, err?: Error) => {
             expect(rec).to.not.be.undefined
             if (rec) count += 1
             if (err) throw new Error(`unexpected error: ${err.toString()}`)
             if (count >= 2) {
-              console.log(Date.now() - timeOne)
               res.close()
               done()
             }
           },
           [info.id],
         )
-        timeOne = Date.now()
         client.createRecord(info.id, { foo: 'bar1' }).then(() => {
           client.createRecord(info.id, { foo: 'bar2' })
         })
-        console.log('done')
-      }).timeout(3000)
+      })
     })
   })
 })

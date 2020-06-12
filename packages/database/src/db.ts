@@ -322,7 +322,7 @@ export class Database implements DatabaseSettings {
       if (logInfo?.id.equals(rec.logID)) {
         return // Ignore our own events since DB already dispatches to DB reducers
       }
-      const value: Event | undefined = decodeRecord(rec, info)
+      const value: Event | undefined = await decodeRecord(rec, info)
       if (value !== undefined) {
         const collection = this.collections.get(value.collection)
         if (collection !== undefined) {

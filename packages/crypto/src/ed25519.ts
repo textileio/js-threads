@@ -1,6 +1,6 @@
 import multibase from 'multibase'
 import * as ed from 'noble-ed25519'
-import { encodePublicKey, encodePrivateKey, KeyType } from './protos'
+import { encodePublicKey, encodePrivateKey, KeyType } from './proto.keys'
 import { PublicKey, PrivateKey } from './interfaces'
 import { ensureKey, sha256Multihash } from './utils'
 

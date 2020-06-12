@@ -1,5 +1,5 @@
 import * as ed25519 from './ed25519'
-import { decodePublicKey, KeyType, decodePrivateKey } from './protos'
+import { decodePublicKey, KeyType, decodePrivateKey } from './proto.keys'
 import { PrivateKey, PublicKey } from './interfaces'
 
 /**

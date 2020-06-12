@@ -24,7 +24,7 @@ import {
   ReadTransaction,
 } from './models'
 
-export { Query, Where, WriteTransaction, ReadTransaction, Instance, QueryJSON, ThreadID }
+export { Query, Where, WriteTransaction, ReadTransaction, Instance, QueryJSON }
 
 export interface CollectionConfig {
   name: string

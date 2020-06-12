@@ -13,7 +13,7 @@
     "declaration": true,
     "sourceMap": true,
     "inlineSourceMap": false,
-    "inlineSources": true,
+    "inlineSources": false,
     "composite": true,
     "downlevelIteration": true,
     "strict": true,

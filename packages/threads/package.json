@@ -30,6 +30,7 @@
   "dependencies": {
     "@textile/security": "^0.1.2",
     "@textile/threads-client": "^0.6.5",
+    "@textile/threads-core": "^0.1.17",
     "@textile/threads-database": "^0.4.3",
     "@textile/threads-id": "^0.1.4",
     "@types/multibase": "^0.6.0",
@@ -41,6 +42,9 @@
   "references": [
     {
       "path": "../id"
+    },
+    {
+      "path": "../core"
     },
     {
       "path": "../security"

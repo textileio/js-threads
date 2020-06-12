@@ -20,8 +20,7 @@
     "build:browser": "webpack --mode production --config ../../webpack.config.js",
     "compile": "tsc -b tsconfig.json",
     "clean": "rimraf ./dist ./tsconfig.tsbuildinfo",
-    "test:browser": "polendina --cleanup --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js",
-    "test:docs": "typedoc --out temp && typescript-docs-verifier --input-files=`find temp -type f -name '**.md'`"
+    "test:browser": "polendina --cleanup --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js"
   },
   "repository": "github:textileio/js-threads",
   "references": [

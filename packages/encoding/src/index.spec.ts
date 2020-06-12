@@ -18,9 +18,9 @@ describe('Encoding...', () => {
       expect(obj).to.have.haveOwnProperty('value')
       expect(obj).to.have.haveOwnProperty('body')
       expect(obj).to.have.haveOwnProperty('header')
-      const decodedBody = decodeBlock(obj.body, key)
+      const decodedBody = await decodeBlock(obj.body, key)
       expect(decodedBody.decodeUnsafe()).to.deep.equal(raw)
-      const decodedHeader = decodeBlock<EventHeader>(obj.header, readKey)
+      const decodedHeader = await decodeBlock<EventHeader>(obj.header, readKey)
       const header = decodedHeader.decodeUnsafe()
       expect(header).to.haveOwnProperty('key')
       expect(header.key).to.deep.equal(key)
@@ -35,7 +35,7 @@ describe('Encoding...', () => {
       // We just use the public key from the private key here for testing
       const pubKey = privKey.public
       const { value } = await createRecord(event, { privKey, servKey: replicatorKey, pubKey })
-      const decoded = decodeBlock<RecordNode>(value, replicatorKey).decode()
+      const decoded = (await decodeBlock<RecordNode>(value, replicatorKey)).decode()
       expect(decoded.prev).to.be.undefined
       expect(decoded).to.haveOwnProperty('block')
       expect(decoded).to.haveOwnProperty('sig')

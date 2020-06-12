@@ -64,7 +64,6 @@
     "interface-datastore": "^0.8.0",
     "isomorphic-ws": "^4.0.1",
     "level": "^6.0.1",
-    "libp2p-crypto": "^0.17.3",
     "loglevel": "^1.6.6",
     "mingo": "^3.0.2",
     "streaming-iterables": "^4.1.2",

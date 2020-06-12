@@ -20,10 +20,10 @@ export async function createEvent(
 ) {
   logger.debug('creating event')
   const keyiv = Buffer.from(key || randomBytes(32))
-  const codedBody = encodeBlock(body, keyiv)
+  const codedBody = await encodeBlock(body, keyiv)
   const header: EventHeader = { key: keyiv }
   const eventHeader = Block.encoder(header, opts.codec, opts.algo)
-  const codedHeader = encodeBlock(eventHeader, readKey, opts)
+  const codedHeader = await encodeBlock(eventHeader, readKey, opts)
   // Encode to create the caches
   codedBody.encode()
   codedHeader.encode()

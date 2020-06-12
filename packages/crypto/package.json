@@ -16,7 +16,7 @@
     "prebuild": "npm run clean",
     "build": "npm run build:protos && npm run build:node && npm run build:browser",
     "build:node": "npm run compile",
-    "build:protos": "npx pbjs keys.proto --ts keys.proto.ts",
+    "build:protos": "npx pbjs src/keys.proto --ts src/proto.keys.ts",
     "build:browser": "webpack --mode production --config ../../webpack.config.js",
     "compile": "tsc -b tsconfig.json",
     "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"

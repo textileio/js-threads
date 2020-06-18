@@ -73,13 +73,6 @@ Want something specific? Take a look at our [contributor guide](#contributing) f
 npm install --save @textile/threads
 ```
 
-
-There are also a number of other recommended packages that will make working with Threads in Typescript/Javascript easier:
-
-```shell script
-npm i --save interface-datastore datastore-level buffer 
-```
-
 If you are running `js-threads` in an environment that does not support [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) by default (such as Node), be sure to include it explicitly using something like the following at the top of your script or module:
 
 ```javascript

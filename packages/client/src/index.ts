@@ -453,6 +453,8 @@ export class Client {
    * directly.
    * See `getDBInfo` for a possible source of the address and keys.
    * @param info The output from a call to getDBInfo on a separate peer.
+   * @param includeLocal Whether to try dialing addresses that appear to be on the local host.
+   * Defaults to false, preferring to add from public ip addresses.
    * @param collections Array of `name` and JSON schema pairs for seeding the DB with collections.
    */
   public async joinFromInfo(
@@ -482,7 +484,7 @@ export class Client {
       await this.unary(API.NewDBFromAddr, req)
       return
     }
-    throw new Error('Unable to add Thread/DB')
+    throw new Error('No viable addresses for dialing')
   }
 
   /**

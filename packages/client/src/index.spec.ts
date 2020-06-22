@@ -175,11 +175,12 @@ describe('Client', function () {
       identity = await Libp2pCryptoIdentity.fromRandom()
       await client2.getToken(identity)
     })
-    it('response should be defined and be an empty object', async () => {
+    it('response should contain a valid list of accessible thread protocol addrs', async () => {
       const info = await client.getDBInfo(dbID)
       await client2.joinFromInfo(info)
       const info2 = await client2.getDBInfo(dbID)
-      expect(info2).to.deep.equal(info)
+      expect(info2.addrs.length).to.be.greaterThan(1)
+      expect(info2.key).to.equal(info.key)
       // Now we should have it locally, so no need to add again
       try {
         await client2.newDBFromAddr(dbAddr, dbKey, [])

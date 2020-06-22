@@ -144,10 +144,10 @@ describe('Client', function () {
     it('response should be defined and be an array of strings', async () => {
       const invites = await client.getDBInfo(dbID)
       expect(invites).to.not.be.undefined
-      expect(invites[0].address).to.not.be.undefined
-      expect(invites[0].key).to.not.be.undefined
-      dbKey = invites[0].key
-      dbAddr = invites[0].address
+      expect(invites.addrs[0]).to.not.be.undefined
+      expect(invites.key).to.not.be.undefined
+      dbKey = invites.key
+      dbAddr = invites.addrs[0]
       expect(invites).to.not.be.empty
     })
   })
@@ -170,9 +170,19 @@ describe('Client', function () {
   })
 
   describe('.newDBFromAddr', () => {
+    const client2 = new Client(new Context('http://127.0.0.1:6207'))
+    before(async () => {
+      identity = await Libp2pCryptoIdentity.fromRandom()
+      await client2.getToken(identity)
+    })
     it('response should be defined and be an empty object', async () => {
+      const info = await client.getDBInfo(dbID)
+      await client2.joinFromInfo(info)
+      const info2 = await client2.getDBInfo(dbID)
+      expect(info2).to.deep.equal(info)
+      // Now we should have it locally, so no need to add again
       try {
-        await client.newDBFromAddr((dbAddr as unknown) as string, dbKey, [])
+        await client2.newDBFromAddr(dbAddr, dbKey, [])
       } catch (err) {
         // Expect this db to already exist on this peer
         expect(err.toString().endsWith('already exists')).to.be.true

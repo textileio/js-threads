@@ -141,7 +141,7 @@ describe('Client', function () {
   })
 
   describe('.getDBInfo', () => {
-    it('response should be defined and be an array of strings', async () => {
+    it('should return a valid db info object', async () => {
       const invites = await client.getDBInfo(dbID)
       expect(invites).to.not.be.undefined
       expect(invites.addrs[0]).to.not.be.undefined

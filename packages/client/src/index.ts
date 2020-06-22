@@ -496,7 +496,8 @@ export class Client {
     const req = new pb.GetDBInfoRequest()
     req.setDbid(threadID.toBytes())
     const res = (await this.unary(API.GetDBInfo, req)) as pb.GetDBInfoReply.AsObject
-    const key = ThreadKey.fromBytes(Buffer.from(res.key as string))
+    const threadKey = Buffer.from(res.key as string, 'base64')
+    const key = ThreadKey.fromBytes(threadKey)
     const addrs: string[] = []
     for (const addr of res.addrsList) {
       const a = typeof addr === 'string' ? Buffer.from(addr, 'base64') : Buffer.from(addr)

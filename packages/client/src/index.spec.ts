@@ -177,7 +177,12 @@ describe('Client', function () {
     })
     it('response should contain a valid list of accessible thread protocol addrs', async () => {
       const info = await client.getDBInfo(dbID)
-      await client2.joinFromInfo(info, true) // We include locals for this test
+      // Hack because we're in docker and the peers can't find each other...
+      info.addrs.forEach((addr) => {
+        addr.replace('/ip4/127.0.0.1', '/dns4/threads1/')
+      })
+      // We can 'exclude' the local addrs because we swapped them for "dns" entries
+      await client2.joinFromInfo(info)
       const info2 = await client2.getDBInfo(dbID)
       expect(info2.addrs.length).to.be.greaterThan(1)
       expect(info2.key).to.equal(info.key)

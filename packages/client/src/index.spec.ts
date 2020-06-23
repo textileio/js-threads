@@ -64,7 +64,6 @@ const createPerson = (): Person => {
 describe('Client', function () {
   const dbID = ThreadID.fromRandom()
   let dbKey: string
-  let dbAddr: string
   let identity: Identity
   const client = new Client(new Context('http://127.0.0.1:6007'))
 
@@ -147,7 +146,6 @@ describe('Client', function () {
       expect(invites.addrs[0]).to.not.be.undefined
       expect(invites.key).to.not.be.undefined
       dbKey = invites.key
-      dbAddr = invites.addrs[0]
       expect(invites).to.not.be.empty
     })
   })
@@ -177,12 +175,22 @@ describe('Client', function () {
     })
     it('response should contain a valid list of accessible thread protocol addrs', async () => {
       const info = await client.getDBInfo(dbID)
-      // Hack because we're in docker and the peers can't find each other...
+      // @hack: we're in docker and peers can't find each other; don't try this at home!
       info.addrs.forEach((addr) => {
         addr.replace('/ip4/127.0.0.1', '/dns4/threads1/')
       })
       // We can 'exclude' the local addrs because we swapped them for "dns" entries
-      await client2.joinFromInfo(info)
+      await client2.joinFromInfo(info, false, [
+        // Include the known collections to boosttrap with...
+        {
+          name: 'Person',
+          schema: personSchema,
+        },
+        {
+          name: 'FromObject',
+          schema: schema2,
+        },
+      ])
       const info2 = await client2.getDBInfo(dbID)
       expect(info2.addrs.length).to.be.greaterThan(1)
       expect(info2.key).to.equal(info.key)

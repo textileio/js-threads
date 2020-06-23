@@ -173,7 +173,7 @@ describe('Client', function () {
       identity = await Libp2pCryptoIdentity.fromRandom()
       await client2.getToken(identity)
     })
-    it('response should contain a valid list of accessible thread protocol addrs', async () => {
+    it('response should contain a valid list of thread protocol addrs', async () => {
       const info = await client.getDBInfo(dbID)
       // @hack: we're in docker and peers can't find each other; don't try this at home!
       info.addrs.forEach((addr) => {
@@ -181,7 +181,7 @@ describe('Client', function () {
       })
       // We can 'exclude' the local addrs because we swapped them for "dns" entries
       await client2.joinFromInfo(info, false, [
-        // Include the known collections to boosttrap with...
+        // Include the known collections to bootstrap with...
         {
           name: 'Person',
           schema: personSchema,

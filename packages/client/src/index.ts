@@ -436,7 +436,7 @@ export class Client {
         collections.map((c) => {
           const config = new pb.CollectionConfig()
           config.setName(c.name)
-          config.setSchema(JSON.stringify(c.schema))
+          config.setSchema(Buffer.from(JSON.stringify(c.schema)))
           return config
         }),
       )
@@ -475,7 +475,7 @@ export class Client {
           collections.map((c) => {
             const config = new pb.CollectionConfig()
             config.setName(c.name)
-            config.setSchema(JSON.stringify(c.schema))
+            config.setSchema(Buffer.from(JSON.stringify(c.schema)))
             return config
           }),
         )

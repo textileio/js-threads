@@ -15,11 +15,6 @@ export const tagBytes = 16
 // KeyBytes is the length of GCM key.
 const keyBytes = 32
 
-export const defaultOptions: Options = {
-  codec: 'dag-cbor',
-  algo: 'sha2-256',
-}
-
 /**
  * EncodeBlock returns a node by encrypting the block's raw bytes with key.
  * @param block The IPLD block to encrypt and encode.
@@ -27,11 +22,11 @@ export const defaultOptions: Options = {
  * @param opts Options to control encoding and encryption.
  * Defaults to CBOR encoding with the SHA256 hash function, and AES GCM 256-bit encryption.
  */
-export async function encodeBlock(block: Block, key: Uint8Array, opts: Options = defaultOptions) {
+export async function encodeBlock(block: Block, key: Uint8Array) {
   const plaintext = block.encodeUnsafe()
   const sk = key.slice(0, keyBytes)
   const ciphertext = await aes.encrypt(sk, plaintext)
-  return Block.encoder(Buffer.from(ciphertext), opts.codec, opts.algo)
+  return Block.encoder(ciphertext, 'dag-cbor')
 }
 
 /**
@@ -40,14 +35,10 @@ export async function encodeBlock(block: Block, key: Uint8Array, opts: Options =
  * @param key Encryption key.
  * @param opts Additional decoding options.
  */
-export async function decodeBlock<T = any>(
-  block: Block<Uint8Array>,
-  key: Uint8Array,
-  opts: Options = defaultOptions,
-) {
+export async function decodeBlock<T = any>(block: Block<Uint8Array>, key: Uint8Array) {
   // Start with Block node wrapping raw encrypted bytes
   const ciphertext = block.decodeUnsafe()
   const sk = key.slice(0, keyBytes)
   const plaintext = await aes.decrypt(sk, ciphertext)
-  return Block.decoder<T>(Buffer.from(plaintext), opts.codec, opts.algo)
+  return Block.decoder<T>(plaintext, 'dag-cbor')
 }

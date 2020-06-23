@@ -9,7 +9,7 @@ import {
   Identity,
   Public,
 } from '@textile/threads-core'
-import { Options, defaultOptions, encodeBlock, decodeBlock } from './coding'
+import { Options, encodeBlock, decodeBlock } from './coding'
 
 const logger = log.getLogger('encoding:record')
 
@@ -51,11 +51,7 @@ export interface CreateRecordConfig {
  * @param config A set of key/CID options for creating the new record.
  * @param opts Additional encoding/encryption options.
  */
-export async function createRecord(
-  data: Event,
-  config: CreateRecordConfig,
-  opts: Options = defaultOptions,
-) {
+export async function createRecord(data: Event, config: CreateRecordConfig) {
   logger.debug('creating record')
   const block = await data.value.cid()
   let payload = block.buffer
@@ -66,21 +62,13 @@ export async function createRecord(
     payload = pubKey
   }
   const sig = Buffer.from(await config.privKey.sign(payload))
-  const obj: RecordNode = {
-    block,
-    sig,
-    pubKey,
-  }
+  const obj: RecordNode = { block, sig, pubKey }
   // Don't include prev unless it is defined
   if (config.prev) obj.prev = config.prev
-  const node = Block.encoder(obj, opts.codec, opts.algo)
-  const value = await encodeBlock(node, config.servKey, opts)
+  const node = Block.encoder(obj, 'dag-cbor')
+  const value = await encodeBlock(node, config.servKey)
   // @todo: We don't support a dag here yet, but this is where we'd add this data to IPFS!
-  const record: LogRecord = {
-    value,
-    obj,
-    block: data,
-  }
+  const record: LogRecord = { value, obj, block: data }
   return record
 }
 
@@ -91,10 +79,10 @@ export async function createRecord(
 export function recordToProto(rec: LogRecord) {
   logger.debug('converting log record to proto object')
   const event = rec.block
-  const eventnode = event.value.encodeUnsafe().toString('base64')
-  const headernode = event.header.encodeUnsafe().toString('base64')
-  const bodynode = event.body.encodeUnsafe().toString('base64')
-  const recordnode = rec.value.encodeUnsafe().toString('base64')
+  const eventnode = event.value.encodeUnsafe() //.toString('base64')
+  const headernode = event.header.encodeUnsafe() //.toString('base64')
+  const bodynode = event.body.encodeUnsafe() //.toString('base64')
+  const recordnode = rec.value.encodeUnsafe() //.toString('base64')
   const record: EncodedRecord = {
     eventnode,
     headernode,
@@ -110,20 +98,16 @@ export function recordToProto(rec: LogRecord) {
  * @param key The symmetric key.
  * @param opts Additional encoding/encryption options.
  */
-export async function recordFromProto(
-  proto: EncodedRecord,
-  key: Uint8Array,
-  opts: Options = defaultOptions,
-) {
+export async function recordFromProto(proto: EncodedRecord, key: Uint8Array) {
   logger.debug('converting proto object to log record')
   const rawRecord = Buffer.from(proto.recordnode as string, 'base64')
-  const rnode = Block.decoder<Buffer>(rawRecord, opts.codec, opts.algo)
+  const rnode = Block.decoder<Buffer>(rawRecord, 'dag-cbor')
   const rawEvent = Buffer.from(proto.eventnode as string, 'base64')
-  const enode = Block.decoder<EventNode>(rawEvent, opts.codec, opts.algo)
+  const enode = Block.decoder<EventNode>(rawEvent, 'dag-cbor')
   const rawHeader = Buffer.from(proto.headernode as string, 'base64')
-  const hnode = Block.decoder<Uint8Array>(rawHeader, opts.codec, opts.algo)
+  const hnode = Block.decoder<Uint8Array>(rawHeader, 'dag-cbor')
   const rawBody = Buffer.from(proto.bodynode as string, 'base64')
-  const body = Block.decoder<Uint8Array>(rawBody, opts.codec, opts.algo)
+  const body = Block.decoder<Uint8Array>(rawBody, 'dag-cbor')
   const decoded = await decodeBlock(rnode, key)
   const robj = decoded.decode()
   const eobj = enode.decode()

@@ -18,6 +18,9 @@ module.exports = {
   resolveLoader: {
     modules: ['../../node_modules'],
   },
+  node: {
+    crypto: 'empty',
+  },
   resolve: {
     modules: ['./node_modules'],
     extensions,

@@ -199,7 +199,7 @@ describe('Client', function () {
         await client2.newDBFromAddr(info.addrs[0], dbKey, [])
       } catch (err) {
         // Expect this db to already exist on this peer
-        expect(err.toString().endsWith('already exists')).to.be.true
+        expect(err.toString()).to.include('already exists')
       }
     })
   })

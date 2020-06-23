@@ -12,7 +12,6 @@ import { ThreadID } from '@textile/threads-id'
 import toJsonSchema from 'to-json-schema'
 import { ContextInterface, Context, defaultHost } from '@textile/context'
 import { UserAuth, KeyInfo } from '@textile/security'
-import { encode, decode } from 'bs58'
 import {
   QueryJSON,
   Instance,
@@ -415,8 +414,9 @@ export class Client {
    * newDBFromAddr initializes the client with the given store, connecting to the given
    * thread address (database). It should be called before any operation on the store, and is an
    * alternative to start, which creates a local store. newDBFromAddr should also include the
-   * read and follow keys, which should be Buffer, Uint8Array or base58-encoded strings.
-   * See `getDBInfo` for a possible source of the address and keys.
+   * read/follow key, which should be a Buffer, Uint8Array or base32-encoded string.
+   * @see getDBInfo for a possible source of the address and keys.
+   * @see ThreadKey for information about thread keys.
    * @param address The address for the thread with which to connect.
    * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
    * @param key The set of keys to use to connect to the database
@@ -430,7 +430,8 @@ export class Client {
     const req = new pb.NewDBFromAddrRequest()
     const addr = new Multiaddr(address).buffer
     req.setAddr(addr)
-    req.setKey(typeof key === 'string' ? decode(key) : key)
+    // Should always be encoded string, but might already be bytes
+    req.setKey(typeof key === 'string' ? ThreadKey.fromString(key).toBytes() : key)
     if (collections !== undefined) {
       req.setCollectionsList(
         collections.map((c) => {
@@ -451,7 +452,8 @@ export class Client {
    * alternative to start, which creates a local store. fromInfo is a helper method around
    * newDBFromAddr that takes the 'raw' output from getDBInfo, rather than specifying an address
    * directly.
-   * See `getDBInfo` for a possible source of the address and keys.
+   * @see getDBInfo for a possible source of the address and keys.
+   * @see ThreadKey for information about thread keys.
    * @param info The output from a call to getDBInfo on a separate peer.
    * @param includeLocal Whether to try dialing addresses that appear to be on the local host.
    * Defaults to false, preferring to add from public ip addresses.

@@ -35,7 +35,7 @@ export const missingIdentity = new Error(
 /**
  * DBInfo contains joining/sharing information for a Thread/DB.
  */
-export interface DBInfo {
+interface DBInfo {
   /**
    * The Thread Key, encoded as a base32 string.
    * @see ThreadKey for details.
@@ -48,7 +48,7 @@ export interface DBInfo {
 }
 
 /**
- * DatabaseSettings specifies a set of settings to constrol the operation of the Database.
+ * DatabaseSettings specifies a set of settings to control the operation of the Database.
  * Implementations should provide reasonable defaults.
  */
 export interface DatabaseSettings {

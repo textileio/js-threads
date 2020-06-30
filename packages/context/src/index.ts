@@ -186,6 +186,16 @@ export class Context implements ContextInterface {
     return ctx.withAPIKey(auth.key).withAPISig(sig).withToken(token)
   }
 
+  static fromUserAuthCallback(
+    callback: () => UserAuth,
+    host: HostString = defaultHost,
+    debug = false,
+    transport: grpc.TransportFactory = grpc.WebsocketTransport(),
+  ) {
+    const userAuth = callback()
+    return this.fromUserAuth(userAuth, host, debug, transport)
+  }
+
   get host() {
     return this._context['host']
   }

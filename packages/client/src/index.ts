@@ -81,19 +81,37 @@ export class Client {
 
   /**
    * Create a new gRPC client instance from a supplied user auth object.
-   * Assumes all default gRPC setttings. For custimization options, use a context object directly.
-   * @param auth The user auth object.
+   * Assumes all default gRPC settlings. For customization options, use a context object directly.
+   * @param auth The user auth object or an async callback that returns a user auth object.
    * @example
    * ```typescript
    * import {UserAuth, Client} from '@textile/threads'
    *
    * async function create (auth: UserAuth) {
-   *   return await Client.withUserAuth(auth)
+   *   return Client.withUserAuth(auth)
+   * }
+   * ```
+   * @example
+   * ```typescript
+   * import {UserAuth, Client} from '@textile/threads'
+   *
+   * async function create (auth: UserAuth) {
+   *   return Client.withUserAuth(async () => {
+   *     // fetch some remote auth, or just...
+   *     return auth
+   *   })
    * }
    * ```
    */
-  static withUserAuth(auth: UserAuth, host = defaultHost, debug = false) {
-    const context = Context.fromUserAuth(auth, host, debug)
+  static withUserAuth(
+    auth: UserAuth | (() => Promise<UserAuth>),
+    host = defaultHost,
+    debug = false,
+  ) {
+    const context =
+      typeof auth === 'object'
+        ? Context.fromUserAuth(auth, host, debug)
+        : Context.fromUserAuthCallback(auth, host, debug)
     return new Client(context)
   }
 

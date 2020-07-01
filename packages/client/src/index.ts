@@ -3,7 +3,7 @@
  * @module @textile/threads-client
  */
 import { grpc } from '@improbable-eng/grpc-web'
-import { API, APIGetToken } from '@textile/threads-client-grpc/threads_pb_service'
+import { API, APIGetToken, APIListen } from '@textile/threads-client-grpc/threads_pb_service'
 import * as pb from '@textile/threads-client-grpc/threads_pb'
 import nextTick from 'next-tick'
 import { Identity, Libp2pCryptoIdentity, ThreadKey } from '@textile/threads-core'
@@ -706,7 +706,7 @@ export class Client {
     threadID: ThreadID,
     filters: Filter[],
     callback: (reply?: Instance<T>, err?: Error) => void,
-  ) {
+  ): grpc.Request {
     const req = new pb.ListenRequest()
     req.setDbid(threadID.toBytes())
     for (const filter of filters) {
@@ -743,28 +743,31 @@ export class Client {
       req.addFilters(requestFilter)
     }
 
-    // @todo: This will throw as opposed to try to refresh as in other contexts
-    const metadata = JSON.parse(JSON.stringify(this.context))
-    const res = grpc.invoke(API.Listen, {
+    const client = grpc.client<pb.ListenRequest, pb.ListenReply, APIListen>(API.Listen, {
       host: this.serviceHost,
       transport: this.rpcOptions.transport,
       debug: this.rpcOptions.debug,
-      request: req,
-      metadata,
-      onMessage: (rec: pb.ListenReply) => {
-        const ret: Instance<T> = {
-          instance: JSON.parse(Buffer.from(rec.getInstance_asU8()).toString()),
-        }
-        nextTick(() => callback(ret))
-      },
-      onEnd: (status: grpc.Code, message: string, _trailers: grpc.Metadata) => {
-        if (status !== grpc.Code.OK) {
-          nextTick(() => callback(undefined, new Error(message)))
-        }
-        nextTick(callback)
-      },
     })
-    return res.close.bind(res)
+    client.onMessage((message: pb.ListenReply) => {
+      const ret: Instance<T> = {
+        instance: JSON.parse(Buffer.from(message.getInstance_asU8()).toString()),
+      }
+      nextTick(() => callback(ret))
+    })
+
+    client.onEnd((status: grpc.Code, message: string, _trailers: grpc.Metadata) => {
+      if (status !== grpc.Code.OK) {
+        nextTick(() => callback(undefined, new Error(message)))
+      }
+      nextTick(callback)
+    })
+
+    this.context.toMetadata().then((metadata) => {
+      client.start(metadata)
+      client.send(req)
+      client.finishSend()
+    })
+    return { close: () => client.close() }
   }
 
   private async unary<

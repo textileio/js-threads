@@ -206,9 +206,10 @@ export class Client {
       })
       const req = new pb.GetTokenRequest()
       req.setKey(publicKey)
-      const metadata = { ...this.context.toJSON(), ...ctx?.toJSON() }
-      client.start(metadata)
-      client.send(req)
+      this.context.toMetadata(ctx).then((metadata) => {
+        client.start(metadata)
+        client.send(req)
+      })
     })
   }
 
@@ -724,6 +725,7 @@ export class Client {
       req.addFilters(requestFilter)
     }
 
+    // @todo: This will throw as opposed to try to refresh as in other contexts
     const metadata = JSON.parse(JSON.stringify(this.context))
     const res = grpc.invoke(API.Listen, {
       host: this.serviceHost,
@@ -752,7 +754,7 @@ export class Client {
     TResponse extends grpc.ProtobufMessage,
     M extends grpc.UnaryMethodDefinition<TRequest, TResponse>
   >(methodDescriptor: M, req: TRequest) {
-    const metadata = JSON.parse(JSON.stringify(this.context))
+    const metadata = await this.context.toMetadata()
     return new Promise((resolve, reject) => {
       grpc.unary(methodDescriptor, {
         transport: this.rpcOptions.transport,

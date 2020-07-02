@@ -16,7 +16,7 @@ import multibase from 'multibase'
  * @example
  * Import
  * ```typescript
- * import {UserAuth} from '@textile/hub';
+ * import {UserAuth} from '@textile/threads';
  * ```
  * @param {string} key - API key. Can be embedded/shared within an app.
  * @param {string} sig - The signature of the authentication message.
@@ -36,7 +36,7 @@ export type UserAuth = {
  * @example
  * Import
  * ```typescript
- * import {KeyInfo} from '@textile/hub';
+ * import {KeyInfo} from '@textile/threads';
  * ```
  * @param {string} key - API key. Can be embedded/shared within an app.
  * @param {string} secret - User group/account secret. Should not be embedded/shared publicly.
@@ -63,7 +63,7 @@ export type KeyInfo = {
  * @example
  * Import
  * ```typescript
- * import {APISig} from '@textile/hub';
+ * import {APISig} from '@textile/threads';
  * ```
  * @param {string} sig - The signature of the authentication message.
  * @param {string} msg - The authentication message.
@@ -81,7 +81,7 @@ export type APISig = {
  * @example
  * Basic usage
  * ```typescript
- * import {createAPISig, APISig} from '@textile/hub'
+ * import {createAPISig, APISig} from '@textile/threads'
  *
  * async function sign (key: string) {
  *   const sig: APISig = await createAPISig(key)
@@ -114,7 +114,7 @@ export async function createAPISig(
  * @example
  * Create a new UserAuth
  * ```typescript
- * import {createUserAuth, KeyInfo, UserAuth} from '@textile/hub';
+ * import {createUserAuth, KeyInfo, UserAuth} from '@textile/threads';
  *
  * async function auth (keyInfo: KeyInfo) {
  *   // Create an expiration and create a signature. 60s or less is recommended.

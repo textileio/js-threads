@@ -86,7 +86,7 @@ export class Client {
    * @param auth The user auth object or an async callback that returns a user auth object.
    * @example
    * ```typescript
-   * import {UserAuth, Client} from '@textile/hub'
+   * import {UserAuth, Client} from '@textile/threads'
    *
    * async function create (auth: UserAuth) {
    *   return Client.withUserAuth(auth)
@@ -94,7 +94,7 @@ export class Client {
    * ```
    * @example
    * ```typescript
-   * import {UserAuth, Client} from '@textile/hub'
+   * import {UserAuth, Client} from '@textile/threads'
    *
    * async function create () {
    *   return Client.withUserAuth(async () => {
@@ -122,7 +122,7 @@ export class Client {
    * @param key The KeyInfo object containing {key: string, secret: string, type: 0}. 0 === User Group Key, 1 === Account Key
    * @example
    * ```typescript
-   * import {KeyInfo, Client} from '@textile/hub'
+   * import {KeyInfo, Client} from '@textile/threads'
    *
    * async function create (keyInfo: KeyInfo) {
    *   return await Client.withKeyInfo(keyInfo)
@@ -139,7 +139,7 @@ export class Client {
    * Create a random user identity.
    * @example
    * ```typescript
-   * import {Client} from '@textile/hub'
+   * import {Client} from '@textile/threads'
    *
    * async function newIdentity () {
    *   const user = await Client.randomIdentity()
@@ -160,7 +160,7 @@ export class Client {
    * @param ctx Context object containing web-gRPC headers and settings.
    * @example
    * ```typescript
-   * import {Client, Identity} from '@textile/hub'
+   * import {Client, Identity} from '@textile/threads'
    *
    * async function newToken (client: Client, user: Identity) {
    *   // Token is added to the client connection at the same time
@@ -239,7 +239,7 @@ export class Client {
    * @param name The human-readable name for the database
    * @example
    * ```typescript
-   * import {Client, ThreadID} from '@textile/hub'
+   * import {Client, ThreadID} from '@textile/threads'
    *
    * async function createDB (client: Client) {
    *   const thread: ThreadID = await client.newDB()
@@ -267,7 +267,7 @@ export class Client {
    * @param name The human-readable name for the database
    * @example
    * ```typescript
-   * import {Client, ThreadID} from '@textile/hub'
+   * import {Client, ThreadID} from '@textile/threads'
    *
    * async function openDB (client: Client, threadID: ThreadID) {
    *   await client.open(threadID)
@@ -293,7 +293,7 @@ export class Client {
    * @param threadID the ID of the database.
    * @example
    * ```typescript
-   * import {Client, ThreadID} from '@textile/hub'
+   * import {Client, ThreadID} from '@textile/threads'
    *
    * async function deleteDB (client: Client, thread: ThreadID) {
    *   await client.deleteDB(thread)
@@ -365,7 +365,7 @@ export class Client {
    * @param indexes A set of index definitions for indexing instance fields.
    * @example
    * ```typescript
-   * import {Client, ThreadID} from '@textile/hub'
+   * import {Client, ThreadID} from '@textile/threads'
    *
    * async function fromObject (client: Client, thread: ThreadID, name: string, obj: any) {
    *   await client.newCollectionFromObject(thread, name, obj)
@@ -425,7 +425,7 @@ export class Client {
    * @param schema The actual json-schema.org compatible schema object.
    * @example
    * ```typescript
-   * import {Client, ThreadID} from '@textile/hub'
+   * import {Client, ThreadID} from '@textile/threads'
    *
    * async function deleteCollection (client: Client, thread: ThreadID, name: string) {
    *   await client.deleteCollection(thread, name)

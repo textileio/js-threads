@@ -14,7 +14,7 @@ export { Variant }
  * @example
  * Create a new random ThreadID
  * ```typescript
- * import { ThreadID } from '@textile/hub'
+ * import { ThreadID } from '@textile/threads'
  *
  * const id = ThreadID.fromRandom()
  * 
@@ -24,7 +24,7 @@ export { Variant }
  * @example
  * Convert a ThreadID to/from a Base32 string
  * ```typescript
- * import { ThreadID } from '@textile/hub'
+ * import { ThreadID } from '@textile/threads'
  *
  * const id = ThreadID.fromRandom()
  * const str = id.toString()

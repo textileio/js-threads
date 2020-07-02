@@ -82,6 +82,7 @@ export class Client {
   /**
    * Create a new gRPC client instance from a supplied user auth object.
    * Assumes all default gRPC settlings. For customization options, use a context object directly.
+   * The callback method will automatically refresh expiring credentials.
    * @param auth The user auth object or an async callback that returns a user auth object.
    * @example
    * ```typescript
@@ -95,7 +96,7 @@ export class Client {
    * ```typescript
    * import {UserAuth, Client} from '@textile/threads'
    *
-   * async function create (auth: UserAuth) {
+   * async function create () {
    *   return Client.withUserAuth(async () => {
    *     // fetch and generate some remote auth. faked here:
    *     const auth: UserAuth = { key: '', sig: '', msg: '' }

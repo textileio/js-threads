@@ -86,7 +86,7 @@ export class Client {
    * @param auth The user auth object or an async callback that returns a user auth object.
    * @example
    * ```typescript
-   * import {UserAuth, Client} from '@textile/threads'
+   * import {UserAuth, Client} from '@textile/hub'
    *
    * async function create (auth: UserAuth) {
    *   return Client.withUserAuth(auth)
@@ -94,7 +94,7 @@ export class Client {
    * ```
    * @example
    * ```typescript
-   * import {UserAuth, Client} from '@textile/threads'
+   * import {UserAuth, Client} from '@textile/hub'
    *
    * async function create () {
    *   return Client.withUserAuth(async () => {

@@ -88,7 +88,7 @@ export class Client {
    * ```typescript
    * import {UserAuth, Client} from '@textile/threads'
    *
-   * async function create (auth: UserAuth) {
+   * function create (auth: UserAuth) {
    *   return Client.withUserAuth(auth)
    * }
    * ```
@@ -96,7 +96,7 @@ export class Client {
    * ```typescript
    * import {UserAuth, Client} from '@textile/threads'
    *
-   * async function setCallback (callback: () => Promise<UserAuth>) {
+   * function setCallback (callback: () => Promise<UserAuth>) {
    *   return Client.withUserAuth(callback)
    * }
    * ```

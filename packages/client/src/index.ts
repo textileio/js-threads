@@ -97,7 +97,8 @@ export class Client {
    *
    * async function create (auth: UserAuth) {
    *   return Client.withUserAuth(async () => {
-   *     // fetch some remote auth, or just...
+   *     // fetch and generate some remote auth. faked here:
+   *     const auth: UserAuth = { key: '', sig: '', msg: '' }
    *     return auth
    *   })
    * }

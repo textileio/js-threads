@@ -49,7 +49,7 @@ export type KeyInfo = {
   /**
    * User group/account secret. Should not be embedded/shared publicly.
    */
-  secret: string
+  secret?: string
 }
 
 /**

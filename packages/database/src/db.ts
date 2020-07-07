@@ -177,7 +177,7 @@ export class Database implements DatabaseSettings {
    * ```typescript
    * import {KeyInfo, Database} from '@textile/threads'
    *
-   * async function create (keyInfo: keyInfo, threadID: ThreadID) {
+   * async function create (keyInfo: KeyInfo, threadID: ThreadID) {
    *   return await Database.withKeyInfo(keyInfo, threadID.toString())
    * }
    * ```

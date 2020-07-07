@@ -175,7 +175,7 @@ export class Database implements DatabaseSettings {
    * @param store The underlying datastore implementation to use.
    * @example
    * ```typescript
-   * import {KeyInfo, Database} from '@textile/threads'
+   * import {KeyInfo, Database, ThreadID} from '@textile/threads'
    *
    * async function create (keyInfo: KeyInfo, threadID: ThreadID) {
    *   return await Database.withKeyInfo(keyInfo, threadID.toString())

@@ -35,7 +35,7 @@ export const missingIdentity = new Error(
 /**
  * DBInfo contains joining/sharing information for a Thread/DB.
  */
-interface DBInfo {
+export interface DBInfo {
   /**
    * The Thread Key, encoded as a base32 string.
    * @see ThreadKey for details.

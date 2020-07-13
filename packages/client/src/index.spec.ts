@@ -103,8 +103,9 @@ describe('Client', function () {
     })
 
     it('getCollectionIndexes should list valid collection indexes', async () => {
+      // @todo Update to latest APIs and mark this as deprecated
       const list = await client.getCollectionIndexes(dbID, 'FromObject')
-      expect(list).to.have.length(2)
+      expect(list).to.have.length(1)
     })
 
     it('deleteCollection should delete an existing collection', async () => {

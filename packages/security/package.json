@@ -16,9 +16,7 @@
     "prepublishOnly": "npm run build",
     "prepare": "npm run build:node",
     "prebuild": "npm run clean",
-    "build": "npm run build:node && npm run build:browser",
-    "build:node": "npm run compile",
-    "build:browser": "webpack --mode production --config ../../webpack.config.js",
+    "build": "npm run compile",
     "compile": "tsc -b tsconfig.json",
     "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
   },

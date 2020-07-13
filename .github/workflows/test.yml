@@ -71,7 +71,7 @@ jobs:
       - name: Compile Node
         run: npm run build:node
 
-      -name: Compile Test Browser
+      - name: Compile Test Browser
         run: |
           cd packages/threads
           ../../node_modules/webpack/bin/webpack.js --mode production --config ../../webpack.test.js

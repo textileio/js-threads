@@ -1,6 +1,3 @@
-/* eslint-disable import/first */
-;(global as any).WebSocket = require('isomorphic-ws')
-
 import { Identity, Libp2pCryptoIdentity } from '@textile/threads-core'
 
 import { expect } from 'chai'

@@ -69,7 +69,7 @@ jobs:
         run: npm run test:browser
 
       - name: Compile Node
-        run: npm run build:node
+        run: npm run build
 
       - name: Compile Test Browser
         run: |

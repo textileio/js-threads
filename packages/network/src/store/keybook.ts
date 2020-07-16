@@ -1,4 +1,5 @@
-import { Closer, LogID, ThreadID } from "@textile/threads-core"
+import { Closer, LogID } from "@textile/threads-core"
+import { ThreadID } from "@textile/threads-id"
 import { keys, PrivateKey, PublicKey } from "@textile/threads-crypto"
 import { NamespaceDatastore } from "datastore-core"
 import { Datastore, Key } from "interface-datastore"

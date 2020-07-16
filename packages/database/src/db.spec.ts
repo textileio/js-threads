@@ -316,7 +316,7 @@ describe("Database", () => {
       assertEvents(actions, expected)
     })
 
-    it("should not listen to any events for non-existant collections", async () => {
+    it("should not listen to any events for non-existent collections", async () => {
       const actions = await runListenersComplexUseCase(["Collection3.**"])
       const expected: Update[] = []
       assertEvents(actions, expected)

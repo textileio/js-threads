@@ -303,7 +303,7 @@ describe("Collection", () => {
         const array = await collect(Person.find({}))
         expect(array.map((p) => p.value.age)).to.deep.equal([8, 8, 8])
       })
-      it("should also save/update a non-existant entity", async () => {
+      it("should also save/update a non-existent entity", async () => {
         const Person = setupCollection(store)
         await Person.save({ _id: "", name: "nothing", age: 55 })
         expect(await collect(Person.find())).to.have.length(1)
@@ -398,7 +398,7 @@ describe("Collection", () => {
             await Person.writeTransaction(async (w) => {
               await w.insert(person) // Won't ever run
             }, 2000)
-            throw new Error("should not be able to aquire this lock")
+            throw new Error("should not be able to acquire this lock")
           } catch (err) {
             expect(err.toString()).to.equal("Error: acquire lock timeout")
           }
@@ -432,7 +432,7 @@ describe("Collection", () => {
             await Person.readTransaction(async (r) => {
               await r.findById(person._id) // Won't ever run
             }, 2000)
-            throw new Error("should not be able to aquire this lock")
+            throw new Error("should not be able to acquire this lock")
           } catch (err) {
             expect(err.toString()).to.equal("Error: acquire lock timeout")
           }

@@ -1,9 +1,4 @@
-import {
-  LogID,
-  LogInfo,
-  ThreadInfo,
-  ThreadKey,
-} from "@textile/threads-core"
+import { LogID, LogInfo, ThreadInfo, ThreadKey } from "@textile/threads-core"
 import { ThreadID } from "@textile/threads-id"
 import { Datastore } from "interface-datastore"
 import { KeyBook } from "./keybook"

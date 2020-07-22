@@ -419,23 +419,6 @@ describe("Database", () => {
       await db.close()
     })
 
-    it("should throw if our database and thread id do not match", async function () {
-      const store = new MemoryDatastore()
-      let db = new Database(store)
-      const ident = await Database.randomIdentity()
-      await db.start(ident, { threadID: ThreadID.fromRandom() })
-      await db.close()
-      // Now 'reopen' the database
-      db = new Database(store)
-      try {
-        await db.start(ident, { threadID: ThreadID.fromRandom() })
-        throw new Error("should have throw")
-      } catch (err) {
-        expect(err).to.equal(mismatchError)
-      }
-      await db.close()
-    })
-
     it("start a functional db using withUserAuth", async () => {
       const store = new MemoryDatastore()
 

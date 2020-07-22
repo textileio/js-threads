@@ -33,6 +33,8 @@ const metaKey = new Key("meta")
 const schemaKey = metaKey.child(new Key("schema"))
 const duplicateCollection = new Error("Duplicate collection")
 
+const defaultName = "thread.db"
+
 export const mismatchError = new Error(
   "Input ThreadID does not match existing database ThreadID. Consider creating new database or use a matching ThreadID."
 )
@@ -132,18 +134,20 @@ export class Database implements DatabaseSettings {
 
   /**
    * Database creates a new database using the provided thread.
-   * @param datastore The primary datastore or a name for a datastore.
-   * It is used to partition out "sub-domains" for collections.
-   * @param options A set of database options.
-   * These are used to control the operation of the underlying database.
+   * @param store The underlying datastore implementation to use. If a string is supplied, this is
+   * used as the default store name. Defaults to "thread.db".
+   * @param options A set of database options. These are used to control the operation of the
+   * underlying database.
    */
   constructor(
-    store: Datastore<any> | string,
+    store: Datastore<any> | string = defaultName,
     options: Partial<DatabaseSettings> = {}
   ) {
     const datastore =
       typeof store === "string" ? new LevelDatastore(store) : store
+    // The "core" database namespace will be suffixed by thread id once started
     this.child = new DomainDatastore(datastore, new Key("db"))
+    // Prefix all "support" namespaces based on the top-level datastore
     this.dispatcher =
       options.dispatcher ??
       new Dispatcher(new DomainDatastore(datastore, new Key("dispatcher")))
@@ -159,7 +163,7 @@ export class Database implements DatabaseSettings {
     this.eventBus =
       options.eventBus ??
       new EventBus(
-        new DomainDatastore(this.child, new Key("eventbus")),
+        new DomainDatastore(datastore, new Key("eventbus")),
         this.network
       )
   }
@@ -168,11 +172,11 @@ export class Database implements DatabaseSettings {
    * Create a new network connected instance from a supplied user auth object.
    * @param auth The user auth object or an async callback that returns a user auth object.
    * @param store The underlying datastore implementation to use. If a string is supplied, this is
-   * used as the default store name.
+   * used as the default store name. Defaults to "thread.db".
    */
   static withUserAuth(
     auth: UserAuth | (() => Promise<UserAuth>),
-    store: string | Datastore,
+    store: string | Datastore = defaultName,
     options?: Partial<DatabaseSettings>,
     host = defaultHost,
     debug = false
@@ -195,7 +199,7 @@ export class Database implements DatabaseSettings {
   /**
    * @param keyInfo The KeyInfo object containing {key: string, secret: string, type: 0}. 0 === User Group Key, 1 === Account Key
    * @param store The underlying datastore implementation to use. If a string is supplied, this is
-   * used as the default store name.
+   * used as the default store name. Defaults to "thread.db".
    * @example
    * ```typescript
    * import {KeyInfo, Database, ThreadID} from '@textile/threads'
@@ -207,7 +211,7 @@ export class Database implements DatabaseSettings {
    */
   static async withKeyInfo(
     keyInfo: KeyInfo,
-    store: string | Datastore,
+    store: string | Datastore = defaultName,
     options?: Partial<DatabaseSettings>,
     host = defaultHost,
     debug = false
@@ -297,24 +301,46 @@ export class Database implements DatabaseSettings {
       throw missingIdentity
     }
     await this.network.getToken(identity)
-    await this.child.open()
-    const idKey = metaKey.child(new Key("threadid"))
-    const hasExisting = await this.child.has(idKey)
-    if (hasExisting) {
-      throw mismatchError
+
+    // We attempt to parse the ThreadID from the invite addr
+    const map = new Map<number, string>(addr.stringTuples() as any)
+    const idString = map.get(406) // ThreadID protocol id is 406
+    if (idString === undefined) throw new Error("Unable to obtain thread id")
+    const threadID = ThreadID.fromString(idString)
+
+    let info: ThreadInfo
+    try {
+      // DANGER: If we don't have the key info locally here already, we're out of luck!
+      info = await this.network.getThread(threadID)
+    } catch (_err) {
+      try {
+        // If that didn't work, let's assume we need to add this this...
+        info = await this.network.addThread(addr, { threadKey })
+      } catch (err) {
+        // If that didn't work, we give up!
+        throw err
+      }
     }
-    // @todo: When adding a new thread, use identity for log key...
-    const info = await this.network.addThread(addr, { threadKey })
-    await this.child.put(idKey, info.id.toBytes())
+    // Specify thread id, which could replace an existing one if we are "switching" here
     this.threadID = info.id
+    if (this.threadID === undefined)
+      throw new Error("Unable to obtain thread id")
+    // Replace default child store with store prefixed by thread id
+    this.child = new DomainDatastore(
+      this.child,
+      new Key(this.threadID.toString())
+    )
+    // Open "new" store, which may in fact already exist
+    await this.child.open()
+    // If it did already exist, try to rehydrate the store now
+    await this.rehydrate()
+    // Now that we have re-hydrated any existing collections, add the ones specified explicitly
     for (const { name, schema } of (opts.collections || []).values()) {
       await this.newCollection(name, schema)
     }
     await this.eventBus.start(this.threadID)
     this.eventBus.on("record", this.onRecord.bind(this))
-    if (this.threadID) {
-      this.network.pullThread(this.threadID) // Don't await
-    }
+    this.network.pullThread(this.threadID) // Don't await
   }
 
   /**
@@ -342,6 +368,9 @@ export class Database implements DatabaseSettings {
     includeLocal = false,
     opts: StartOptions = {}
   ): Promise<undefined | Error> {
+    if (identity === undefined) {
+      throw missingIdentity
+    }
     const threadKey =
       typeof info.key === "string" ? ThreadKey.fromString(info.key) : info.key
     const filtered = [...info.addrs]
@@ -375,45 +404,42 @@ export class Database implements DatabaseSettings {
       throw missingIdentity
     }
     await this.network.getToken(identity)
-    await this.child.open()
-    const idKey = metaKey.child(new Key("threadid"))
-    const hasExisting = await this.child.has(idKey)
 
-    if (opts.threadID === undefined) {
-      if (hasExisting) {
-        this.threadID = ThreadID.fromBytes(await this.child.get(idKey))
-      } else {
-        // @todo: When creating a new thread, use identity for log key...
-        const info = await createThread(this.network)
-        await this.child.put(idKey, info.id.toBytes())
-        this.threadID = info.id
-      }
-    } else {
-      if (hasExisting) {
-        const existing = ThreadID.fromBytes(await this.child.get(idKey))
-        if (!existing.equals(opts.threadID)) {
-          throw mismatchError
-        }
-        this.threadID = existing
-      } else {
-        let info: ThreadInfo
-        try {
-          info = await this.network.getThread(opts.threadID)
-        } catch (_err) {
-          info = await createThread(this.network, opts.threadID)
-        }
-        await this.child.put(idKey, info.id.toBytes())
-        this.threadID = info.id
+    // If we didn't get one specified here, and don't already have one, create a new random one
+    const threadID = opts.threadID ?? this.threadID ?? ThreadID.fromRandom()
+    let info: ThreadInfo
+    try {
+      // DANGER: If we don't have the key info locally here already, we're out of luck!
+      info = await this.network.getThread(threadID)
+    } catch (_err) {
+      try {
+        // If that didn't work, let's assume we need to create this...
+        info = await createThread(this.network, threadID)
+      } catch (err) {
+        // If that didn't work, we give up!
+        throw err
       }
     }
+    // Specify thread id, which could replace an existing one if we are "switching" here
+    this.threadID = info.id
+    if (this.threadID === undefined)
+      throw new Error("Unable to obtain thread id")
+    // Replace default child store with store prefixed by thread id
+    this.child = new DomainDatastore(
+      this.child,
+      new Key(this.threadID.toString())
+    )
+    // Open "new" store, which may in fact already exist
+    await this.child.open()
+    // If it did already exist, try to rehydrate the store now
     await this.rehydrate()
-    // Now that we have re-hydrated any existing collections, add the ones specified here
+    // Now that we have re-hydrated any existing collections, add the ones specified explicitly
     for (const { name, schema } of (opts.collections || []).values()) {
       await this.newCollection(name, schema)
     }
     await this.eventBus.start(this.threadID)
     this.eventBus.on("record", this.onRecord.bind(this))
-    if (this.threadID) this.network.pullThread(this.threadID) // Don't await
+    this.network.pullThread(this.threadID) // Don't await
   }
 
   /**

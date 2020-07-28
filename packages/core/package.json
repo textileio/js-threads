@@ -46,7 +46,7 @@
     "@types/node": "^14.0.5",
     "@types/varint": "^5.0.0",
     "multiaddr": "^7.4.2",
-    "multibase": "^1.0.1",
+    "multibase": "^2.0.0",
     "multihashes": "1.0.1",
     "varint": "^5.0.0"
   },

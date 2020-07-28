@@ -54,7 +54,7 @@
     "@textile/threads-network-client": "^0.6.4",
     "@textile/threads-store": "^0.1.20",
     "@types/async-retry": "^1.4.1",
-    "@types/datastore-core": "^0.7.0",
+    "@types/datastore-core": "^1.1.0",
     "@types/datastore-level": "^0.14.0",
     "@types/interface-datastore": "^0.8.0",
     "@types/json-schema": "^7.0.4",

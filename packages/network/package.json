@@ -28,7 +28,7 @@
     "@textile/threads-encoding": "^0.1.33",
     "@textile/threads-id": "^0.1.13",
     "@textile/threads-network-client": "^0.6.4",
-    "@types/datastore-core": "^0.7.0",
+    "@types/datastore-core": "^1.1.0",
     "@types/interface-datastore": "^0.8.0",
     "@types/node": "^14.0.1",
     "cids": "^0.8.0",

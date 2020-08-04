@@ -23,7 +23,7 @@
     "@textile/threads-core": "^0.1.33",
     "@textile/threads-crypto": "^0.1.4",
     "@types/node": "^14.0.1",
-    "cids": "^0.8.0",
+    "cids": "^1.0.0",
     "loglevel": "^1.6.6"
   },
   "references": [

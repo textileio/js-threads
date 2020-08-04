@@ -35,7 +35,7 @@
     "@types/multibase": "^0.6.0",
     "@types/varint": "^5.0.0",
     "bs58": "^4.0.1",
-    "cids": "^0.8.0",
+    "cids": "^1.0.0",
     "multiaddr": "^7.4.2",
     "varint": "^5.0.0"
   },

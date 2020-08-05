@@ -56,7 +56,7 @@
     "@types/async-retry": "^1.4.1",
     "@types/datastore-core": "^0.7.0",
     "@types/datastore-level": "^0.14.0",
-    "@types/interface-datastore": "^0.8.0",
+    "@types/interface-datastore": "^1.0.1",
     "@types/json-schema": "^7.0.4",
     "@types/to-json-schema": "^0.2.0",
     "@types/url-parse": "^1.4.3",

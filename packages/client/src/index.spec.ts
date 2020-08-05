@@ -401,11 +401,11 @@ describe("Client", function () {
     }).timeout(5000) // Make sure our test doesn't timeout
 
     it("should handle deletes.", (done) => {
-      const callback = (reply: Update<Person>, err?: Error) => {
+      const callback = (reply?: Update<Person>, err?: Error) => {
         if (err) {
           throw err
         }
-        expect(reply.instance).to.be.undefined
+        expect(reply?.instance).to.be.undefined
         if (listener.close) {
           listener.close()
         }

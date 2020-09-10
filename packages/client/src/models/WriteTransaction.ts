@@ -197,4 +197,19 @@ export class WriteTransaction extends Transaction<
       this.client.send(req)
     })
   }
+
+  /**
+   * abort quits the current transaction and drops all associated updates.
+   */
+  public async abort(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      // Invalid request with no type set
+      const req = new WriteTransactionRequest()
+      this.client.send(req)
+      super.setReject(({ message }) => {
+        if (message === "no WriteTransactionRequest type set") resolve()
+        else reject(message)
+      })
+    })
+  }
 }

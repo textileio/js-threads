@@ -308,19 +308,23 @@ describe("Client", function () {
   describe(".readTransaction", () => {
     let existingPersonID: string
     let transaction: ReadTransaction | undefined
+
     before(async () => {
       const instances = await client.create(dbID, "Person", [createPerson()])
       existingPersonID = instances.pop()!
       transaction = client.readTransaction(dbID, "Person")
     })
+
     it("should start a transaction", async () => {
       expect(transaction).to.not.be.undefined
       await transaction!.start()
     })
+
     it("should able to check for an existing instance", async () => {
       const has = await transaction!.has([existingPersonID])
       expect(has).to.be.true
     })
+
     it("should be able to find an existing instance", async () => {
       const find = await transaction!.findByID<Person>(existingPersonID)
       expect(find).to.not.be.undefined
@@ -333,8 +337,20 @@ describe("Client", function () {
       expect(instance).to.have.property("_id")
       expect(instance?._id).to.deep.equal(existingPersonID)
     })
+
     it("should be able to close/end an transaction", async () => {
       await transaction!.end()
+    })
+
+    it("should throw on invalid transaction information", async function () {
+      const t = client.readTransaction(dbID, "fake")
+      await t.start()
+      try {
+        await t.has(["anything"])
+        throw new Error("should have thrown")
+      } catch (err) {
+        expect(err.toString()).to.include("collection not found")
+      }
     })
   })
   describe(".writeTransaction", () => {

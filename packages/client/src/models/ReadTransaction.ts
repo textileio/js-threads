@@ -18,6 +18,7 @@ import { Transaction } from "./Transaction"
 
 /**
  * ReadTransaction performs a read-only bulk transaction on the underlying store.
+ * {@inheritDoc @textile/threads-client#Transaction}
  */
 export class ReadTransaction extends Transaction<
   ReadTransactionRequest,

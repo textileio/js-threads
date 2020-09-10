@@ -344,11 +344,6 @@ describe("Client", function () {
 
     context("complete transaction", function () {
       before(async () => {
-        const register = await client.newCollection(
-          dbID,
-          "Person",
-          personSchema
-        )
         const instances = await client.create(dbID, "Person", [person])
         existingPersonID = instances.length ? instances[0] : ""
         person["_id"] = existingPersonID
@@ -394,7 +389,6 @@ describe("Client", function () {
 
     context("rejected transaction", function () {
       before(async () => {
-        await client.newCollection(dbID, "Person", personSchema)
         const instances = await client.create(dbID, "Person", [person])
         existingPersonID = instances.length ? instances[0] : ""
         person["_id"] = existingPersonID
@@ -402,7 +396,6 @@ describe("Client", function () {
       })
 
       it("should not commit an aborted write transaction", async function () {
-        this.timeout(20000)
         await transaction?.start()
         const newPerson = createPerson()
         const ids = (await transaction?.create<Person>([newPerson])) ?? []
@@ -416,6 +409,7 @@ describe("Client", function () {
       })
     })
   })
+
   describe(".listen", () => {
     const listener: { events: number; close?: () => void } = { events: 0 }
     const person = createPerson()

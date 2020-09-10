@@ -21,6 +21,56 @@ import { Transaction } from "./Transaction"
 
 /**
  * WriteTransaction performs a mutating bulk transaction on the underlying store.
+ * {@inheritDoc @textile/threads-client#Transaction}
+ * @example
+ * Create a new entry in our collection
+ * ```typescript
+ * import {Client, ThreadID} from '@textile/threads'
+ *
+ * interface Astronaut {
+ *   name: string
+ *   missions: number
+ *   _id: string
+ * }
+ *
+ * async function createBuzz (client: Client, threadID: ThreadID) {
+ *   const buzz: Astronaut = {
+ *     name: 'Buzz',
+ *     missions: 2,
+ *     _id: '',
+ *   }
+ *
+ *   const t = client.writeTransaction(threadID, 'astronauts')
+ *   await t.start()
+ *   await t.create([buzz])
+ *   await t.end() // Commit
+ * }
+ * ```
+ *
+ * @example
+ * Abort an in-flight transaction
+ * ```typescript
+ * import {Client, ThreadID} from '@textile/threads'
+ *
+ * interface Astronaut {
+ *   name: string
+ *   missions: number
+ *   _id: string
+ * }
+ *
+ * async function createBuzz (client: Client, threadID: ThreadID) {
+ *   const buzz: Astronaut = {
+ *     name: 'Buzz',
+ *     missions: 2,
+ *     _id: '',
+ *   }
+ *
+ *   const t = client.writeTransaction(threadID, 'astronauts')
+ *   await t.start()
+ *   await t.create([buzz])
+ *   await t.abort() // Abort
+ * }
+ * ```
  */
 export class WriteTransaction extends Transaction<
   WriteTransactionRequest,
@@ -200,6 +250,30 @@ export class WriteTransaction extends Transaction<
 
   /**
    * abort quits the current transaction and drops all associated updates.
+   * @example
+   * Abort an in-flight transaction
+   * ```typescript
+   * import {Client, ThreadID} from '@textile/threads'
+   *
+   * interface Astronaut {
+   *   name: string
+   *   missions: number
+   *   _id: string
+   * }
+   *
+   * async function example (client: Client, threadID: ThreadID) {
+   *   const buzz: Astronaut = {
+   *     name: 'Buzz',
+   *     missions: 2,
+   *     _id: '',
+   *   }
+   *
+   *   const t = client.writeTransaction(threadID, 'astronauts')
+   *   await t.start()
+   *   await t.create([buzz])
+   *   await t.abort() // Abort
+   * }
+   * ```
    */
   public async abort(): Promise<void> {
     return new Promise<void>((resolve, reject) => {

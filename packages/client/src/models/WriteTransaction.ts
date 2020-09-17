@@ -71,7 +71,8 @@ const decoder = new TextDecoder()
  *   const t = client.writeTransaction(threadID, 'astronauts')
  *   await t.start()
  *   await t.create([buzz])
- *   await t.abort() // Abort
+ *   await t.discard() // Abort
+ *   await t.end()
  * }
  * ```
  */
@@ -297,7 +298,8 @@ export class WriteTransaction extends Transaction<
    *   const t = client.writeTransaction(threadID, 'astronauts')
    *   await t.start()
    *   await t.create([buzz])
-   *   await t.abort() // Abort
+   *   await t.discard() // Abort
+   *   await t.end()
    * }
    * ```
    */

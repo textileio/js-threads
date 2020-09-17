@@ -36,7 +36,7 @@
     "@types/varint": "^5.0.0",
     "bs58": "^4.0.1",
     "cids": "^0.8.0",
-    "multiaddr": "^7.4.2",
+    "multiaddr": "^8.0.0",
     "varint": "^5.0.0"
   },
   "gitHead": "696e9d9dd45fbea8ec6bacb3c7f673c45c1bc12a"

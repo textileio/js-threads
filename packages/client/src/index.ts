@@ -4,6 +4,7 @@
  */
 import { grpc } from "@improbable-eng/grpc-web"
 import { Context, ContextInterface, defaultHost } from "@textile/context"
+import { Identity, PrivateKey } from "@textile/crypto"
 import { WebsocketTransport } from "@textile/grpc-transport"
 import { Multiaddr } from "@textile/multiaddr"
 import { KeyInfo, UserAuth } from "@textile/security"
@@ -13,11 +14,7 @@ import {
   APIGetToken,
   APIListen,
 } from "@textile/threads-client-grpc/threads_pb_service"
-import {
-  Identity,
-  Libp2pCryptoIdentity,
-  ThreadKey,
-} from "@textile/threads-core"
+import { ThreadKey } from "@textile/threads-core"
 import { ThreadID } from "@textile/threads-id"
 import toJsonSchema from "to-json-schema"
 import {
@@ -214,8 +211,8 @@ export class Client {
    * @remarks
    * See `PrivateKey`
    */
-  static async randomIdentity(): Promise<Libp2pCryptoIdentity> {
-    return Libp2pCryptoIdentity.fromRandom()
+  static async randomIdentity(): Promise<PrivateKey> {
+    return PrivateKey.fromRandom()
   }
 
   /**
@@ -887,7 +884,7 @@ export class Client {
     const list: any[] = []
     values.forEach((v) => {
       if (!v.hasOwnProperty("_id")) {
-        v["_id"] = "" // The server will add an ID if empty.
+        v["_id"] = "" // The server will add an _id if empty.
       }
       list.push(encoder.encode(JSON.stringify(v)))
     })

@@ -15,8 +15,8 @@
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "prebuild": "npm run clean",
-    "build": "tsc -b tsconfig.json",
-    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo",
+    "build": "npx tsc -b tsconfig.json",
+    "clean": "npx rimraf ./dist ./tsconfig.tsbuildinfo",
     "test:browser": "polendina --cleanup --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js"
   },
   "repository": "github:textileio/js-threads",
@@ -43,6 +43,7 @@
   "dependencies": {
     "@improbable-eng/grpc-web": "^0.13.0",
     "@textile/context": "^0.6.8",
+    "@textile/crypto": "^0.1.0",
     "@textile/grpc-transport": "^0.0.3",
     "@textile/multiaddr": "^0.0.24",
     "@textile/security": "^0.2.7",
@@ -55,10 +56,6 @@
     "cids": "^0.8.3",
     "google-protobuf": "^3.10.0",
     "to-json-schema": "^0.2.5"
-  },
-  "devDependencies": {
-    "rimraf": "^3.0.0",
-    "typescript": "^3.7.2"
   },
   "gitHead": "331b99b7d5dbae032e5c071a0b9f6141d757b6f1"
 }

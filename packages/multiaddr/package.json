@@ -15,8 +15,8 @@
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "prebuild": "npm run clean",
-    "build": "tsc -b tsconfig.json",
-    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
+    "build": "npx tsc -b tsconfig.json",
+    "clean": "npx rimraf ./dist ./tsconfig.tsbuildinfo"
   },
   "repository": "github:textileio/js-threads",
   "references": [
@@ -24,10 +24,7 @@
       "path": "../id"
     }
   ],
-  "devDependencies": {
-    "rimraf": "^3.0.0",
-    "typescript": "^3.7.2"
-  },
+  "devDependencies": {},
   "dependencies": {
     "@textile/threads-id": "^0.1.13",
     "@types/bs58": "^4.0.1",

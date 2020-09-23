@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Context } from "@textile/context"
-import { Identity, Libp2pCryptoIdentity } from "@textile/threads-core"
+import { Identity, PrivateKey } from "@textile/crypto"
 import { ThreadID } from "@textile/threads-id"
 import { expect } from "chai"
 import { Client, Update } from "./index"
@@ -65,7 +65,7 @@ describe("Client", function () {
   const client = new Client(new Context("http://127.0.0.1:6007"))
 
   before(async () => {
-    identity = await Libp2pCryptoIdentity.fromRandom()
+    identity = await PrivateKey.fromRandom()
     await client.getToken(identity)
     await client.newDB(dbID, "test")
   })
@@ -206,7 +206,7 @@ describe("Client", function () {
   describe(".newDBFromAddr", () => {
     const client2 = new Client(new Context("http://127.0.0.1:6207"))
     before(async () => {
-      identity = await Libp2pCryptoIdentity.fromRandom()
+      identity = await PrivateKey.fromRandom()
       await client2.getToken(identity)
     })
     it("response should contain a valid list of thread protocol addrs", async () => {

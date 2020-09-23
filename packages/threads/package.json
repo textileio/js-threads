@@ -15,16 +15,15 @@
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "prebuild": "npm run clean",
-    "build": "tsc -b tsconfig.json",
-    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
+    "build": "npx tsc -b tsconfig.json",
+    "clean": "npx rimraf ./dist ./tsconfig.tsbuildinfo"
   },
   "repository": "github:textileio/js-threads",
   "devDependencies": {
-    "@improbable-eng/grpc-web": "^0.13.0",
-    "rimraf": "^3.0.0",
-    "typescript": "^3.7.2"
+    "@improbable-eng/grpc-web": "^0.13.0"
   },
   "dependencies": {
+    "@textile/crypto": "^0.1.0",
     "@textile/security": "^0.2.7",
     "@textile/threads-client": "^1.0.0-alpha.0",
     "@textile/threads-core": "^0.3.1",

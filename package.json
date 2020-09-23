@@ -34,7 +34,7 @@
     "@types/chai": "^4.2.7",
     "@types/dirty-chai": "^2.0.2",
     "@types/mocha": "^8.0.0",
-    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.0.0",
     "@typescript-eslint/parser": "^3.4.0",
     "buffer": "^5.4.3",
     "chai": "^4.2.0",

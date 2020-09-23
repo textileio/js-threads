@@ -29,7 +29,7 @@
   "license": "MIT",
   "repository": "github:textileio/js-threads",
   "devDependencies": {
-    "@commitlint/cli": "^9.0.1",
+    "@commitlint/cli": "^11.0.0",
     "@commitlint/config-conventional": "^9.0.1",
     "@types/chai": "^4.2.7",
     "@types/dirty-chai": "^2.0.2",

@@ -33,7 +33,7 @@
     "google-protobuf": "3.13.0",
     "libp2p-crypto": "^0.17.7",
     "micro-aes-gcm": "^0.2.0",
-    "multibase": "^1.0.1",
+    "multibase": "^3.0.1",
     "noble-ed25519": "^1.0.0",
     "varint": "^5.0.0"
   },

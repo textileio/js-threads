@@ -28,7 +28,7 @@
   "dependencies": {
     "@types/multibase": "^0.6.0",
     "fast-sha256": "^1.3.0",
-    "multibase": "^1.0.0"
+    "multibase": "^3.0.1"
   },
   "gitHead": "696e9d9dd45fbea8ec6bacb3c7f673c45c1bc12a"
 }

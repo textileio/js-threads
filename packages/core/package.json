@@ -43,7 +43,7 @@
     "@types/node": "^14.0.5",
     "@types/varint": "^5.0.0",
     "cids": "^0.8.3",
-    "multibase": "^1.0.1",
+    "multibase": "^3.0.1",
     "varint": "^5.0.0"
   },
   "gitHead": "696e9d9dd45fbea8ec6bacb3c7f673c45c1bc12a"

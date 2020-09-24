@@ -522,7 +522,7 @@ export class Client {
    *   name: string
    * }
    *
-   * const writeValidator = (writer: string, event: any, instance: Person) = {
+   * const writeValidator = (writer: string, event: any, instance: Person) => {
    *   var type = event.patch.type
    *   var patch = event.patch.json_patch
    *   switch (type) {

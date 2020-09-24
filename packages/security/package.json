@@ -24,6 +24,7 @@
     "@improbable-eng/grpc-web": "^0.13.0"
   },
   "dependencies": {
+    "@consento/sync-randombytes": "^1.0.5",
     "@types/multibase": "^0.6.0",
     "fast-sha256": "^1.3.0",
     "multibase": "^1.0.0"

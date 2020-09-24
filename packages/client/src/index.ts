@@ -8,14 +8,13 @@ import { Context, ContextInterface, defaultHost } from "@textile/context"
 import { Identity } from "@textile/crypto"
 import { WebsocketTransport } from "@textile/grpc-transport"
 import { Multiaddr } from "@textile/multiaddr"
-import { KeyInfo, UserAuth } from "@textile/security"
+import { KeyInfo, ThreadKey, UserAuth } from "@textile/security"
 import * as pb from "@textile/threads-client-grpc/threads_pb"
 import {
   API,
   APIGetToken,
   APIListen,
 } from "@textile/threads-client-grpc/threads_pb_service"
-import { ThreadKey } from "@textile/threads-core"
 import { ThreadID } from "@textile/threads-id"
 import toJsonSchema, { JSONSchema3or4 } from "to-json-schema"
 import {
@@ -131,7 +130,7 @@ export interface Update<T = unknown> {
 export interface DBInfo {
   /**
    * The Thread Key, encoded as a base32 string.
-   * @see ThreadKey for details.
+   * @see {@link ThreadKey} for details.
    */
   key: string
   /**
@@ -755,7 +754,7 @@ export class Client {
    * alternative to start, which creates a local store. newDBFromAddr should also include the
    * read/follow key, which should be a Buffer, Uint8Array or base32-encoded string.
    * @remarks
-   * See getDBInfo for a possible source of the address and keys. See ThreadKey for
+   * See getDBInfo for a possible source of the address and keys. See {@link ThreadKey} for
    * information about thread keys.
    * @param address The address for the thread with which to connect.
    * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>

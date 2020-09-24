@@ -31,7 +31,7 @@ const client = new Client()
 **create a store**
 
 ```typescript
-import {Client, Identity, ThreadID, UserAuth} from '@textile/threads'
+import {Client, Identity, ThreadID, UserAuth, PrivateKey} from '@textile/threads'
 
 async function newToken (client: Client, user: Identity) {
   const token = await client.getToken(user)
@@ -49,7 +49,7 @@ async function collectionFromObject (client: Client, thread: ThreadID, name: str
 }
 
 async function setup (auth: UserAuth) {
-  const user = await Client.randomIdentity()
+  const user = PrivateKey.fromRandom()
 
   const client = await Client.withUserAuth(auth)
 

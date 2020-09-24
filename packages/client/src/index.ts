@@ -43,12 +43,60 @@ export {
   JSONSchema3or4,
 }
 
-export interface CollectionConfig {
+function isEmpty(obj: any) {
+  return Object.keys(obj).length === 0 && obj.constructor === Object
+}
+
+function getFunctionBody(fn: ((...args: any[]) => any) | string): string {
+  // https://stackoverflow.com/a/25229488/1256988
+  function removeCommentsFromSource(str: string) {
+    return str.replace(
+      /(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm,
+      "$1"
+    )
+  }
+  const s = removeCommentsFromSource(fn.toString())
+  return s.substring(s.indexOf("{") + 1, s.lastIndexOf("}"))
+}
+
+/**
+ * CollectionConfig is the configuration options for creating and updating a Collection.
+ * It supports the following configuration options:
+ * * Name: The name of the collection, e.g, "Animals" (must be unique per DB).
+ * * Schema: A JSON Schema), which is used for instance validation.
+ * * Indexes: An optional list of index configurations, which define how instances are indexed.
+ * * WriteValidator: An optional JavaScript (ECMAScript 5.1) function that is used to validate
+ *   instances on write.
+ * * ReadFilter: An optional JavaScript (ECMAScript 5.1) function that is used to filter
+ *   instances on read.
+ *
+ * The `writeValidator` function receives three arguments:
+ * * writer: The multibase-encoded public key identity of the writer.
+ * * event: An object describing the update event (see core.Event).
+ * * instance: The current instance as a JavaScript object before the update event is applied.
+ *
+ * A falsy return value indicates a failed validation.
+ *
+ * Having access to writer, event, and instance opens the door to a variety of app-specific logic.
+ * Textile Buckets file-level access roles are implemented in part with a write validator.
+ *
+ * The `readFilter` function receives three arguments:
+ * * reader: The multibase-encoded public key identity of the reader.
+ * * instance: The current instance as a JavaScript object.
+ *
+ * The function must return a JavaScript object. Most implementation will modify and return the
+ * current instance.
+ * Like write validation, read filtering opens the door to a variety of app-specific logic.
+ * Textile Buckets file-level access roles are implemented in part with a read filter.
+ */
+export interface CollectionConfig<W = any, R = W> {
   name: string
-  schema: JSONSchema3or4 | any // Union type to indicate that JSONSchema is preferred but any works
+  schema?: JSONSchema3or4 | any // Union type to indicate that JSONSchema is preferred but any works
   indexes?: pb.Index.AsObject[]
-  writeValidator?: ((...args: any[]) => boolean) | string
-  readFilter?: ((...args: any[]) => boolean) | string
+  writeValidator?:
+    | ((writer: string, event: any, instance: W) => boolean)
+    | string
+  readFilter?: ((reader: string, instance: R) => R) | string
 }
 
 const encoder = new TextEncoder()
@@ -418,12 +466,11 @@ export class Client {
    * newCollection registers a new collection schema under the given name.
    * The schema must be a valid json-schema.org schema, and can be a JSON string or object.
    * @param threadID the ID of the database
-   * @param name The human-readable name for the collection.
-   * @param schema The actual json-schema.org compatible schema object.
-   * @param indexes A set of index definitions for indexing instance fields.
+   * @param config A configuration object for the collection. See {@link CollectionConfig}. Note
+   * that the validator and filter functions can also be provided as strings.
    *
    * @example
-   * Change a new astronauts collection
+   * Create a new astronauts collection
    * ```typescript
    * import {Client, ThreadID} from '@textile/threads'
    *
@@ -452,6 +499,55 @@ export class Client {
    *   return await client.updateCollection(threadID, { name: 'astronauts', schema: astronauts })
    * }
    * ```
+   * @example
+   * Create a collection with writeValidator and readFilter functions
+   * ```typescript
+   * import {Client, ThreadID} from '@textile/threads'
+   *
+   * const schema = {
+   *   title: "Person",
+   *   type: "object",
+   *   required: ["_id"],
+   *   properties: {
+   *     _id: { type: "string" },
+   *     name: { type: "string" },
+   *     age: { type: "integer" },
+   *   },
+   * }
+   *
+   * // We'll create a helper interface for type-safety
+   * interface Person {
+   *   _id: string
+   *   age: number
+   *   name: string
+   * }
+   *
+   * const writeValidator = (writer: string, event: any, instance: Person) = {
+   *   var type = event.patch.type
+   *   var patch = event.patch.json_patch
+   *   switch (type) {
+   *     case "delete":
+   *       if (writer != "the_boss") {
+   *         return false // Not the boss? No deletes for you.
+   *       }
+   *     default:
+   *       return true
+   *   }
+   * }
+   *
+   * const readFilter = (reader: string, instance: Person) => {
+   *   if (instance.age > 50) {
+   *     delete instance.age // Let's just hide their age for them ;)
+   *   }
+   *   return instance
+   * }
+   *
+   * async function newCollection (client: Client, threadID: ThreadID) {
+   *   return await client.updateCollection(threadID, {
+   *     name: 'Person', schema, writeValidator, readFilter
+   *   })
+   * }
+   * ```
    */
   public newCollection(
     threadID: ThreadID,
@@ -460,7 +556,20 @@ export class Client {
     const req = new pb.NewCollectionRequest()
     const conf = new pb.CollectionConfig()
     conf.setName(config.name)
+    if (config.schema === undefined || isEmpty(config.schema)) {
+      // We'll use our default schema
+      config.schema = { properties: { _id: { type: "string" } } }
+    }
     conf.setSchema(encoder.encode(JSON.stringify(config.schema)))
+
+    if (config.writeValidator) {
+      conf.setWritevalidator(getFunctionBody(config.writeValidator))
+    }
+
+    if (config.readFilter) {
+      conf.setReadfilter(getFunctionBody(config.readFilter))
+    }
+
     const idx: pb.Index[] = []
     for (const item of config.indexes ?? []) {
       const index = new pb.Index()
@@ -478,9 +587,8 @@ export class Client {
    * newCollectionFromObject creates and registers a new collection under the given name.
    * The input object must be serializable to JSON, and contain only json-schema.org types.
    * @param threadID the ID of the database
-   * @param name The human-readable name for the collection.
    * @param obj The actual object to attempt to extract a schema from.
-   * @param indexes A set of index definitions for indexing instance fields.
+   * @param config A configuration object for the collection. See {@link CollectionConfig}.
    *
    * @example
    * Change a new astronauts collection based of Buzz
@@ -511,8 +619,7 @@ export class Client {
    * Currently, updates can include name and schema.
    * @todo Allow update of indexing information.
    * @param threadID the ID of the database
-   * @param name the new name of the collection
-   * @param schema the new schema of the collection
+   * @param config A configuration object for the collection. See {@link CollectionConfig}.
    *
    * @example
    * Change the name of our astronauts collection
@@ -547,12 +654,23 @@ export class Client {
    */
   public updateCollection(
     threadID: ThreadID,
+    // Everything except "name" is optional here
     config: CollectionConfig
   ): Promise<void> {
     const req = new pb.UpdateCollectionRequest()
     const conf = new pb.CollectionConfig()
     conf.setName(config.name)
+    if (config.schema === undefined || isEmpty(config.schema)) {
+      // We'll use our default schema
+      config.schema = { properties: { _id: { type: "string" } } }
+    }
     conf.setSchema(encoder.encode(JSON.stringify(config.schema)))
+    if (config.writeValidator) {
+      conf.setWritevalidator(getFunctionBody(config.writeValidator))
+    }
+    if (config.readFilter) {
+      conf.setReadfilter(getFunctionBody(config.readFilter))
+    }
     const idx: pb.Index[] = []
     for (const item of config.indexes ?? []) {
       const index = new pb.Index()
@@ -652,12 +770,12 @@ export class Client {
    * @param address The address for the thread with which to connect.
    * Should be of the form /ip4/<url/ip-address>/tcp/<port>/p2p/<peer-id>/thread/<thread-id>
    * @param key The set of keys to use to connect to the database
-   * @param collections Array of `name` and JSON schema pairs for seeding the DB with collections.
+   * @param collections Array of CollectionConfig objects for seeding the DB with collections.
    */
   public newDBFromAddr(
     address: string,
     key: string | Uint8Array,
-    collections?: Array<{ name: string; schema: any }>
+    collections?: Array<CollectionConfig>
   ): Promise<ThreadID> {
     const req = new pb.NewDBFromAddrRequest()
     const addr = new Multiaddr(address).buffer
@@ -672,6 +790,16 @@ export class Client {
           const config = new pb.CollectionConfig()
           config.setName(c.name)
           config.setSchema(encoder.encode(JSON.stringify(c.schema)))
+          const { indexes } = c
+          if (indexes !== undefined) {
+            const idxs = indexes.map((idx) => {
+              const index = new pb.Index()
+              index.setPath(idx.path)
+              index.setUnique(idx.unique)
+              return index
+            })
+            config.setIndexesList(idxs)
+          }
           return config
         })
       )
@@ -714,7 +842,7 @@ export class Client {
   public joinFromInfo(
     info: DBInfo,
     includeLocal = false,
-    collections?: Array<{ name: string; schema: any }>
+    collections?: Array<CollectionConfig>
   ): Promise<ThreadID> {
     const req = new pb.NewDBFromAddrRequest()
     const filtered = info.addrs
@@ -734,6 +862,16 @@ export class Client {
             const config = new pb.CollectionConfig()
             config.setName(c.name)
             config.setSchema(encoder.encode(JSON.stringify(c.schema)))
+            const { indexes } = c
+            if (indexes !== undefined) {
+              const idxs = indexes.map((idx) => {
+                const index = new pb.Index()
+                index.setPath(idx.path)
+                index.setUnique(idx.unique)
+                return index
+              })
+              config.setIndexesList(idxs)
+            }
             return config
           })
         )
@@ -1079,16 +1217,13 @@ export class Client {
     threadID: ThreadID,
     collectionName: string,
     values: any[]
-  ): Promise<Error | undefined> {
+  ): Promise<void> {
     const req = new pb.VerifyRequest()
     req.setDbid(threadID.toBytes())
     req.setCollectionname(collectionName)
     const list: any[] = values.map((v) => encoder.encode(JSON.stringify(v)))
     req.setInstancesList(list)
-    return this.unary(API.Verify, req, (res: pb.VerifyReply) => {
-      const { transactionerror } = res.toObject()
-      return transactionerror ? new Error(transactionerror) : undefined
-    })
+    return this.unary(API.Verify, req)
   }
 
   /**

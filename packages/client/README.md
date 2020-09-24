@@ -44,7 +44,7 @@ async function createDB (client: Client) {
 }
 
 async function collectionFromObject (client: Client, thread: ThreadID, name: string, obj: any) {
-  await client.newCollectionFromObject(thread, name, obj)
+  await client.newCollectionFromObject(thread, obj, { name })
   return
 }
 
@@ -54,7 +54,7 @@ async function setup (auth: UserAuth) {
   const client = await Client.withUserAuth(auth)
 
   const token = await newToken(client, user)
-  
+
   const thread = await createDB(client)
 
   const astronaut = {name: 'Buzz', missions: 3}
@@ -68,7 +68,7 @@ async function setup (auth: UserAuth) {
 import {Client, ThreadID} from '@textile/threads'
 async function findEntity (client: Client, threadId: ThreadID, collection: string) {
   const found = await client.find(threadId, collection, {})
-  console.debug('found:', found.instancesList.length)
+  console.debug('found:', found.length)
 }
 ```
 
@@ -93,7 +93,7 @@ The following has been tested on **Android Only**.
 
 ### Connecting to the threads daemon
 
-You can run the daemon released as part of the early preview. To do so, 
+You can run the daemon released as part of the early preview. To do so,
 
 ```sh
 git clone git@github.com:textileio/go-threads.git
@@ -148,9 +148,9 @@ npm install -G rn-nodeify
 rn-nodeify --install buffer --hack
 ```
 
-This will create a `shim.js` in the root of your project. You need to import this at the top of your apps entry file (e.g. `indes.js`). 
+This will create a `shim.js` in the root of your project. You need to import this at the top of your apps entry file (e.g. `indes.js`).
 
-The top of `index.js` would look like, 
+The top of `index.js` would look like,
 
 ```js
 require('./shim')

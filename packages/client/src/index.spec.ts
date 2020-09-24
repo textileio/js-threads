@@ -3,10 +3,10 @@ import { Context } from "@textile/context"
 import { Identity, PrivateKey } from "@textile/crypto"
 import { ThreadID } from "@textile/threads-id"
 import { expect } from "chai"
-import { Client, Update } from "./index"
+import { Client, JSONSchema3or4, Update } from "./index"
 import { ReadTransaction, Where, WriteTransaction } from "./models"
 
-const personSchema = {
+const personSchema: JSONSchema3or4 = {
   $id: "https://example.com/person.schema.json",
   $schema: "http://json-schema.org/draft-07/schema#",
   title: "Person",
@@ -34,7 +34,7 @@ const personSchema = {
 }
 
 // Minimal schema representation
-const schema2 = {
+const schema2: JSONSchema3or4 = {
   properties: {
     _id: { type: "string" },
     fullName: { type: "string" },
@@ -65,38 +65,47 @@ describe("Client", function () {
   const client = new Client(new Context("http://127.0.0.1:6007"))
 
   before(async () => {
-    identity = await PrivateKey.fromRandom()
+    identity = PrivateKey.fromRandom()
     await client.getToken(identity)
     await client.newDB(dbID, "test")
   })
 
   describe("Collections", () => {
     it("newCollection should work and create an empty object", async () => {
-      const register = await client.newCollection(dbID, "Person", personSchema)
+      const register = await client.newCollection(dbID, {
+        name: "Person",
+        schema: personSchema,
+      })
       expect(register).to.be.undefined
     })
     it("newCollectionFromObject should create new collections from input objects", async () => {
       const register = await client.newCollectionFromObject(
         dbID,
-        "FromObject",
         {
           _id: "",
           these: "can",
           all: 83,
           values: ["that", "arent", "already"],
           specified: true,
+        },
+        {
+          name: "FromObject",
         }
       )
       expect(register).to.be.undefined
     })
 
     it("updateCollection should update an existing collection", async () => {
-      await client.updateCollection(dbID, "FromObject", schema2, [
-        {
-          path: "age",
-          unique: false,
-        },
-      ])
+      await client.updateCollection(dbID, {
+        name: "FromObject",
+        schema: schema2,
+        indexes: [
+          {
+            path: "age",
+            unique: false,
+          },
+        ],
+      })
       await client.create(dbID, "FromObject", [
         {
           _id: "",
@@ -123,7 +132,7 @@ describe("Client", function () {
         },
       })
       // Just one index on age
-      expect(info.indexesList).to.have.lengthOf(1)
+      expect(info.indexes).to.have.lengthOf(1)
     })
 
     it("getCollectionInfo should throw for a missing collection", async () => {
@@ -304,9 +313,7 @@ describe("Client", function () {
       const personID = instances[0]
 
       const q = new Where("firstName").eq(frank.firstName)
-      const find = await client.find<Person>(dbID, "Person", q)
-      expect(find).to.not.be.undefined
-      const found = find.instancesList
+      const found = await client.find<Person>(dbID, "Person", q)
       expect(found).to.have.length(1)
       const foundPerson = found.pop()!
       expect(foundPerson).to.not.be.undefined
@@ -318,13 +325,15 @@ describe("Client", function () {
     })
   })
   describe(".findById", () => {
-    it("response should contain a JSON parsable instance property", async () => {
-      const instances = await client.create(dbID, "Person", [createPerson()])
-      const personID = instances.pop()!
-      const find = await client.findByID<Person>(dbID, "Person", personID)
-      expect(find).to.not.be.undefined
-      expect(find).to.haveOwnProperty("instance")
-      const instance = find.instance
+    it("response should contain an instance", async () => {
+      try {
+        await client.findByID<Person>(dbID, "Person", "blah") // not a real id
+        throw new Error("wrong error")
+      } catch (err) {
+        expect(err.toString()).to.not.include("wrong error")
+      }
+      const [id] = await client.create(dbID, "Person", [createPerson()])
+      const instance = await client.findByID<Person>(dbID, "Person", id)
       expect(instance).to.not.be.undefined
       expect(instance).to.have.property("firstName", "Adam")
       expect(instance).to.have.property("lastName", "Doe")
@@ -353,10 +362,7 @@ describe("Client", function () {
     })
 
     it("should be able to find an existing instance", async () => {
-      const find = await transaction!.findByID<Person>(existingPersonID)
-      expect(find).to.not.be.undefined
-      expect(find).to.haveOwnProperty("instance")
-      const instance = find!.instance
+      const instance = await transaction!.findByID<Person>(existingPersonID)
       expect(instance).to.not.be.undefined
       expect(instance).to.have.property("firstName", "Adam")
       expect(instance).to.have.property("lastName", "Doe")
@@ -407,10 +413,7 @@ describe("Client", function () {
         expect(has).to.be.true
       })
       it("should be able to find an existing instance", async () => {
-        const find = await transaction!.findByID<Person>(existingPersonID)
-        expect(find).to.not.be.undefined
-        expect(find).to.haveOwnProperty("instance")
-        const instance = find!.instance
+        const instance = await transaction!.findByID<Person>(existingPersonID)
         expect(instance).to.not.be.undefined
         expect(instance).to.have.property("firstName", "Adam")
         expect(instance).to.have.property("lastName", "Doe")
@@ -453,7 +456,7 @@ describe("Client", function () {
         // After discarding transaction, we end it... but results updates should be ignored
         await transaction.end()
 
-        const { instance } = await client.findByID(dbID, "Person", id)
+        const instance: Person = await client.findByID(dbID, "Person", id)
         expect(instance.age).to.not.equal(38)
       })
     })
@@ -549,10 +552,8 @@ describe("Client", function () {
         .and("age")
         .lt(66)
         .or(new Where("age").eq(67))
-      const find = await client.find<Person>(dbID, "Person", q)
-      expect(find).to.not.be.undefined
-      const found = find.instancesList
-      expect(found).to.have.length(7)
+      const instances = await client.find<Person>(dbID, "Person", q)
+      expect(instances).to.have.length(7)
     })
   })
 
@@ -562,9 +563,9 @@ describe("Client", function () {
       const person = createPerson()
       await newClient.getToken(identity)
       const created = await newClient.create(dbID, "Person", [person])
-      const got = await newClient.findByID(dbID, "Person", created[0])
-      expect(got.instance).to.haveOwnProperty("_id", created[0])
-      expect(got.instance).to.haveOwnProperty("firstName", "Adam")
+      const got: Person = await newClient.findByID(dbID, "Person", created[0])
+      expect(got).to.haveOwnProperty("_id", created[0])
+      expect(got).to.haveOwnProperty("firstName", "Adam")
     })
   })
 })

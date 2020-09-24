@@ -3,6 +3,7 @@
  * @module @textile/threads-client
  */
 import { grpc } from "@improbable-eng/grpc-web"
+import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary"
 import { Context, ContextInterface, defaultHost } from "@textile/context"
 import { Identity, PrivateKey } from "@textile/crypto"
 import { WebsocketTransport } from "@textile/grpc-transport"
@@ -16,12 +17,10 @@ import {
 } from "@textile/threads-client-grpc/threads_pb_service"
 import { ThreadKey } from "@textile/threads-core"
 import { ThreadID } from "@textile/threads-id"
-import toJsonSchema from "to-json-schema"
+import toJsonSchema, { JSONSchema3or4 } from "to-json-schema"
 import {
   CriterionJSON,
   Filter,
-  Instance,
-  InstanceList,
   Query,
   QueryJSON,
   ReadTransaction,
@@ -37,27 +36,23 @@ export {
   Where,
   WriteTransaction,
   ReadTransaction,
-  Instance,
-  InstanceList,
   QueryJSON,
   ValueJSON,
   CriterionJSON,
   SortJSON,
-}
-
-export interface CollectionInfo {
-  name: string
-  schema: any
-  indexesList: Array<pb.Index.AsObject>
+  JSONSchema3or4,
 }
 
 export interface CollectionConfig {
   name: string
-  schema: any
-  indexes: pb.Index.AsObject
+  schema: JSONSchema3or4 | any // Union type to indicate that JSONSchema is preferred but any works
+  indexes?: pb.Index.AsObject[]
+  writeValidator?: ((...args: any[]) => boolean) | string
+  readFilter?: ((...args: any[]) => boolean) | string
 }
 
 const encoder = new TextEncoder()
+const decoder = new TextDecoder()
 
 export function maybeLocalAddr(ip: string): boolean | RegExpMatchArray {
   return (
@@ -75,7 +70,8 @@ export enum Action {
   DELETE,
 }
 
-export interface Update<T = any> extends Instance<T> {
+export interface Update<T = unknown> {
+  instance: T | undefined
   collectionName: string
   instanceID: string
   action: Action
@@ -122,7 +118,7 @@ export interface DBInfo {
  *     missions: 2,
  *     _id: '',
  *   }
- *   await client.newCollectionFromObject(threadID, 'astronauts', buzz)
+ *   await client.newCollectionFromObject(threadID, buzz, { name: 'astronauts' })
  *
  *   // Store the buzz object in the new collection
  *   await client.create(threadID, 'astronauts', [buzz])
@@ -200,9 +196,7 @@ export class Client {
     host = defaultHost,
     debug = false
   ): Promise<Client> {
-    const context = new Context(host)
-    await context.withKeyInfo(key)
-    return new Client(context, debug)
+    return new Client(await new Context(host).withKeyInfo(key), debug)
   }
 
   /**
@@ -211,7 +205,7 @@ export class Client {
    * @remarks
    * See `PrivateKey`
    */
-  static async randomIdentity(): Promise<PrivateKey> {
+  static randomIdentity(): PrivateKey {
     return PrivateKey.fromRandom()
   }
 
@@ -233,7 +227,7 @@ export class Client {
    * }
    * ```
    */
-  async getToken(identity: Identity, ctx?: ContextInterface): Promise<string> {
+  getToken(identity: Identity, ctx?: ContextInterface): Promise<string> {
     return this.getTokenChallenge(
       identity.public.toString(),
       async (challenge: Uint8Array) => {
@@ -255,7 +249,7 @@ export class Client {
    * @param ctx Context object containing web-gRPC headers and settings.
    * @remarks `publicKey` must be the corresponding public key of the private key used in `callback`.
    */
-  async getTokenChallenge(
+  getTokenChallenge(
     publicKey: string,
     callback: (challenge: Uint8Array) => Uint8Array | Promise<Uint8Array>,
     ctx?: ContextInterface
@@ -318,7 +312,7 @@ export class Client {
    * }
    * ```
    */
-  public async newDB(threadID?: ThreadID, name?: string): Promise<ThreadID> {
+  public newDB(threadID?: ThreadID, name?: string): Promise<ThreadID> {
     const dbID = threadID ?? ThreadID.fromRandom()
     const req = new pb.NewDBRequest()
     req.setDbid(dbID.toBytes())
@@ -326,10 +320,11 @@ export class Client {
       this.context.withThreadName(name)
       req.setName(name)
     }
-    await this.unary(API.NewDB, req)
-    // Update our context with out new thread id
-    this.context.withThread(dbID.toString())
-    return dbID
+    return this.unary(API.NewDB, req, () => {
+      // Update our context with out new thread id
+      this.context.withThread(dbID.toString())
+      return dbID
+    })
   }
 
   /**
@@ -347,14 +342,20 @@ export class Client {
    */
   public async open(threadID: ThreadID, name?: string): Promise<void> {
     const req = new pb.ListDBsRequest()
-    const res = (await this.unary(API.ListDBs, req)) as pb.ListDBsReply.AsObject
-    for (const db of res.dbsList) {
-      const id = ThreadID.fromBytes(Buffer.from(db.dbid as string, "base64"))
-      if (id === threadID) {
-        this.context.withThread(threadID.toString())
-        return
+    // Check if we already have this thread on the client...
+    const found = await this.unary(API.ListDBs, req, (res: pb.ListDBsReply) => {
+      for (const db of res.getDbsList()) {
+        const id = ThreadID.fromBytes(db.getDbid_asU8())
+        if (id === threadID) {
+          this.context.withThread(threadID.toString())
+          return true
+        }
       }
-    }
+      return false
+    })
+    // If yes, use that one...
+    if (found) return
+    // Otherwise, try to create a new one
     await this.newDB(threadID, name)
     this.context.withThread(threadID.toString())
   }
@@ -372,11 +373,10 @@ export class Client {
    * }
    * ```
    */
-  public async deleteDB(threadID: ThreadID): Promise<void> {
+  public deleteDB(threadID: ThreadID): Promise<void> {
     const req = new pb.DeleteDBRequest()
     req.setDbid(threadID.toBytes())
-    await this.unary(API.DeleteDB, req)
-    return
+    return this.unary(API.DeleteDB, req)
   }
 
   /**
@@ -384,35 +384,34 @@ export class Client {
    * @remarks this API is blocked on the Hub. Use `listThreads` when importing Client
    * from `@textile/hub` as an alternative.
    */
-  public async listDBs(): Promise<
+  public listDBs(): Promise<
     Record<string, pb.GetDBInfoReply.AsObject | undefined>
   > {
     const req = new pb.ListDBsRequest()
-    const res = (await this.unary(API.ListDBs, req)) as pb.ListDBsReply.AsObject
-    const dbs: Record<string, pb.GetDBInfoReply.AsObject | undefined> = {}
-    for (const db of res.dbsList) {
-      const id = ThreadID.fromBytes(
-        Buffer.from(db.dbid as string, "base64")
-      ).toString()
-      dbs[id] = db.info
-    }
-    return dbs
+    return this.unary(API.ListDBs, req, (res: pb.ListDBsReply) => {
+      const dbs: Record<string, pb.GetDBInfoReply.AsObject | undefined> = {}
+      for (const db of res.getDbsList()) {
+        const id = ThreadID.fromBytes(db.getDbid_asU8()).toString()
+        dbs[id] = db.getInfo()?.toObject()
+      }
+      return dbs
+    })
   }
 
   /**
    * Lists the collections in a thread
    * @param thread the ID of the database
    */
-  public async listCollections(
+  public listCollections(
     thread: ThreadID
   ): Promise<Array<pb.GetCollectionInfoReply.AsObject>> {
     const req = new pb.ListCollectionsRequest()
     req.setDbid(thread.toBytes())
-    const resp = (await this.unary(
+    return this.unary(
       API.ListCollections,
-      req
-    )) as pb.ListCollectionsReply.AsObject
-    return resp.collectionsList
+      req,
+      (res: pb.ListCollectionsReply) => res.toObject().collectionsList
+    )
   }
 
   /**
@@ -450,33 +449,29 @@ export class Client {
    * }
    *
    * async function newCollection (client: Client, threadID: ThreadID) {
-   *   return await client.updateCollection(threadID, 'astronauts', astronauts)
+   *   return await client.updateCollection(threadID, { name: 'astronauts', schema: astronauts })
    * }
    * ```
    */
-  public async newCollection(
+  public newCollection(
     threadID: ThreadID,
-    name: string,
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    schema: any,
-    indexes?: pb.Index.AsObject[]
+    config: CollectionConfig
   ): Promise<void> {
     const req = new pb.NewCollectionRequest()
-    const config = new pb.CollectionConfig()
-    config.setName(name)
-    config.setSchema(encoder.encode(JSON.stringify(schema)))
+    const conf = new pb.CollectionConfig()
+    conf.setName(config.name)
+    conf.setSchema(encoder.encode(JSON.stringify(config.schema)))
     const idx: pb.Index[] = []
-    for (const item of indexes ?? []) {
+    for (const item of config.indexes ?? []) {
       const index = new pb.Index()
       index.setPath(item.path)
       index.setUnique(item.unique)
       idx.push(index)
     }
-    config.setIndexesList(idx)
+    conf.setIndexesList(idx)
     req.setDbid(threadID.toBytes())
-    req.setConfig(config)
-    await this.unary(API.NewCollection, req)
-    return
+    req.setConfig(conf)
+    return this.unary(API.NewCollection, req)
   }
 
   /**
@@ -498,19 +493,17 @@ export class Client {
    *     missions: 2,
    *     _id: '',
    *   }
-   *   return await client.newCollectionFromObject(threadID, 'astronauts', buzz)
+   *   return await client.newCollectionFromObject(threadID, buzz, { name: 'astronauts' })
    * }
    * ```
    */
-  public async newCollectionFromObject(
+  public newCollectionFromObject(
     threadID: ThreadID,
-    name: string,
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    obj: any,
-    indexes?: pb.Index.AsObject[]
+    obj: Record<string, any>,
+    config: Omit<CollectionConfig, "schema">
   ): Promise<void> {
-    const schema = toJsonSchema(obj)
-    return this.newCollection(threadID, name, schema, indexes)
+    const schema: JSONSchema3or4 = toJsonSchema(obj)
+    return this.newCollection(threadID, { ...config, schema })
   }
 
   /**
@@ -548,23 +541,20 @@ export class Client {
    * }
    *
    * async function changeName (client: Client, threadID: ThreadID) {
-   *   return await client.updateCollection(threadID, 'toy-story-characters', astronauts)
+   *   return await client.updateCollection(threadID, { name: 'toy-story-characters', schema: astronauts })
    * }
    * ```
    */
-  public async updateCollection(
+  public updateCollection(
     threadID: ThreadID,
-    name: string,
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    schema: any,
-    indexes?: pb.Index.AsObject[]
+    config: CollectionConfig
   ): Promise<void> {
     const req = new pb.UpdateCollectionRequest()
     const conf = new pb.CollectionConfig()
-    conf.setName(name)
-    conf.setSchema(encoder.encode(JSON.stringify(schema)))
+    conf.setName(config.name)
+    conf.setSchema(encoder.encode(JSON.stringify(config.schema)))
     const idx: pb.Index[] = []
-    for (const item of indexes ?? []) {
+    for (const item of config.indexes ?? []) {
       const index = new pb.Index()
       index.setPath(item.path)
       index.setUnique(item.unique)
@@ -573,8 +563,7 @@ export class Client {
     conf.setIndexesList(idx)
     req.setDbid(threadID.toBytes())
     req.setConfig(conf)
-    await this.unary(API.UpdateCollection, req)
-    return
+    return this.unary(API.UpdateCollection, req)
   }
 
   /**
@@ -592,15 +581,11 @@ export class Client {
    * }
    * ```
    */
-  public async deleteCollection(
-    threadID: ThreadID,
-    name: string
-  ): Promise<void> {
+  public deleteCollection(threadID: ThreadID, name: string): Promise<void> {
     const req = new pb.DeleteCollectionRequest()
     req.setDbid(threadID.toBytes())
     req.setName(name)
-    await this.unary(API.DeleteCollection, req)
-    return
+    return this.unary(API.DeleteCollection, req)
   }
 
   /**
@@ -618,35 +603,42 @@ export class Client {
    * }
    * ```
    */
-  public async getCollectionIndexes(
+  public getCollectionIndexes(
     threadID: ThreadID,
     name: string
   ): Promise<pb.Index.AsObject[]> {
     const req = new pb.GetCollectionIndexesRequest()
     req.setDbid(threadID.toBytes())
     req.setName(name)
-    const res = (await this.unary(
+    return this.unary(
       API.GetCollectionIndexes,
-      req
-    )) as pb.GetCollectionIndexesReply.AsObject
-    return res.indexesList
+      req,
+      (res: pb.GetCollectionIndexesReply) => res.toObject().indexesList
+    )
   }
 
-  public async getCollectionInfo(
+  public getCollectionInfo(
     threadID: ThreadID,
     name: string
-  ): Promise<CollectionInfo> {
+  ): Promise<CollectionConfig> {
     const req = new pb.GetCollectionInfoRequest()
     req.setDbid(threadID.toBytes())
     req.setName(name)
-    const res = (await this.unary(
+    return this.unary(
       API.GetCollectionInfo,
-      req
-    )) as pb.GetCollectionInfoReply.AsObject
-    res.schema = JSON.parse(
-      (Buffer.from(res.schema as string, "base64") as unknown) as string
+      req,
+      (res: pb.GetCollectionInfoReply) => {
+        const result: CollectionConfig = {
+          schema: JSON.parse(decoder.decode(res.getSchema_asU8())),
+          name: res.getName(),
+          indexes: res.getIndexesList().map((index) => index.toObject()),
+          // We'll always return strings in this case for safety reasons
+          writeValidator: res.getWritevalidator(),
+          readFilter: res.getReadfilter(),
+        }
+        return result
+      }
     )
-    return res
   }
 
   /**
@@ -662,7 +654,7 @@ export class Client {
    * @param key The set of keys to use to connect to the database
    * @param collections Array of `name` and JSON schema pairs for seeding the DB with collections.
    */
-  public async newDBFromAddr(
+  public newDBFromAddr(
     address: string,
     key: string | Uint8Array,
     collections?: Array<{ name: string; schema: any }>
@@ -684,13 +676,14 @@ export class Client {
         })
       )
     }
-    await this.unary(API.NewDBFromAddr, req)
-    // Hacky way to extract threadid from addr that succeeded
-    // @todo: Return this directly from the gRPC API?
-    const result = new Multiaddr(Buffer.from(req.getAddr_asU8()))
-      .stringTuples()
-      .filter(([key]) => key === 406)
-    return ThreadID.fromString(result[0][1])
+    return this.unary(API.NewDBFromAddr, req, (/** res: pb.NewDBReply */) => {
+      // Hacky way to extract threadid from addr that succeeded
+      // TODO: Return this directly from the gRPC API on the go side?
+      const result = new Multiaddr(Buffer.from(req.getAddr_asU8()))
+        .stringTuples()
+        .filter(([key]) => key === 406)
+      return ThreadID.fromString(result[0][1])
+    })
   }
 
   /**
@@ -718,7 +711,7 @@ export class Client {
    * }
    * ```
    */
-  public async joinFromInfo(
+  public joinFromInfo(
     info: DBInfo,
     includeLocal = false,
     collections?: Array<{ name: string; schema: any }>
@@ -746,13 +739,14 @@ export class Client {
         )
       }
       // Try to add addrs one at a time, if one succeeds, we are done.
-      await this.unary(API.NewDBFromAddr, req)
-      // Hacky way to extract threadid from addr that succeeded
-      // @todo: Return this directly from the gRPC API?
-      const result = new Multiaddr(Buffer.from(req.getAddr_asU8()))
-        .stringTuples()
-        .filter(([key]) => key === 406)
-      return ThreadID.fromString(result[0][1])
+      return this.unary(API.NewDBFromAddr, req, () => {
+        // Hacky way to extract threadid from addr that succeeded
+        // @todo: Return this directly from the gRPC API?
+        const result = new Multiaddr(Buffer.from(req.getAddr_asU8()))
+          .stringTuples()
+          .filter(([key]) => key === 406)
+        return ThreadID.fromString(result[0][1])
+      })
     }
     throw new Error("No viable addresses for dialing")
   }
@@ -776,25 +770,23 @@ export class Client {
    * }
    * ```
    */
-  public async getDBInfo(threadID: ThreadID): Promise<DBInfo> {
+  public getDBInfo(threadID: ThreadID): Promise<DBInfo> {
     const req = new pb.GetDBInfoRequest()
     req.setDbid(threadID.toBytes())
-    const res = (await this.unary(
-      API.GetDBInfo,
-      req
-    )) as pb.GetDBInfoReply.AsObject
-    const threadKey = Buffer.from(res.key as string, "base64")
-    const key = ThreadKey.fromBytes(threadKey)
-    const addrs: string[] = []
-    for (const addr of res.addrsList) {
-      const a =
-        typeof addr === "string"
-          ? Buffer.from(addr, "base64")
-          : Buffer.from(addr)
-      const address = new Multiaddr(a).toString()
-      addrs.push(address)
-    }
-    return { key: key.toString(), addrs }
+    return this.unary(API.GetDBInfo, req, (res: pb.GetDBInfoReply) => {
+      const key = ThreadKey.fromBytes(res.getKey_asU8())
+      const addrs: string[] = []
+      for (const addr of res.getAddrsList()) {
+        // TODO: Remove the buffer requirement here
+        const a =
+          typeof addr === "string"
+            ? Buffer.from(addr, "base64")
+            : Buffer.from(addr)
+        const address = new Multiaddr(a).toString()
+        addrs.push(address)
+      }
+      return { key: key.toString(), addrs }
+    })
   }
 
   /**
@@ -825,7 +817,7 @@ export class Client {
    * }
    * ```
    */
-  public async create(
+  public create(
     threadID: ThreadID,
     collectionName: string,
     values: any[]
@@ -838,8 +830,11 @@ export class Client {
       list.push(encoder.encode(JSON.stringify(v)))
     })
     req.setInstancesList(list)
-    const res = (await this.unary(API.Create, req)) as pb.CreateReply.AsObject
-    return res.instanceidsList
+    return this.unary(
+      API.Create,
+      req,
+      (res: pb.CreateReply) => res.toObject().instanceidsList
+    )
   }
 
   /**
@@ -864,16 +859,16 @@ export class Client {
    *   const query = new Where('name').eq('Buzz')
    *   const result = await client.find<Astronaut>(threadID, 'astronauts', query)
    *
-   *   if (result.instancesList.length < 1) return
+   *   if (result.length < 1) return
    *
-   *   const buzz = result.instancesList[0]
+   *   const buzz = result[0]
    *   buzz.missions += 1
    *
    *   return await client.save(threadID, 'astronauts', [buzz])
    * }
    * ```
    */
-  public async save(
+  public save(
     threadID: ThreadID,
     collectionName: string,
     values: any[]
@@ -889,8 +884,7 @@ export class Client {
       list.push(encoder.encode(JSON.stringify(v)))
     })
     req.setInstancesList(list)
-    await this.unary(API.Save, req)
-    return
+    return this.unary(API.Save, req)
   }
 
   /**
@@ -914,14 +908,14 @@ export class Client {
    *   const query = new Where('name').eq('Buzz')
    *   const result = await client.find<Astronaut>(threadID, 'astronauts', query)
    *
-   *   if (result.instancesList.length < 1) return
+   *   if (result.length < 1) return
    *
-   *   const ids = await result.instancesList.map((instance) => instance._id)
+   *   const ids = await result.map((instance) => instance._id)
    *   await client.delete(threadID, 'astronauts', ids)
    * }
    * ```
    */
-  public async delete(
+  public delete(
     threadID: ThreadID,
     collectionName: string,
     IDs: string[]
@@ -930,8 +924,7 @@ export class Client {
     req.setDbid(threadID.toBytes())
     req.setCollectionname(collectionName)
     req.setInstanceidsList(IDs)
-    await this.unary(API.Delete, req)
-    return
+    return this.unary(API.Delete, req)
   }
 
   /**
@@ -950,7 +943,7 @@ export class Client {
    * }
    * ```
    */
-  public async has(
+  public has(
     threadID: ThreadID,
     collectionName: string,
     IDs: string[]
@@ -959,8 +952,7 @@ export class Client {
     req.setDbid(threadID.toBytes())
     req.setCollectionname(collectionName)
     req.setInstanceidsList(IDs)
-    const res = (await this.unary(API.Has, req)) as pb.HasReply.AsObject
-    return res.exists
+    return this.unary(API.Has, req, (res: pb.HasReply) => res.getExists())
   }
 
   /**
@@ -987,23 +979,21 @@ export class Client {
    * }
    * ```
    */
-  public async find<T = any>(
+  public find<T = unknown>(
     threadID: ThreadID,
     collectionName: string,
     query: QueryJSON
-  ): Promise<InstanceList<T>> {
+  ): Promise<T[]> {
     const req = new pb.FindRequest()
     req.setDbid(threadID.toBytes())
     req.setCollectionname(collectionName)
     // @todo: Find a more isomorphic way to do this base64 round-trip
     req.setQueryjson(encoder.encode(JSON.stringify(query)))
-    const res = (await this.unary(API.Find, req)) as pb.FindReply.AsObject
-    const ret: InstanceList<T> = {
-      instancesList: res.instancesList.map((instance) =>
-        JSON.parse(Buffer.from(instance as string, "base64").toString())
-      ),
-    }
-    return ret
+    return this.unary(API.Find, req, (res: pb.FindReply) => {
+      return res
+        .getInstancesList_asU8()
+        .map((instance) => JSON.parse(decoder.decode(instance)))
+    })
   }
 
   /**
@@ -1039,25 +1029,18 @@ export class Client {
    * }
    * ```
    */
-  public async findByID<T = any>(
+  public findByID<T = unknown>(
     threadID: ThreadID,
     collectionName: string,
     ID: string
-  ): Promise<Instance<T>> {
+  ): Promise<T> {
     const req = new pb.FindByIDRequest()
     req.setDbid(threadID.toBytes())
     req.setCollectionname(collectionName)
     req.setInstanceid(ID)
-    const res = (await this.unary(
-      API.FindByID,
-      req
-    )) as pb.FindByIDReply.AsObject
-    const ret: Instance<T> = {
-      instance: JSON.parse(
-        Buffer.from(res.instance as string, "base64").toString()
-      ),
-    }
-    return ret
+    return this.unary(API.FindByID, req, (res: pb.FindByIDReply) =>
+      JSON.parse(decoder.decode(res.getInstance_asU8()))
+    )
   }
 
   /**
@@ -1082,9 +1065,9 @@ export class Client {
    *   const query = new Where('name').eq('Buzz')
    *   const result = await client.find<Astronaut>(threadID, 'astronauts', query)
    *
-   *   if (result.instancesList.length < 1) return
+   *   if (result.length < 1) return
    *
-   *   const buzz = result.instancesList[0]
+   *   const buzz = result[0]
    *   buzz.missions += 1
    *
    *   // Is this going to be a valid update?
@@ -1092,7 +1075,7 @@ export class Client {
    * }
    * ```
    */
-  public async verify(
+  public verify(
     threadID: ThreadID,
     collectionName: string,
     values: any[]
@@ -1102,11 +1085,10 @@ export class Client {
     req.setCollectionname(collectionName)
     const list: any[] = values.map((v) => encoder.encode(JSON.stringify(v)))
     req.setInstancesList(list)
-    const { transactionerror } = (await this.unary(
-      API.Verify,
-      req
-    )) as pb.VerifyReply.AsObject
-    return transactionerror ? new Error(transactionerror) : undefined
+    return this.unary(API.Verify, req, (res: pb.VerifyReply) => {
+      const { transactionerror } = res.toObject()
+      return transactionerror ? new Error(transactionerror) : undefined
+    })
   }
 
   /**
@@ -1118,11 +1100,15 @@ export class Client {
     threadID: ThreadID,
     collectionName: string
   ): ReadTransaction {
-    const client = grpc.client(API.ReadTransaction, {
+    // TODO: We can do this setup much cleaner!
+    const client: grpc.Client<
+      pb.ReadTransactionRequest,
+      pb.ReadTransactionReply
+    > = grpc.client(API.ReadTransaction, {
       host: this.serviceHost,
       transport: this.rpcOptions.transport,
       debug: this.rpcOptions.debug,
-    }) as grpc.Client<pb.ReadTransactionRequest, pb.ReadTransactionReply>
+    })
     return new ReadTransaction(this.context, client, threadID, collectionName)
   }
 
@@ -1135,11 +1121,14 @@ export class Client {
     threadID: ThreadID,
     collectionName: string
   ): WriteTransaction {
-    const client = grpc.client(API.WriteTransaction, {
+    const client: grpc.Client<
+      pb.WriteTransactionRequest,
+      pb.WriteTransactionReply
+    > = grpc.client(API.WriteTransaction, {
       host: this.serviceHost,
       transport: this.rpcOptions.transport,
       debug: this.rpcOptions.debug,
-    }) as grpc.Client<pb.WriteTransactionRequest, pb.WriteTransactionReply>
+    })
     return new WriteTransaction(this.context, client, threadID, collectionName)
   }
 
@@ -1284,23 +1273,24 @@ export class Client {
   }
 
   private async unary<
-    TRequest extends grpc.ProtobufMessage,
     TResponse extends grpc.ProtobufMessage,
-    M extends grpc.UnaryMethodDefinition<TRequest, TResponse>
-  >(methodDescriptor: M, req: TRequest) {
+    TRequest extends grpc.ProtobufMessage,
+    M extends grpc.UnaryMethodDefinition<TRequest, TResponse>,
+    O = undefined // Only thing we can't know ahead of time
+  >(methodDescriptor: M, req: TRequest, mapper?: (resp: TResponse) => O) {
     const metadata = await this.context.toMetadata()
-    return new Promise((resolve, reject) => {
+    return new Promise<O>((resolve, reject) => {
       grpc.unary(methodDescriptor, {
         transport: this.rpcOptions.transport,
         debug: this.rpcOptions.debug,
         request: req,
         host: this.serviceHost,
         metadata,
-        onEnd: (res) => {
+        onEnd: (res: UnaryOutput<TResponse>) => {
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {
-            if (message) {
-              resolve(message.toObject())
+            if (message && mapper) {
+              resolve(mapper(message))
             } else {
               resolve()
             }

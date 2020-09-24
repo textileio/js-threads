@@ -48,7 +48,6 @@
     "@textile/multiaddr": "^0.0.25",
     "@textile/security": "^0.2.8",
     "@textile/threads-client-grpc": "^1.0.0",
-    "@textile/threads-core": "^0.3.2",
     "@textile/threads-id": "^0.1.14",
     "@types/to-json-schema": "^0.2.0",
     "to-json-schema": "^0.2.5"

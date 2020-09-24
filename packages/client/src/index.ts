@@ -61,18 +61,18 @@ function getFunctionBody(fn: ((...args: any[]) => any) | string): string {
 /**
  * CollectionConfig is the configuration options for creating and updating a Collection.
  * It supports the following configuration options:
- * * Name: The name of the collection, e.g, "Animals" (must be unique per DB).
- * * Schema: A JSON Schema), which is used for instance validation.
- * * Indexes: An optional list of index configurations, which define how instances are indexed.
- * * WriteValidator: An optional JavaScript (ECMAScript 5.1) function that is used to validate
- *   instances on write.
- * * ReadFilter: An optional JavaScript (ECMAScript 5.1) function that is used to filter
- *   instances on read.
+ *   - Name: The name of the collection, e.g, "Animals" (must be unique per DB).
+ *   - Schema: A JSON Schema), which is used for instance validation.
+ *   - Indexes: An optional list of index configurations, which define how instances are indexed.
+ *   - WriteValidator: An optional JavaScript (ECMAScript 5.1) function that is used to validate
+ *     instances on write.
+ *   - ReadFilter: An optional JavaScript (ECMAScript 5.1) function that is used to filter
+ *     instances on read.
  *
  * The `writeValidator` function receives three arguments:
- * * writer: The multibase-encoded public key identity of the writer.
- * * event: An object describing the update event (see core.Event).
- * * instance: The current instance as a JavaScript object before the update event is applied.
+ *   - writer: The multibase-encoded public key identity of the writer.
+ *   - event: An object describing the update event (see core.Event).
+ *   - instance: The current instance as a JavaScript object before the update event is applied.
  *
  * A falsy return value indicates a failed validation.
  *
@@ -80,8 +80,8 @@ function getFunctionBody(fn: ((...args: any[]) => any) | string): string {
  * Textile Buckets file-level access roles are implemented in part with a write validator.
  *
  * The `readFilter` function receives three arguments:
- * * reader: The multibase-encoded public key identity of the reader.
- * * instance: The current instance as a JavaScript object.
+ *   - reader: The multibase-encoded public key identity of the reader.
+ *   - instance: The current instance as a JavaScript object.
  *
  * The function must return a JavaScript object. Most implementation will modify and return the
  * current instance.

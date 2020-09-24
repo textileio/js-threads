@@ -5,7 +5,7 @@
 import { grpc } from "@improbable-eng/grpc-web"
 import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary"
 import { Context, ContextInterface, defaultHost } from "@textile/context"
-import { Identity, PrivateKey } from "@textile/crypto"
+import { Identity } from "@textile/crypto"
 import { WebsocketTransport } from "@textile/grpc-transport"
 import { Multiaddr } from "@textile/multiaddr"
 import { KeyInfo, UserAuth } from "@textile/security"
@@ -245,16 +245,6 @@ export class Client {
     debug = false
   ): Promise<Client> {
     return new Client(await new Context(host).withKeyInfo(key), debug)
-  }
-
-  /**
-   * Create a random user identity.
-   * @deprecated
-   * @remarks
-   * See `PrivateKey`
-   */
-  static randomIdentity(): PrivateKey {
-    return PrivateKey.fromRandom()
   }
 
   /**

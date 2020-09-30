@@ -8,7 +8,7 @@ export * from "./WriteTransaction"
 
 /**
  * Event represents an update event.
- * It contains information about when the update occured, the instance id, the collection name,
+ * It contains information about when the update occurred, the instance id, the collection name,
  * and the update patch itself.
  */
 export interface Event {

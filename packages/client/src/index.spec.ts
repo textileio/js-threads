@@ -563,7 +563,8 @@ describe("Client", function () {
           await transaction?.verify([createPerson()])
           throw new Error("wrong error")
         } catch (err) {
-          expect(err.message).to.include("unkown instance") // sic
+          // Regression test against old verify/save bahavior
+          expect(err.message).to.not.include("unkown instance") // sic
         }
       })
       it("should be able to save an existing instance", async function () {
@@ -743,7 +744,7 @@ describe("Client", function () {
       const list = await client.find(dbID, "Person", {})
       expect(list.length).to.be.greaterThan(0)
       const collections = await client.listCollections(dbID)
-      expect(collections).to.have.lengthOf(3)
+      expect(collections).to.have.lengthOf(4)
     })
   })
 

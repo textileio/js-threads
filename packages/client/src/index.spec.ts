@@ -4,7 +4,7 @@ import { Context } from "@textile/context"
 import { Identity, PrivateKey } from "@textile/crypto"
 import { ThreadID } from "@textile/threads-id"
 import { expect } from "chai"
-import { Client, JSONSchema3or4, Update } from "./index"
+import { Client, getFunctionBody, JSONSchema3or4, Update } from "./index"
 import { Event, ReadTransaction, Where, WriteTransaction } from "./models"
 
 const personSchema: JSONSchema3or4 = {
@@ -305,6 +305,24 @@ describe("Client", function () {
           return true
       }
     }
+
+    it("should handle string-based writeValidators", async function () {
+      const replaceThisValidator = (writer: string) => {
+        // eslint-disable-next-line prettier/prettier
+        const ownerPub = 'replaceThis'
+        if (writer === ownerPub) {
+          return true
+        }
+        return false
+      }
+      const writeValidatorString = getFunctionBody(
+        replaceThisValidator
+      ).replace("replaceThis", "publicKeyString")
+      await client.newCollection(dbID, {
+        name: "DontUseThisOne",
+        writeValidator: writeValidatorString,
+      })
+    })
     it("should catch invalid write operations before they are added to the db", async function () {
       // Empty schema
       await client.updateCollection(dbID, {

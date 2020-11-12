@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "scripts": {
+    "bili": "bili --config ../../bili.config.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "prebuild": "npm run clean",

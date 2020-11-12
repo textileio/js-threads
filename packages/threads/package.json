@@ -2,8 +2,9 @@
   "name": "@textile/threads",
   "version": "1.1.0",
   "description": "Components for building with Threads Database and Client.",
-  "main": "dist/index",
-  "types": "dist/index",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.esm.ts",
   "files": [
     "dist/**/!(*.spec).js?(.map)",
     "dist/**/!(*.spec).d.ts"

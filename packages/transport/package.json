@@ -1,8 +1,9 @@
 {
   "name": "@textile/grpc-transport",
   "version": "0.0.6",
-  "main": "dist/index",
-  "types": "dist/index",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.esm.ts",
   "files": [
     "dist/**/!(*.spec).js?(.map)",
     "dist/**/!(*.spec).d.ts"

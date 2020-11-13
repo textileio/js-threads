@@ -13,11 +13,10 @@
   },
   "license": "MIT",
   "scripts": {
-    "bili": "bili --config ../../bili.config.js",
+    "build": "bili --config ../../bili.config.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "prebuild": "npm run clean",
-    "build": "npx tsc -b tsconfig.json",
     "clean": "npx rimraf ./dist ./tsconfig.tsbuildinfo"
   },
   "repository": "github:textileio/js-threads",

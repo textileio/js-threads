@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.8.1-alpha.0](https://github.com/textileio/js-threads/compare/@textile/context@0.8.0...@textile/context@0.8.1-alpha.0) (2020-11-13)
+
+
+### Features
+
+* **builds:** adds module path and build ([9d029ef](https://github.com/textileio/js-threads/commit/9d029ef44c39d3019773c772bf8d483bcdf3be1a))
+* **builds:** rm umd for now; update build scripts to all use bili ([4757daf](https://github.com/textileio/js-threads/commit/4757dafa316b4e2c84c8ea8d2ad35206ad7737d4))
+* **bundle:** try out bili for packaging ([5df79c4](https://github.com/textileio/js-threads/commit/5df79c4c0dbd1def9b3e5a4c84a21ac787a01663))
+
+
+
+
+
 # [0.8.0](https://github.com/textileio/js-threads/compare/@textile/context@0.6.8...@textile/context@0.8.0) (2020-09-30)
 
 

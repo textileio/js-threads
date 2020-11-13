@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1-alpha.1](https://github.com/textileio/js-threads/compare/@textile/security@0.4.1-alpha.0...@textile/security@0.4.1-alpha.1) (2020-11-13)
+
+
+### Bug Fixes
+
+* **releases:** point to correct module file ([8546aba](https://github.com/textileio/js-threads/commit/8546aba1152bca503baa0de6443a02e47acbf3ca))
+
+
+
+
+
 ## [0.4.1-alpha.0](https://github.com/textileio/js-threads/compare/@textile/security@0.4.0...@textile/security@0.4.1-alpha.0) (2020-11-13)
 
 

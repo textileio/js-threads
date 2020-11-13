@@ -1,6 +1,6 @@
 {
   "name": "@textile/threads-client",
-  "version": "1.1.1-alpha.1",
+  "version": "1.1.1-alpha.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.esm.js",
@@ -44,13 +44,13 @@
   ],
   "dependencies": {
     "@improbable-eng/grpc-web": "^0.13.0",
-    "@textile/context": "^0.8.1-alpha.1",
+    "@textile/context": "^0.8.1-alpha.2",
     "@textile/crypto": "^0.1.0",
-    "@textile/grpc-transport": "^0.0.7-alpha.1",
-    "@textile/multiaddr": "^0.1.1-alpha.1",
-    "@textile/security": "^0.4.1-alpha.1",
+    "@textile/grpc-transport": "^0.0.7-alpha.2",
+    "@textile/multiaddr": "^0.1.1-alpha.2",
+    "@textile/security": "^0.4.1-alpha.2",
     "@textile/threads-client-grpc": "^1.0.0",
-    "@textile/threads-id": "^0.1.17-alpha.1",
+    "@textile/threads-id": "^0.1.17-alpha.2",
     "@types/to-json-schema": "^0.2.0",
     "to-json-schema": "^0.2.5"
   },

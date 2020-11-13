@@ -5,7 +5,7 @@ module.exports = {
   output: {
     moduleName: "ThreadDB",
     minify: true,
-    format: ["esm", "cjs"],
+    format: ["esm", "cjs", "umd"],
     dir: "./dist"
   },
   plugins: {

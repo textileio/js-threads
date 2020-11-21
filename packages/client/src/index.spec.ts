@@ -561,7 +561,6 @@ describe("Client", function () {
       it("should be able to validate an instance that is invalid", async function () {
         try {
           await transaction?.verify([createPerson()])
-          throw new Error("wrong error")
         } catch (err) {
           // Regression test against old verify/save bahavior
           expect(err.message).to.not.include("unkown instance") // sic

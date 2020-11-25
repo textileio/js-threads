@@ -1428,8 +1428,6 @@ export class Client {
           if (status === grpc.Code.OK) {
             if (message && mapper) {
               resolve(mapper(message))
-            } else {
-              resolve()
             }
           } else {
             reject(new Error(statusMessage))

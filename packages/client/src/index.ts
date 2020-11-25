@@ -1414,7 +1414,11 @@ export class Client {
     TRequest extends grpc.ProtobufMessage,
     M extends grpc.UnaryMethodDefinition<TRequest, TResponse>,
     O = undefined // Only thing we can't know ahead of time
-  >(methodDescriptor: M, req: TRequest, mapper?: (resp: TResponse) => O) {
+  >(
+    methodDescriptor: M,
+    req: TRequest,
+    mapper: (resp: TResponse) => O | undefined = () => undefined
+  ) {
     const metadata = await this.context.toMetadata()
     return new Promise<O>((resolve, reject) => {
       grpc.unary(methodDescriptor, {
@@ -1426,9 +1430,7 @@ export class Client {
         onEnd: (res: UnaryOutput<TResponse>) => {
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {
-            if (message && mapper) {
-              resolve(mapper(message))
-            }
+            resolve(mapper(message as any))
           } else {
             reject(new Error(statusMessage))
           }

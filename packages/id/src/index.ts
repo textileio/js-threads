@@ -114,7 +114,7 @@ export class ThreadID {
    * @param data The input Thread ID bytes.
    */
   static fromBytes(data: Uint8Array): ThreadID {
-    let copy = data
+    let copy = new Uint8Array(data)
     const version = decode(copy)
     if (version != 1) {
       throw new Error(`expected 1 as the id version number, got: ${version}.`)
@@ -161,7 +161,7 @@ export class ThreadID {
    * The output of bytes can be parsed back into an ID with fromBytes.
    */
   toBytes(): Uint8Array {
-    return this.buf
+    return this.buf // These should not be mutated directly!
   }
 
   /**

@@ -71,9 +71,6 @@ jobs:
       - name: Test Browser
         run: npm run test:browser
 
-      - name: Compile CommonJS/ESM
-        run: npm run build
-
       - name: Compile Webpack
         run: |
           cd packages/threads

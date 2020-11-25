@@ -1430,7 +1430,7 @@ export class Client {
         onEnd: (res: UnaryOutput<TResponse>) => {
           const { status, statusMessage, message } = res
           if (status === grpc.Code.OK) {
-            resolve(mapper(message as any))
+            resolve(mapper(message as any) as O)
           } else {
             reject(new Error(statusMessage))
           }

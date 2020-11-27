@@ -1,6 +1,6 @@
 {
   "name": "@textile/threads-id",
-  "version": "0.3.1",
+  "version": "0.4.0-alpha.0",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
   "module": "dist/esm/index.js",
@@ -13,7 +13,6 @@
   },
   "license": "MIT",
   "scripts": {
-    "prepublishOnly": "npm run clean && npm run build",
     "build": "npm run build:cjs",
     "build:cjs": "npx tsc -b ./tsconfig.json",
     "clean": "npx rimraf ./dist",
@@ -25,5 +24,5 @@
     "multibase": "^3.1.0",
     "varint": "^6.0.0"
   },
-  "gitHead": "cdbfb3a09a606e1c3c90f052e5ee74afa5399a40"
+  "gitHead": "1c550ec78eab0368d5c758a7068e529c45918729"
 }

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.10.0-alpha.1](https://github.com/textileio/js-threads/compare/@textile/context@0.9.2...@textile/context@0.10.0-alpha.1) (2020-11-27)
+
+
+### Features
+
+* cleanup esm builds + update changelog ([1c550ec](https://github.com/textileio/js-threads/commit/1c550ec78eab0368d5c758a7068e529c45918729))
+
+
+
+
+
 # [0.10.0-alpha.0](https://github.com/textileio/js-threads/compare/@textile/context@0.9.2...@textile/context@0.10.0-alpha.0) (2020-11-27)
 
 

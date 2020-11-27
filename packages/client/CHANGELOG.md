@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.3-alpha.0](https://github.com/textileio/js-threads/compare/@textile/threads-client@1.3.2...@textile/threads-client@1.3.3-alpha.0) (2020-11-27)
+
+**Note:** Version bump only for package @textile/threads-client
+
+
+
+
+
 ## [1.3.2](https://github.com/textileio/js-threads/compare/@textile/threads-client@1.3.1...@textile/threads-client@1.3.2) (2020-11-26)
 
 **Note:** Version bump only for package @textile/threads-client

@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.9.3-alpha.0](https://github.com/textileio/js-threads/compare/@textile/context@0.9.2...@textile/context@0.9.3-alpha.0) (2020-11-27)
+
+**Note:** Version bump only for package @textile/context
+
+
+
+
+
 ## [0.9.2](https://github.com/textileio/js-threads/compare/@textile/context@0.9.1...@textile/context@0.9.2) (2020-11-26)
 
 **Note:** Version bump only for package @textile/context

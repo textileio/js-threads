@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.3-alpha.0](https://github.com/textileio/js-threads/compare/@textile/security@0.6.2...@textile/security@0.6.3-alpha.0) (2020-11-27)
+
+**Note:** Version bump only for package @textile/security
+
+
+
+
+
 ## [0.6.2](https://github.com/textileio/js-threads/compare/@textile/security@0.6.1...@textile/security@0.6.2) (2020-11-26)
 
 

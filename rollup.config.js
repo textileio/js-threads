@@ -24,16 +24,16 @@ const external = [
 ]
 
 /**
- * @param {string}[scope] - packages to only build (if you don't
+ * @param {string[]}[scope] - packages to only build (if you don't
  *    want to build everything)
- * @param {string}[ignore] - packages to not build
+ * @param {string[]}[ignore] - packages to not build
  *
- * @returns {string[]} - sorted list of Package objects that
+ * @returns {Promise<any[]>} - sorted list of Package objects that
  *    represent packages to be built.
  */
 async function getSortedPackages(scope, ignore) {
   const packages = await getPackages(__dirname)
-  const filtered = filterPackages(packages, scope, ignore, false)
+  const filtered = filterPackages(packages, scope, ignore, false, true)
 
   return batchPackages(filtered).reduce((arr, batch) => arr.concat(batch), [])
 }

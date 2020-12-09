@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.4.0-alpha.3](https://github.com/textileio/js-threads/compare/@textile/threads@1.3.2...@textile/threads@1.4.0-alpha.3) (2020-12-09)
+
+
+### Features
+
+* cleanup esm builds + update changelog ([19ea109](https://github.com/textileio/js-threads/commit/19ea109f39e80e159c4f6bd9e40a9a199549371a))
+* cleanup esm builds in multiaddr + dep updates ([b456f60](https://github.com/textileio/js-threads/commit/b456f60d9e43cf21c720f2019f2a920f27db856a))
+
+
+
+
+
 # [1.4.0-alpha.2](https://github.com/textileio/js-threads/compare/@textile/threads@1.3.2...@textile/threads@1.4.0-alpha.2) (2020-12-09)
 
 

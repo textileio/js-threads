@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.7.0-alpha.4](https://github.com/textileio/js-threads/compare/@textile/security@0.7.0-alpha.3...@textile/security@0.7.0-alpha.4) (2020-12-09)
+
+
+### Features
+
+* remove timeout error from security ([7a781f0](https://github.com/textileio/js-threads/commit/7a781f058a01414ee713e4486820a71805b6e9d9))
+
+
+
+
+
 # [0.7.0-alpha.3](https://github.com/textileio/js-threads/compare/@textile/security@0.6.2...@textile/security@0.7.0-alpha.3) (2020-12-09)
 
 

@@ -108,7 +108,7 @@ export function getFunctionBody(
  */
 export interface CollectionConfig<W = any, R = W> {
   name: string
-  schema?: JSONSchema3or4 | any // Union type to indicate that JSONSchema is preferred but any works
+  schema?: JSONSchema3or4 | any // JSONSchema is preferred but any works
   indexes?: pb.Index.AsObject[]
   writeValidator?:
     | ((writer: string, event: Event, instance: W) => boolean)

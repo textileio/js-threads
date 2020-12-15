@@ -21,6 +21,7 @@ import {
   APIListen,
 } from "@textile/threads-client-grpc/threads_pb_service"
 import { ThreadID } from "@textile/threads-id"
+import "fastestsmallesttextencoderdecoder"
 import toJsonSchema, { JSONSchema3or4 } from "to-json-schema"
 import {
   ComparisonJSON,

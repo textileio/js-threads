@@ -3,12 +3,5 @@
   "compilerOptions": {
     "outDir": "./dist/cjs",
     "rootDir": "./src"
-  },
-  "references": [
-    { "path": "../context" },
-    { "path": "../id" },
-    { "path": "../multiaddr" },
-    { "path": "../security" },
-    { "path": "../transport" }
-  ]
+  }
 }

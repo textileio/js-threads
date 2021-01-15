@@ -5,8 +5,8 @@
     "rootDir": "./src"
   },
   "references": [
-    { "path": "../client" },
-    { "path": "../id" },
-    { "path": "../security" }
+    {
+      "path": "../client"
+    }
   ]
 }

@@ -705,8 +705,11 @@ describe("Client", function () {
         .and("age")
         .lt(66)
         .or(new Where("age").eq(67))
+        .skipNum(1)
+        .limitTo(5)
+        .orderByID()
       const instances = await client.find<Person>(dbID, "Person", q)
-      expect(instances).to.have.length(7)
+      expect(instances).to.have.length(5)
     })
   })
 

@@ -67,6 +67,10 @@ export interface QueryJSON {
   ands?: CriterionJSON[]
   ors?: QueryJSON[]
   sort?: SortJSON
+  seek?: string // instanceId
+  limit?: number
+  skip?: number
+  index?: string
 }
 
 /**
@@ -179,6 +183,11 @@ export { Where }
  * Query allows to build queries to be used to fetch data from a model.
  */
 export class Query implements QueryJSON {
+  // Additional query resrictions
+  public limit?: number
+  public skip?: number
+  public index?: string
+  public seek?: string
   /**
    * Query creates a new generic query object.
    * @param ands An array of top-level Criterions to be included in the query.
@@ -208,7 +217,19 @@ export class Query implements QueryJSON {
   }
 
   /**
-   * or concatenates a new condition that is sufficient for an instance to satisfy, independant of the current Query. Has left-associativity as: (a And b) Or c
+   * useIndex specifies the index to use when running this query.
+   * @param fieldPath The path to the indexed field.
+   * @note fieldPath must be a valid field for which an index has been created.
+   */
+  useIndex(fieldPath: string): Query {
+    this.index = fieldPath
+    return this
+  }
+
+  /**
+   * or concatenates a new condition that is sufficient for an instance to
+   * satisfy, independant of the current Query. Has left-associativity as:
+   * (a And b) Or c
    * @param query The 'sub-query' to concat to the existing query.
    */
   or(query: Query): Query {
@@ -217,7 +238,8 @@ export class Query implements QueryJSON {
   }
 
   /**
-   * orderBy specify ascending order for the query results. On multiple calls, only the last one is considered.
+   * orderBy specify ascending order for the query results.
+   * On multiple calls, only the last one is considered.
    * @param fieldPath The field name to query on. Can be a hierarchical path.
    */
   orderBy(fieldPath: string): Query {
@@ -226,11 +248,57 @@ export class Query implements QueryJSON {
   }
 
   /**
-   * orderByDesc specify descending order for the query results. On multiple calls, only the last one is considered.
+   * orderByID specifies ascending ID order for the query results.
+   * On multiple calls, only the last one is considered.
+   */
+  orderByID(): Query {
+    this.sort = { fieldPath: "_id", desc: false }
+    return this
+  }
+
+  /**
+   * orderByDesc specify descending order for the query results.
+   * On multiple calls, only the last one is considered.
    * @param fieldPath The field name to query on. Can be a hierarchical path.
    */
   orderByDesc(fieldPath: string): Query {
     this.sort = { fieldPath, desc: true }
+    return this
+  }
+
+  /**
+   * orderByIDDesc specifies descending ID order for the query results.
+   * On multiple calls, only the last one is considered.
+   */
+  orderByIDDesc(): Query {
+    this.sort = { fieldPath: "_id", desc: true }
+    return this
+  }
+
+  /**
+   * seekID seeks to the given ID before returning query results.
+   * @param id The instance id to seek.
+   */
+  seekID(id: string): Query {
+    this.seek = id
+    return this
+  }
+
+  /**
+   * limitTo sets the maximum number of results.
+   * @param limit The max number of instances to return.
+   */
+  limitTo(limit: number): Query {
+    this.limit = limit
+    return this
+  }
+
+  /**
+   * skipNum skips the given number of results.
+   * @param num The number of instances to skip.
+   */
+  skipNum(num: number): Query {
+    this.skip = num
     return this
   }
 }

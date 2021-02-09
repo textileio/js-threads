@@ -25,7 +25,7 @@
     "@textile/crypto": "^2.0.0",
     "@textile/security": "^0.7.0",
     "@textile/threads-client": "^2.1.0",
-    "@textile/threads-id": "^0.4.0"
+    "@textile/threads-id": "^0.5.1"
   },
   "author": "Textile",
   "license": "MIT",

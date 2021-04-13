@@ -22,7 +22,7 @@
   "dependencies": {
     "@improbable-eng/grpc-web": "^0.13.0",
     "@textile/context": "^0.10.0",
-    "@textile/crypto": "^2.0.0",
+    "@textile/crypto": "^4.1.1",
     "@textile/grpc-transport": "^0.3.0",
     "@textile/multiaddr": "^0.4.0",
     "@textile/security": "^0.7.0",

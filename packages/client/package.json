@@ -24,7 +24,7 @@
     "@textile/context": "^0.10.0",
     "@textile/crypto": "^2.0.0",
     "@textile/grpc-transport": "^0.3.0",
-    "@textile/multiaddr": "^0.4.0",
+    "@textile/multiaddr": "^0.5.1",
     "@textile/security": "^0.7.0",
     "@textile/threads-client-grpc": "^1.0.2",
     "@textile/threads-id": "^0.4.0",
